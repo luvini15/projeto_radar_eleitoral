@@ -1,0 +1,36 @@
+import type { DailyMetric } from '@/types/instagram'
+
+// Dados ilustrativos — protótipo em desenvolvimento.
+// 30 dias de métricas diárias, com valores fixos (não gerados a cada carregamento).
+export const mockDailyMetrics: DailyMetric[] = [
+  { data: "2026-06-30", seguidores: 54958, alcance: 59529, visualizacoes: 129499, interacoes: 6458, novosSeguidores: 158 },
+  { data: "2026-07-01", seguidores: 55085, alcance: 57531, visualizacoes: 112621, interacoes: 4182, novosSeguidores: 127 },
+  { data: "2026-07-02", seguidores: 55225, alcance: 60225, visualizacoes: 122025, interacoes: 5184, novosSeguidores: 140 },
+  { data: "2026-07-03", seguidores: 55369, alcance: 66128, visualizacoes: 145216, interacoes: 7584, novosSeguidores: 144 },
+  { data: "2026-07-04", seguidores: 55459, alcance: 42649, visualizacoes: 84998, interacoes: 4760, novosSeguidores: 90 },
+  { data: "2026-07-05", seguidores: 55547, alcance: 52751, visualizacoes: 94291, interacoes: 4997, novosSeguidores: 88 },
+  { data: "2026-07-06", seguidores: 55684, alcance: 41617, visualizacoes: 80224, interacoes: 4491, novosSeguidores: 137 },
+  { data: "2026-07-07", seguidores: 55798, alcance: 63323, visualizacoes: 105927, interacoes: 7303, novosSeguidores: 114 },
+  { data: "2026-07-08", seguidores: 55916, alcance: 47498, visualizacoes: 101009, interacoes: 3768, novosSeguidores: 118 },
+  { data: "2026-07-09", seguidores: 56021, alcance: 65995, visualizacoes: 116843, interacoes: 4719, novosSeguidores: 105 },
+  { data: "2026-07-10", seguidores: 56188, alcance: 49552, visualizacoes: 98960, interacoes: 5807, novosSeguidores: 167 },
+  { data: "2026-07-11", seguidores: 56290, alcance: 64468, visualizacoes: 105951, interacoes: 4717, novosSeguidores: 102 },
+  { data: "2026-07-12", seguidores: 56403, alcance: 69261, visualizacoes: 147138, interacoes: 6151, novosSeguidores: 113 },
+  { data: "2026-07-13", seguidores: 56523, alcance: 51337, visualizacoes: 111188, interacoes: 5162, novosSeguidores: 120 },
+  { data: "2026-07-14", seguidores: 56626, alcance: 63661, visualizacoes: 123383, interacoes: 6978, novosSeguidores: 103 },
+  { data: "2026-07-15", seguidores: 56753, alcance: 71416, visualizacoes: 156361, interacoes: 6652, novosSeguidores: 127 },
+  { data: "2026-07-16", seguidores: 56886, alcance: 58678, visualizacoes: 116125, interacoes: 5792, novosSeguidores: 133 },
+  { data: "2026-07-17", seguidores: 56977, alcance: 65075, visualizacoes: 104808, interacoes: 4683, novosSeguidores: 91 },
+  { data: "2026-07-18", seguidores: 57094, alcance: 62460, visualizacoes: 110278, interacoes: 7362, novosSeguidores: 117 },
+  { data: "2026-07-19", seguidores: 57173, alcance: 61574, visualizacoes: 113089, interacoes: 5851, novosSeguidores: 79 },
+  { data: "2026-07-20", seguidores: 57301, alcance: 58712, visualizacoes: 97508, interacoes: 5495, novosSeguidores: 128 },
+  { data: "2026-07-21", seguidores: 57447, alcance: 62393, visualizacoes: 115604, interacoes: 6007, novosSeguidores: 146 },
+  { data: "2026-07-22", seguidores: 57564, alcance: 80025, visualizacoes: 171150, interacoes: 5828, novosSeguidores: 117 },
+  { data: "2026-07-23", seguidores: 57651, alcance: 64571, visualizacoes: 121960, interacoes: 6961, novosSeguidores: 87 },
+  { data: "2026-07-24", seguidores: 57736, alcance: 61215, visualizacoes: 101078, interacoes: 6839, novosSeguidores: 85 },
+  { data: "2026-07-25", seguidores: 57856, alcance: 74032, visualizacoes: 154373, interacoes: 8546, novosSeguidores: 120 },
+  { data: "2026-07-26", seguidores: 57983, alcance: 72652, visualizacoes: 152173, interacoes: 7116, novosSeguidores: 127 },
+  { data: "2026-07-27", seguidores: 58080, alcance: 78926, visualizacoes: 170533, interacoes: 7699, novosSeguidores: 97 },
+  { data: "2026-07-28", seguidores: 58231, alcance: 63595, visualizacoes: 132034, interacoes: 6753, novosSeguidores: 151 },
+  { data: "2026-07-29", seguidores: 58420, alcance: 72955, visualizacoes: 151608, interacoes: 7102, novosSeguidores: 189 },
+]
