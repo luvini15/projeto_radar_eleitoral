@@ -1,0 +1,23 @@
+# Python / backend
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+backend/.env
+
+# Node / frontend
+radar-eleitoral/node_modules/
+radar-eleitoral/dist/
+radar-eleitoral/.env.local
+
+# Environment / secrets
+.env
+*.env.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

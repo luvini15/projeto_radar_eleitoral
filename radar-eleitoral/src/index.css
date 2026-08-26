@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --color-bg: #F4F7FB;
+  --color-card: #FFFFFF;
+  --color-blue: #2563EB;
+  --color-blue-dark: #172033;
+  --color-slate: #64748B;
+  --color-border: #DFE6EF;
+  --color-positive: #16A34A;
+  --color-alert: #DC2626;
+  --color-warning: #D97706;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--color-blue-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: #DBEAFE;
+}
+
+/* Scrollbar discreto para tabelas e sidebar */
+.thin-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 999px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media print {
+  .no-print { display: none !important; }
+}
