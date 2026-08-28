@@ -17,9 +17,11 @@ export default function Content() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate">
-        {media.length} conteúdos no período selecionado. Métricas exibidas são compatíveis com a API oficial da Meta e podem variar conforme o formato da publicação e permissões concedidas. Clique em uma linha para ver o detalhe.
-      </p>
+      <div className="rounded-2xl border border-border bg-muted/60 p-4">
+        <p className="text-sm leading-6 text-slate">
+          {media.length} conteudos no periodo selecionado. Metricas exibidas seguem o que pode vir da API oficial da Meta e variam por formato e permissao concedida.
+        </p>
+      </div>
       <MediaTable media={media} onSelect={setSelected} />
       <MediaDetailPanel item={selected} onClose={() => setSelected(null)} />
     </div>

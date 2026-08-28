@@ -6,13 +6,13 @@ export function ExecutiveSummaryCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-blue" />
-          <CardTitle>Análise do Radar</CardTitle>
+          <FileText className="h-4 w-4 text-ballot" />
+          <CardTitle>Analise do Radar</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm leading-relaxed text-slate">
-          Com base nas métricas oficiais da conta autorizada, o Radar identificou crescimento consistente no período. Reels relacionados a mobilidade urbana e fiscalização ficaram acima da mediana do perfil. A classificação por tema é uma camada do Radar, feita a partir da legenda e passível de revisão manual.
+        <p className="text-sm leading-7 text-slate">
+          Com base nas metricas oficiais da conta autorizada, o Radar identificou crescimento consistente no periodo. Reels relacionados a mobilidade urbana e fiscalizacao ficaram acima da mediana do perfil. A classificacao por tema e uma camada do Radar, feita a partir da legenda e passivel de revisao manual.
         </p>
       </CardContent>
     </Card>
@@ -26,22 +26,22 @@ interface HighlightCardProps {
 
 const kindConfig = {
   oportunidade: {
-    label: 'Análise do Radar',
+    label: 'Analise do Radar',
     icon: TrendingUp,
     color: 'text-positive',
     bg: 'bg-positive/10',
   },
   atencao: {
-    label: 'Alerta baseado em métrica',
+    label: 'Alerta baseado em metrica',
     icon: AlertTriangle,
     color: 'text-warning',
     bg: 'bg-warning/10',
   },
   recomendacao: {
-    label: 'Recomendação estratégica',
+    label: 'Recomendacao estrategica',
     icon: Lightbulb,
-    color: 'text-blue',
-    bg: 'bg-blue/10',
+    color: 'text-ballot',
+    bg: 'bg-ballot/10',
   },
 } as const
 
@@ -49,11 +49,11 @@ export function HighlightCard({ kind, text }: HighlightCardProps) {
   const { label, icon: Icon, color, bg } = kindConfig[kind]
   return (
     <Card className="p-5">
-      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg} ${color}`}>
+      <div className={`flex h-8 w-8 items-center justify-center rounded-md ${bg} ${color}`}>
         <Icon className="h-4 w-4" />
       </div>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate">{label}</p>
-      <p className="mt-1.5 text-sm leading-relaxed text-blue-dark">{text}</p>
+      <p className="mt-4 font-mono text-[10px] uppercase text-slate">{label}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-ink">{text}</p>
     </Card>
   )
 }

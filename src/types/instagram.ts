@@ -1,4 +1,4 @@
-// Tipos centrais do domínio "Radar Eleitoral".
+// Tipos centrais do dominio "Data Sight".
 // Desenhados para que, futuramente, os mesmos formatos sejam
 // preenchidos pela API oficial do Instagram (Graph API / Meta),
 // sem exigir mudanças nos componentes visuais.

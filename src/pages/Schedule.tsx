@@ -25,7 +25,7 @@ export default function Schedule() {
           <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
             Melhor dia histórico
           </p>
-          <p className="font-display text-2xl font-bold text-blue-dark">Quinta-feira</p>
+          <p className="font-display text-2xl font-bold text-ink">Quinta-feira</p>
         </Card>
         <Card className="p-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue">
@@ -34,7 +34,7 @@ export default function Schedule() {
           <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
             Melhor horário histórico
           </p>
-          <p className="font-display text-2xl font-bold text-blue-dark">19h</p>
+          <p className="font-display text-2xl font-bold text-ink">19h</p>
         </Card>
         <Card className="p-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-alert/10 text-alert">
@@ -43,7 +43,7 @@ export default function Schedule() {
           <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
             Faixa de menor desempenho
           </p>
-          <p className="font-display text-xl font-bold text-blue-dark">
+          <p className="font-display text-xl font-bold text-ink">
             Segunda-feira, 9h–12h
           </p>
         </Card>

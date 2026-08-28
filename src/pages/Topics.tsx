@@ -14,22 +14,20 @@ export default function Topics() {
   const [formatos, setFormatos] = React.useState<FormatoResumo[]>([])
 
   React.useEffect(() => {
-    Promise.all([instagramService.getTopics(), instagramService.getFormats()]).then(
-      ([t, f]) => {
-        setTopicos(t)
-        setFormatos(f)
-      }
-    )
+    Promise.all([instagramService.getTopics(), instagramService.getFormats()]).then(([t, f]) => {
+      setTopicos(t)
+      setFormatos(f)
+    })
   }, [])
 
   if (!topicos) return <PageLoader />
 
   return (
     <div className="space-y-6">
-      <Card className="flex items-start gap-3 border-blue/20 bg-blue/5 p-4">
+      <Card className="flex items-start gap-3 border-blue/20 bg-blue/10 p-4">
         <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
-        <p className="text-sm text-blue-dark">
-          A API da Meta entrega mídia, legenda, formato e métricas. O campo <strong>tema</strong> é uma camada do Radar: classificação por IA a partir da legenda, com possibilidade de revisão manual.
+        <p className="text-sm leading-6 text-ink">
+          A API da Meta entrega midia, legenda, formato e metricas. O campo <strong>tema</strong> e uma camada do Radar: classificacao por IA a partir da legenda, com revisao manual.
         </p>
       </Card>
 
@@ -46,10 +44,10 @@ export default function Topics() {
 
       <FormatComparison data={formatos} />
 
-      <Card className="flex items-start gap-3 border-blue/20 bg-blue/5 p-4">
+      <Card className="flex items-start gap-3 border-blue/20 bg-blue/10 p-4">
         <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
-        <p className="text-sm text-blue-dark">
-          Análise do Radar: formatos são comparados a partir das métricas oficiais de mídia disponíveis para cada tipo de conteúdo.
+        <p className="text-sm leading-6 text-ink">
+          Analise do Radar: formatos sao comparados a partir das metricas oficiais de midia disponiveis para cada tipo de conteudo.
         </p>
       </Card>
     </div>

@@ -25,11 +25,11 @@ export default function Settings() {
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-xs text-slate">Campanha</dt>
-              <dd className="text-sm font-medium text-blue-dark">Cláudio Borcem</dd>
+              <dd className="text-sm font-medium text-ink">Cláudio Borcem</dd>
             </div>
             <div>
               <dt className="text-xs text-slate">Rede conectada</dt>
-              <dd className="text-sm font-medium text-blue-dark">Instagram</dd>
+              <dd className="text-sm font-medium text-ink">Instagram</dd>
             </div>
             <div>
               <dt className="text-xs text-slate">Status</dt>
@@ -39,7 +39,7 @@ export default function Settings() {
             </div>
             <div>
               <dt className="text-xs text-slate">Última atualização</dt>
-              <dd className="text-sm font-medium text-blue-dark">Hoje, 07:00</dd>
+              <dd className="text-sm font-medium text-ink">Hoje, 07:00</dd>
             </div>
           </dl>
         </CardContent>
@@ -52,11 +52,11 @@ export default function Settings() {
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-bg text-slate">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-slate">
                 <AtSign className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-dark">Instagram oficial</p>
+                <p className="text-sm font-medium text-ink">Instagram oficial</p>
                 <p className="text-xs text-slate">Aguardando autorização oficial da Meta</p>
               </div>
             </div>
@@ -79,7 +79,7 @@ export default function Settings() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue/10 text-xs font-bold text-blue">
                     {u.nome.split(' ').map((n) => n[0]).slice(0, 2).join('')}
                   </div>
-                  <span className="text-sm text-blue-dark">{u.nome}</span>
+                  <span className="text-sm text-ink">{u.nome}</span>
                 </div>
                 <Badge variant={u.papel === 'Administrador' ? 'dark' : 'neutral'}>{u.papel}</Badge>
               </li>

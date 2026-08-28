@@ -6,34 +6,27 @@ import { ConfidentialBanner } from './ConfidentialBanner'
 import { Footer } from './Footer'
 import type { PeriodoFiltro } from '@/types/instagram'
 
-const pageMeta: Record<string, { title: string; subtitle: string }> = {
+const pageMeta: Record<string, { title: string }> = {
   '/': {
-    title: 'Central de Inteligência do Instagram',
-    subtitle: 'Acompanhamento estratégico da comunicação digital da campanha.',
+    title: 'Sala de situacao digital',
   },
   '/conteudos': {
-    title: 'Conteúdos',
-    subtitle: 'Todas as publicações do período, com desempenho e classificação.',
+    title: 'Conteudos publicados',
   },
   '/temas-formatos': {
-    title: 'Temas e Formatos',
-    subtitle: 'Temas classificados pelo Radar a partir da legenda e formatos alimentados pela API oficial.',
+    title: 'Temas e formatos',
   },
   '/dias-horarios': {
-    title: 'Desempenho por Dia e Horário',
-    subtitle: 'Padrões históricos calculados a partir do horário das publicações e suas métricas oficiais.',
+    title: 'Dias e horarios',
   },
   '/audiencia': {
-    title: 'Audiência',
-    subtitle: 'Dados agregados de audiência quando disponibilizados pela Meta e elegíveis por volume mínimo.',
+    title: 'Audiencia',
   },
   '/insights': {
-    title: 'Inteligência Estratégica',
-    subtitle: 'Separação clara entre dado oficial da Meta, análise do Radar e recomendação estratégica.',
+    title: 'Inteligencia estrategica',
   },
   '/configuracoes': {
-    title: 'Configurações',
-    subtitle: 'Campanha, integração de dados e usuários autorizados.',
+    title: 'Configuracoes',
   },
 }
 
@@ -45,18 +38,17 @@ export function DashboardLayout() {
   const meta = pageMeta[location.pathname] ?? pageMeta['/']
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="intel-grid-bg flex min-h-screen bg-bg text-ink">
       <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
       <div className="flex min-h-screen flex-1 flex-col">
         <ConfidentialBanner />
         <Topbar
           title={meta.title}
-          subtitle={meta.subtitle}
           periodo={periodo}
           onPeriodoChange={setPeriodo}
           onOpenMobileMenu={() => setMobileOpen(true)}
         />
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
+        <main className="flex-1 px-4 py-5 md:px-7 md:py-7">
           <Outlet context={{ periodo } satisfies { periodo: PeriodoFiltro }} />
         </main>
         <Footer />

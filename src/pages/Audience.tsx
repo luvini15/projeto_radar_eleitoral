@@ -39,10 +39,10 @@ export default function Audience() {
             {audience.faixaEtaria.map((f) => (
               <div key={f.faixa}>
                 <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="text-blue-dark">{f.faixa} anos</span>
-                  <span className="font-medium text-blue-dark">{f.percentual}%</span>
+                  <span className="text-ink">{f.faixa} anos</span>
+                  <span className="font-medium text-ink">{f.percentual}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-bg">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div className="h-full rounded-full bg-blue" style={{ width: `${f.percentual}%` }} />
                 </div>
               </div>
@@ -59,15 +59,15 @@ export default function Audience() {
             {audience.genero.map((g, i) => (
               <div key={g.genero}>
                 <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="text-blue-dark">{g.genero}</span>
-                  <span className="font-medium text-blue-dark">{g.percentual}%</span>
+                  <span className="text-ink">{g.genero}</span>
+                  <span className="font-medium text-ink">{g.percentual}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-bg">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full"
                     style={{
                       width: `${g.percentual}%`,
-                      backgroundColor: ['#2563EB', '#16A34A', '#D97706'][i % 3],
+                      backgroundColor: ['#8EA4FF', '#5CE1A7', '#F2B45C'][i % 3],
                     }}
                   />
                 </div>
@@ -89,14 +89,14 @@ export default function Audience() {
             .map((r, i) => (
               <div key={r.cidade} className="flex items-center gap-3">
                 <span className="w-5 shrink-0 text-xs font-semibold text-slate">{i + 1}</span>
-                <span className="w-32 shrink-0 text-sm text-blue-dark">{r.cidade}</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-bg">
+                <span className="w-32 shrink-0 text-sm text-ink">{r.cidade}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-blue"
                     style={{ width: `${(r.percentual / maxRegiao) * 100}%` }}
                   />
                 </div>
-                <span className="w-12 shrink-0 text-right text-sm font-medium text-blue-dark">
+                <span className="w-12 shrink-0 text-right text-sm font-medium text-ink">
                   {r.percentual}%
                 </span>
               </div>

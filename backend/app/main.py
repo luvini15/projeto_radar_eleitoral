@@ -8,7 +8,7 @@ from app.routers.analytics import router as analytics_router
 
 
 app = FastAPI(
-    title="Radar Eleitoral API",
+    title="Data Sight API",
     version="0.1.0",
 )
 
@@ -38,7 +38,7 @@ app.include_router(analytics_router)
 @app.get("/")
 def root():
     return {
-        "service": "Radar Eleitoral API",
+        "service": "Data Sight API",
         "status": "online",
     }
 

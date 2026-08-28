@@ -20,8 +20,8 @@ export function AlertList({ alertas }: { alertas: AlertaItem[] }) {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-blue" />
-          <CardTitle>Alertas baseados na própria conta</CardTitle>
+          <Bell className="h-4 w-4 text-ballot" />
+          <CardTitle>Alertas da propria conta</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -29,16 +29,16 @@ export function AlertList({ alertas }: { alertas: AlertaItem[] }) {
           {alertas.map((alerta) => {
             const Icon = iconByTipo[alerta.tipo]
             return (
-              <li key={alerta.id} className="flex items-start gap-3">
+              <li key={alerta.id} className="flex items-start gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0">
                 <div
                   className={cn(
-                    'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
+                    'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
                     colorByTipo[alerta.tipo]
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-sm text-blue-dark">{alerta.texto}</span>
+                <span className="text-sm leading-6 text-ink">{alerta.texto}</span>
               </li>
             )
           })}

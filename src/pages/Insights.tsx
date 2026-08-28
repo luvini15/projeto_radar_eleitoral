@@ -38,7 +38,7 @@ export default function Insights() {
         if (items.length === 0) return null
         return (
           <section key={secao}>
-            <h2 className="mb-3 font-display text-xl font-bold tracking-tight text-blue-dark">
+            <h2 className="mb-3 font-display text-xl font-bold tracking-tight text-ink">
               {secao}
             </h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -10,12 +10,16 @@ backend/__pycache__/
 backend/**/*.pyc
 
 # Node
+node_modules/
+dist/
 radar-eleitoral/node_modules/
 radar-eleitoral/dist/
 
 # Editors / OS
 .vscode/
 .idea/
+.agents/
+skills-lock.json
 .DS_Store
 Thumbs.db
 

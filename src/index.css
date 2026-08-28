@@ -1,44 +1,366 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans/DMSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-  --color-bg: #F4F7FB;
-  --color-card: #FFFFFF;
-  --color-blue: #2563EB;
-  --color-blue-dark: #172033;
-  --color-slate: #64748B;
-  --color-border: #DFE6EF;
-  --color-positive: #16A34A;
-  --color-alert: #DC2626;
-  --color-warning: #D97706;
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans/DMSans-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans/DMSans-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans/DMSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-display: "DM Sans", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-bg: #0A0A0A;
+  --color-card: #141414;
+  --color-blue: #7FA1E8;
+  --color-blue-dark: #F5F5F4;
+  --color-slate: #A1A1AA;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-positive: #A7D6BB;
+  --color-alert: #F87171;
+  --color-warning: #B8C3D8;
+  --color-ink: #F5F5F4;
+  --color-paper: #141414;
+  --color-ballot: #7FA1E8;
+  --color-signal: #A7D6BB;
+  --color-panel: #0F0F10;
+  --color-muted: #1F1F22;
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   background-color: var(--color-bg);
+  color: var(--color-ink);
   font-family: var(--font-sans);
-  color: var(--color-blue-dark);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss02" on, "ss03" on, "ss04" on;
+}
+
+.intel-grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+}
+
+.mainline-shell {
+  border: 1px solid var(--color-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
+    var(--color-panel);
+  box-shadow: none;
+}
+
+.mainline-bg-top {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(10, 10, 10, 0.9) 42%, rgba(10, 10, 10, 0.96));
+}
+
+.dashed-line-x {
+  height: 1px;
+  color: rgba(255, 255, 255, 0.28);
+  background: repeating-linear-gradient(90deg, transparent, transparent 4px, currentColor 4px, currentColor 10px);
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+}
+
+.data-rule {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0,
+    rgba(255, 255, 255, 0.2) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+}
+
+.uiverse-login-bg {
+  background: #111111;
+}
+
+.uiverse-login-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(28, 28, 28, 0.88), rgba(18, 18, 18, 0.82));
+  padding: 30px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+}
+
+.uiverse-login-input {
+  height: 52px;
+  border-radius: 999px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.055);
+  color: white;
+}
+
+.uiverse-login-input:focus-visible {
+  border-color: rgba(127, 161, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(127, 161, 232, 0.1);
+}
+
+.uiverse-login-button {
+  height: 52px;
+  background: #f5f5f4;
+  color: #0a0a0a;
+}
+
+.uiverse-login-button svg {
+  color: #0a0a0a;
+}
+
+.uiverse-login-button:hover {
+  background: #d9e2f5;
+}
+
+.uiverse-login-button:hover svg {
+  color: #0a0a0a;
+}
+
+.uiverse-login-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(127, 161, 232, 0.16);
+}
+
+.uiverse-login-button[data-accent="blue"] {
+  background: #7FA1E8;
+  color: #ffffff;
+}
+
+.uiverse-login-button[data-accent="blue"]:hover {
+  background: #6d90d5;
+}
+
+.uiverse-social-button {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.uiverse-social-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.boxes {
+  --size: 32px;
+  --duration: 800ms;
+  height: calc(var(--size) * 2);
+  width: calc(var(--size) * 3);
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  margin-top: calc(var(--size) * 1.5 * -1);
+  transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0);
+}
+
+.boxes .box {
+  width: var(--size);
+  height: var(--size);
+  top: 0;
+  left: 0;
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+.boxes .box:nth-child(1) {
+  transform: translate(100%, 0);
+  -webkit-animation: box1 var(--duration) linear infinite;
+  animation: box1 var(--duration) linear infinite;
+}
+
+.boxes .box:nth-child(2) {
+  transform: translate(0, 100%);
+  -webkit-animation: box2 var(--duration) linear infinite;
+  animation: box2 var(--duration) linear infinite;
+}
+
+.boxes .box:nth-child(3) {
+  transform: translate(100%, 100%);
+  -webkit-animation: box3 var(--duration) linear infinite;
+  animation: box3 var(--duration) linear infinite;
+}
+
+.boxes .box:nth-child(4) {
+  transform: translate(200%, 0);
+  -webkit-animation: box4 var(--duration) linear infinite;
+  animation: box4 var(--duration) linear infinite;
+}
+
+.boxes .box > div {
+  --background: #D6DAE2;
+  --top: auto;
+  --right: auto;
+  --bottom: auto;
+  --left: auto;
+  --translateZ: calc(var(--size) / 2);
+  --rotateY: 0deg;
+  --rotateX: 0deg;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--background);
+  top: var(--top);
+  right: var(--right);
+  bottom: var(--bottom);
+  left: var(--left);
+  transform: rotateY(var(--rotateY)) rotateX(var(--rotateX)) translateZ(var(--translateZ));
+}
+
+.boxes .box > div:nth-child(1) {
+  --top: 0;
+  --left: 0;
+}
+
+.boxes .box > div:nth-child(2) {
+  --background: #8D96A8;
+  --right: 0;
+  --rotateY: 90deg;
+}
+
+.boxes .box > div:nth-child(3) {
+  --background: #B4BCCB;
+  --rotateX: -90deg;
+}
+
+.boxes .box > div:nth-child(4) {
+  --background: #DBE3F4;
+  --top: 0;
+  --left: 0;
+  --translateZ: calc(var(--size) * 3 * -1);
+}
+
+@-webkit-keyframes box1 {
+  0%, 50% {
+    transform: translate(100%, 0);
+  }
+  100% {
+    transform: translate(200%, 0);
+  }
+}
+
+@keyframes box1 {
+  0%, 50% {
+    transform: translate(100%, 0);
+  }
+  100% {
+    transform: translate(200%, 0);
+  }
+}
+
+@-webkit-keyframes box2 {
+  0% {
+    transform: translate(0, 100%);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(100%, 0);
+  }
+}
+
+@keyframes box2 {
+  0% {
+    transform: translate(0, 100%);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(100%, 0);
+  }
+}
+
+@-webkit-keyframes box3 {
+  0%, 50% {
+    transform: translate(100%, 100%);
+  }
+  100% {
+    transform: translate(0, 100%);
+  }
+}
+
+@keyframes box3 {
+  0%, 50% {
+    transform: translate(100%, 100%);
+  }
+  100% {
+    transform: translate(0, 100%);
+  }
+}
+
+@-webkit-keyframes box4 {
+  0% {
+    transform: translate(200%, 0);
+  }
+  50% {
+    transform: translate(200%, 100%);
+  }
+  100% {
+    transform: translate(100%, 100%);
+  }
+}
+
+@keyframes box4 {
+  0% {
+    transform: translate(200%, 0);
+  }
+  50% {
+    transform: translate(200%, 100%);
+  }
+  100% {
+    transform: translate(100%, 100%);
+  }
 }
 
 ::selection {
-  background-color: #DBEAFE;
+  background-color: rgba(127, 161, 232, 0.24);
 }
 
-/* Scrollbar discreto para tabelas e sidebar */
 .thin-scrollbar::-webkit-scrollbar {
   height: 6px;
   width: 6px;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #CBD5E1;
+  background-color: rgba(255, 255, 255, 0.24);
   border-radius: 999px;
 }
 .thin-scrollbar::-webkit-scrollbar-track {
