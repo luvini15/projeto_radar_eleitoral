@@ -1,172 +1,238 @@
 import * as React from 'react'
+import { animate } from 'animejs'
+import 'animejs/adapters/three'
+import * as THREE from 'three'
 
-type Particle = {
+type FlowPoint = {
   x: number
   y: number
+  z: number
   vx: number
   vy: number
-  baseSize: number
-  pulse: number
+  vz: number
+  phase: number
   pulseSpeed: number
-  drift: number
 }
 
-const LINK_DISTANCE = 138
-const TRIANGLE_DISTANCE = 104
-const FLOW_FORCE = 0.045
-const MAX_SPEED = 2.35
+const DEPTH = 520
+const FIELD_WIDTH = 1280
+const FIELD_HEIGHT = 760
+const CONNECTION_DISTANCE = 178
+const POINT_COUNT = 190
+const REDUCED_POINT_COUNT = 94
 
-function createParticle(width: number, height: number): Particle {
-  const angle = Math.random() * Math.PI * 2
-  const speed = 0.85 + Math.random() * 1.2
-
+function createPoint(): FlowPoint {
   return {
-    x: Math.random() * width,
-    y: Math.random() * height,
-    vx: Math.cos(angle) * speed + 0.52,
-    vy: Math.sin(angle) * speed * 0.78,
-    baseSize: 1.15 + Math.random() * 2.15,
-    pulse: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.024 + Math.random() * 0.034,
-    drift: Math.random() * Math.PI * 2,
+    x: (Math.random() - 0.5) * FIELD_WIDTH,
+    y: (Math.random() - 0.5) * FIELD_HEIGHT,
+    z: (Math.random() - 0.5) * DEPTH,
+    vx: 0.34 + Math.random() * 0.72,
+    vy: (Math.random() - 0.5) * 0.34,
+    vz: (Math.random() - 0.5) * 0.52,
+    phase: Math.random() * Math.PI * 2,
+    pulseSpeed: 0.025 + Math.random() * 0.035,
   }
 }
 
-function resizeCanvas(canvas: HTMLCanvasElement) {
-  const rect = canvas.getBoundingClientRect()
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+function createDotTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 64
+  canvas.height = 64
 
-  canvas.width = Math.max(1, Math.floor(rect.width * dpr))
-  canvas.height = Math.max(1, Math.floor(rect.height * dpr))
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
 
-  return { width: rect.width, height: rect.height, dpr }
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  ctx.arc(32, 32, 21, 0, Math.PI * 2)
+  ctx.fill()
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
+function resizeRenderer(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, element: HTMLElement) {
+  const { width, height } = element.getBoundingClientRect()
+  const nextWidth = Math.max(1, width)
+  const nextHeight = Math.max(1, height)
+
+  renderer.setSize(nextWidth, nextHeight, false)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  camera.aspect = nextWidth / nextHeight
+  camera.updateProjectionMatrix()
 }
 
 export function LoginAnimatedBackdrop() {
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
+  const containerRef = React.useRef<HTMLDivElement | null>(null)
 
   React.useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const context = canvas.getContext('2d')
-    if (!context) return
-    const ctx = context
+    const container = containerRef.current
+    if (!container) return
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    let frame = 0
-    let raf = 0
-    let size = resizeCanvas(canvas)
-    const motionScale = reducedMotion ? 0.45 : 1
-    let particles = Array.from({ length: reducedMotion ? 72 : 148 }, () => createParticle(size.width, size.height))
+    const points = Array.from({ length: reducedMotion ? REDUCED_POINT_COUNT : POINT_COUNT }, createPoint)
+    const maxSegments = points.length * 7
+    const pointPositions = new Float32Array(points.length * 3)
+    const linePositions = new Float32Array(maxSegments * 2 * 3)
 
-    const resizeObserver = new ResizeObserver(() => {
-      size = resizeCanvas(canvas)
-      particles = Array.from({ length: reducedMotion ? 72 : 148 }, () => createParticle(size.width, size.height))
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: true,
+    })
+    renderer.setClearColor(0x000000, 0)
+    container.appendChild(renderer.domElement)
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(54, 1, 1, 1800)
+    camera.position.set(0, 0, 780)
+
+    const field = new THREE.Group()
+    field.rotation.x = THREE.MathUtils.degToRad(-3)
+    field.rotation.y = THREE.MathUtils.degToRad(-10)
+    scene.add(field)
+
+    const pointGeometry = new THREE.BufferGeometry()
+    pointGeometry.setAttribute('position', new THREE.BufferAttribute(pointPositions, 3))
+
+    const dotTexture = createDotTexture()
+    const pointMaterial = new THREE.PointsMaterial({
+      color: 0xe8eef7,
+      depthWrite: false,
+      map: dotTexture ?? undefined,
+      opacity: 0.78,
+      size: 4.4,
+      sizeAttenuation: true,
+      transparent: true,
     })
 
-    resizeObserver.observe(canvas)
+    const pointCloud = new THREE.Points(pointGeometry, pointMaterial)
+    field.add(pointCloud)
 
-    function draw() {
-      const { width, height, dpr } = size
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, width, height)
+    const lineGeometry = new THREE.BufferGeometry()
+    lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
+    lineGeometry.setDrawRange(0, 0)
 
-      const gradient = ctx.createRadialGradient(width * 0.56, height * 0.44, 0, width * 0.56, height * 0.44, width * 0.72)
-      gradient.addColorStop(0, 'rgba(91, 124, 183, 0.08)')
-      gradient.addColorStop(0.48, 'rgba(18, 23, 33, 0.04)')
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, width, height)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xc8d6ec,
+      opacity: 0.18,
+      transparent: true,
+    })
 
-      for (const particle of particles) {
-        {
-          const flowX = Math.sin(particle.y * 0.01 + frame * 0.028 + particle.drift) * FLOW_FORCE
-          const flowY = Math.cos(particle.x * 0.008 + frame * 0.022 + particle.drift) * FLOW_FORCE
+    const links = new THREE.LineSegments(lineGeometry, lineMaterial)
+    field.add(links)
 
-          particle.vx += flowX + 0.0028
-          particle.vy += flowY
+    resizeRenderer(renderer, camera, container)
 
-          const speed = Math.hypot(particle.vx, particle.vy)
-          if (speed > MAX_SPEED) {
-            particle.vx = (particle.vx / speed) * MAX_SPEED
-            particle.vy = (particle.vy / speed) * MAX_SPEED
+    const resizeObserver = new ResizeObserver(() => {
+      resizeRenderer(renderer, camera, container)
+    })
+    resizeObserver.observe(container)
+
+    const spin = animate(field, {
+      rotateY: [-10, 8, -10],
+      rotateX: [-3, 4, -3],
+      duration: reducedMotion ? 16000 : 10500,
+      ease: 'inOutSine',
+      loop: true,
+    })
+
+    const cameraBreath = animate(camera, {
+      z: [780, 690, 780],
+      duration: reducedMotion ? 14000 : 9000,
+      ease: 'inOutSine',
+      loop: true,
+    })
+
+    let frame = 0
+    let raf = 0
+    function renderFrame() {
+        frame += 1
+        const motionScale = reducedMotion ? 0.55 : 1
+
+        for (let i = 0; i < points.length; i += 1) {
+          const point = points[i]
+          const waveX = Math.sin(point.y * 0.006 + frame * 0.015 + point.phase) * 0.018
+          const waveY = Math.cos(point.z * 0.008 + frame * 0.018 + point.phase) * 0.022
+          const waveZ = Math.sin(point.x * 0.005 + frame * 0.012 + point.phase) * 0.026
+
+          point.vx += waveX
+          point.vy += waveY
+          point.vz += waveZ
+
+          const speed = Math.hypot(point.vx, point.vy, point.vz)
+          const maxSpeed = 2.15
+          if (speed > maxSpeed) {
+            point.vx = (point.vx / speed) * maxSpeed
+            point.vy = (point.vy / speed) * maxSpeed
+            point.vz = (point.vz / speed) * maxSpeed
           }
 
-          particle.x += particle.vx * motionScale
-          particle.y += particle.vy * motionScale
-          particle.pulse += particle.pulseSpeed
-          particle.drift += 0.012 * motionScale
+          point.x += point.vx * motionScale
+          point.y += point.vy * motionScale
+          point.z += point.vz * motionScale
+          point.phase += point.pulseSpeed
+
+          if (point.x > FIELD_WIDTH / 2) point.x = -FIELD_WIDTH / 2
+          if (point.x < -FIELD_WIDTH / 2) point.x = FIELD_WIDTH / 2
+          if (point.y > FIELD_HEIGHT / 2) point.y = -FIELD_HEIGHT / 2
+          if (point.y < -FIELD_HEIGHT / 2) point.y = FIELD_HEIGHT / 2
+          if (point.z > DEPTH / 2) point.z = -DEPTH / 2
+          if (point.z < -DEPTH / 2) point.z = DEPTH / 2
+
+          const depthScale = THREE.MathUtils.mapLinear(point.z, -DEPTH / 2, DEPTH / 2, 0.72, 1.18)
+          const pulse = 0.9 + Math.sin(point.phase) * 0.1
+          pointPositions[i * 3] = point.x
+          pointPositions[i * 3 + 1] = point.y
+          pointPositions[i * 3 + 2] = point.z * depthScale * pulse
         }
 
-        if (particle.x > width + LINK_DISTANCE) particle.x = -LINK_DISTANCE
-        if (particle.x < -LINK_DISTANCE) particle.x = width + LINK_DISTANCE
-        if (particle.y > height + LINK_DISTANCE) particle.y = -LINK_DISTANCE
-        if (particle.y < -LINK_DISTANCE) particle.y = height + LINK_DISTANCE
-      }
+        let segment = 0
+        for (let i = 0; i < points.length; i += 1) {
+          const first = points[i]
 
-      for (let i = 0; i < particles.length; i += 1) {
-        const first = particles[i]
+          for (let j = i + 1; j < points.length && segment < maxSegments; j += 1) {
+            const second = points[j]
+            const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.7)
 
-        for (let j = i + 1; j < particles.length; j += 1) {
-          const second = particles[j]
-          const dx = first.x - second.x
-          const dy = first.y - second.y
-          const distance = Math.hypot(dx, dy)
-
-          if (distance < LINK_DISTANCE) {
-            const alpha = (1 - distance / LINK_DISTANCE) * 0.24
-            ctx.strokeStyle = `rgba(210, 222, 241, ${alpha})`
-            ctx.lineWidth = 0.85
-            ctx.beginPath()
-            ctx.moveTo(first.x, first.y)
-            ctx.lineTo(second.x, second.y)
-            ctx.stroke()
+            if (distance < CONNECTION_DISTANCE) {
+              const index = segment * 6
+              linePositions[index] = first.x
+              linePositions[index + 1] = first.y
+              linePositions[index + 2] = first.z
+              linePositions[index + 3] = second.x
+              linePositions[index + 4] = second.y
+              linePositions[index + 5] = second.z
+              segment += 1
+            }
           }
         }
-      }
 
-      for (let i = 0; i < particles.length - 2; i += 5) {
-        const first = particles[i]
-        const second = particles[i + 1]
-        const third = particles[i + 2]
-        const a = Math.hypot(first.x - second.x, first.y - second.y)
-        const b = Math.hypot(second.x - third.x, second.y - third.y)
-        const c = Math.hypot(third.x - first.x, third.y - first.y)
-
-        if (a < TRIANGLE_DISTANCE && b < TRIANGLE_DISTANCE && c < TRIANGLE_DISTANCE) {
-          const alpha = (1 - Math.max(a, b, c) / TRIANGLE_DISTANCE) * 0.05
-          ctx.fillStyle = `rgba(108, 139, 191, ${alpha})`
-          ctx.beginPath()
-          ctx.moveTo(first.x, first.y)
-          ctx.lineTo(second.x, second.y)
-          ctx.lineTo(third.x, third.y)
-          ctx.closePath()
-          ctx.fill()
-        }
-      }
-
-      for (const particle of particles) {
-        const pulse = 0.72 + Math.sin(particle.pulse) * 0.28
-        const radius = particle.baseSize * (1 + pulse * 0.28)
-
-        ctx.fillStyle = `rgba(242, 246, 252, ${0.42 + pulse * 0.26})`
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      frame += 1
-      raf = window.requestAnimationFrame(draw)
+        pointGeometry.attributes.position.needsUpdate = true
+        lineGeometry.attributes.position.needsUpdate = true
+        lineGeometry.setDrawRange(0, segment * 2)
+        renderer.render(scene, camera)
+        raf = window.requestAnimationFrame(renderFrame)
     }
 
-    draw()
+    renderFrame()
 
     return () => {
       window.cancelAnimationFrame(raf)
+      spin.pause()
+      cameraBreath.pause()
       resizeObserver.disconnect()
+      pointGeometry.dispose()
+      lineGeometry.dispose()
+      pointMaterial.dispose()
+      lineMaterial.dispose()
+      dotTexture?.dispose()
+      renderer.dispose()
+      renderer.domElement.remove()
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="login-particles pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden="true" />
+  return <div ref={containerRef} className="login-particles pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden="true" />
 }
