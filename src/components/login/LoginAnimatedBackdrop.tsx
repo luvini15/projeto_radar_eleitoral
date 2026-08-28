@@ -11,23 +11,23 @@ type Particle = {
   drift: number
 }
 
-const LINK_DISTANCE = 142
-const TRIANGLE_DISTANCE = 92
-const FLOW_FORCE = 0.018
-const MAX_SPEED = 0.92
+const LINK_DISTANCE = 138
+const TRIANGLE_DISTANCE = 104
+const FLOW_FORCE = 0.045
+const MAX_SPEED = 2.35
 
 function createParticle(width: number, height: number): Particle {
   const angle = Math.random() * Math.PI * 2
-  const speed = 0.28 + Math.random() * 0.52
+  const speed = 0.85 + Math.random() * 1.2
 
   return {
     x: Math.random() * width,
     y: Math.random() * height,
-    vx: Math.cos(angle) * speed + 0.18,
-    vy: Math.sin(angle) * speed * 0.65,
+    vx: Math.cos(angle) * speed + 0.52,
+    vy: Math.sin(angle) * speed * 0.78,
     baseSize: 1.15 + Math.random() * 2.15,
     pulse: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.018 + Math.random() * 0.028,
+    pulseSpeed: 0.024 + Math.random() * 0.034,
     drift: Math.random() * Math.PI * 2,
   }
 }
@@ -57,11 +57,12 @@ export function LoginAnimatedBackdrop() {
     let frame = 0
     let raf = 0
     let size = resizeCanvas(canvas)
-    let particles = Array.from({ length: reducedMotion ? 48 : 136 }, () => createParticle(size.width, size.height))
+    const motionScale = reducedMotion ? 0.45 : 1
+    let particles = Array.from({ length: reducedMotion ? 72 : 148 }, () => createParticle(size.width, size.height))
 
     const resizeObserver = new ResizeObserver(() => {
       size = resizeCanvas(canvas)
-      particles = Array.from({ length: reducedMotion ? 48 : 136 }, () => createParticle(size.width, size.height))
+      particles = Array.from({ length: reducedMotion ? 72 : 148 }, () => createParticle(size.width, size.height))
     })
 
     resizeObserver.observe(canvas)
@@ -79,9 +80,9 @@ export function LoginAnimatedBackdrop() {
       ctx.fillRect(0, 0, width, height)
 
       for (const particle of particles) {
-        if (!reducedMotion) {
-          const flowX = Math.sin(particle.y * 0.009 + frame * 0.018 + particle.drift) * FLOW_FORCE
-          const flowY = Math.cos(particle.x * 0.007 + frame * 0.015 + particle.drift) * FLOW_FORCE
+        {
+          const flowX = Math.sin(particle.y * 0.01 + frame * 0.028 + particle.drift) * FLOW_FORCE
+          const flowY = Math.cos(particle.x * 0.008 + frame * 0.022 + particle.drift) * FLOW_FORCE
 
           particle.vx += flowX + 0.0028
           particle.vy += flowY
@@ -92,10 +93,10 @@ export function LoginAnimatedBackdrop() {
             particle.vy = (particle.vy / speed) * MAX_SPEED
           }
 
-          particle.x += particle.vx
-          particle.y += particle.vy
+          particle.x += particle.vx * motionScale
+          particle.y += particle.vy * motionScale
           particle.pulse += particle.pulseSpeed
-          particle.drift += 0.006
+          particle.drift += 0.012 * motionScale
         }
 
         if (particle.x > width + LINK_DISTANCE) particle.x = -LINK_DISTANCE
@@ -114,9 +115,9 @@ export function LoginAnimatedBackdrop() {
           const distance = Math.hypot(dx, dy)
 
           if (distance < LINK_DISTANCE) {
-            const alpha = (1 - distance / LINK_DISTANCE) * 0.22
+            const alpha = (1 - distance / LINK_DISTANCE) * 0.24
             ctx.strokeStyle = `rgba(210, 222, 241, ${alpha})`
-            ctx.lineWidth = 0.8
+            ctx.lineWidth = 0.85
             ctx.beginPath()
             ctx.moveTo(first.x, first.y)
             ctx.lineTo(second.x, second.y)
@@ -134,7 +135,7 @@ export function LoginAnimatedBackdrop() {
         const c = Math.hypot(third.x - first.x, third.y - first.y)
 
         if (a < TRIANGLE_DISTANCE && b < TRIANGLE_DISTANCE && c < TRIANGLE_DISTANCE) {
-          const alpha = (1 - Math.max(a, b, c) / TRIANGLE_DISTANCE) * 0.055
+          const alpha = (1 - Math.max(a, b, c) / TRIANGLE_DISTANCE) * 0.05
           ctx.fillStyle = `rgba(108, 139, 191, ${alpha})`
           ctx.beginPath()
           ctx.moveTo(first.x, first.y)
@@ -147,16 +148,11 @@ export function LoginAnimatedBackdrop() {
 
       for (const particle of particles) {
         const pulse = 0.72 + Math.sin(particle.pulse) * 0.28
-        const radius = particle.baseSize * (1 + pulse * 0.38)
+        const radius = particle.baseSize * (1 + pulse * 0.28)
 
         ctx.fillStyle = `rgba(242, 246, 252, ${0.42 + pulse * 0.26})`
         ctx.beginPath()
         ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2)
-        ctx.fill()
-
-        ctx.fillStyle = `rgba(104, 136, 200, ${0.07 + pulse * 0.08})`
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, radius * 4.2, 0, Math.PI * 2)
         ctx.fill()
       }
 
