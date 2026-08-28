@@ -1,7 +1,4 @@
 import * as React from 'react'
-import { animate } from 'animejs'
-import 'animejs/adapters/three'
-import * as THREE from 'three'
 
 type FlowPoint = {
   x: number
@@ -21,157 +18,137 @@ type FlowLink = {
   active: boolean
 }
 
-const DEPTH = 520
-const FIELD_WIDTH = 1280
-const FIELD_HEIGHT = 760
-const CONNECTION_DISTANCE = 178
-const POINT_COUNT = 190
-const REDUCED_POINT_COUNT = 94
+type ProjectedPoint = {
+  x: number
+  y: number
+  scale: number
+}
+
+const DEPTH = 620
+const FIELD_WIDTH = 1320
+const FIELD_HEIGHT = 780
+const CONNECTION_DISTANCE = 190
+const POINT_COUNT = 178
+const REDUCED_POINT_COUNT = 92
+const FOCAL_LENGTH = 760
 
 function createPoint(): FlowPoint {
   return {
     x: (Math.random() - 0.5) * FIELD_WIDTH,
     y: (Math.random() - 0.5) * FIELD_HEIGHT,
     z: (Math.random() - 0.5) * DEPTH,
-    vx: 0.18 + Math.random() * 0.34,
-    vy: (Math.random() - 0.5) * 0.18,
-    vz: (Math.random() - 0.5) * 0.24,
+    vx: 0.2 + Math.random() * 0.36,
+    vy: (Math.random() - 0.5) * 0.2,
+    vz: (Math.random() - 0.5) * 0.28,
     phase: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.025 + Math.random() * 0.035,
+    pulseSpeed: 0.022 + Math.random() * 0.032,
   }
 }
 
-function createDotTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 64
-  canvas.height = 64
+function resizeCanvas(canvas: HTMLCanvasElement) {
+  const rect = canvas.getBoundingClientRect()
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const width = Math.max(1, rect.width)
+  const height = Math.max(1, rect.height)
 
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return null
+  canvas.width = Math.floor(width * dpr)
+  canvas.height = Math.floor(height * dpr)
 
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.arc(32, 32, 21, 0, Math.PI * 2)
-  ctx.fill()
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
-  return texture
+  return { width, height, dpr }
 }
 
-function resizeRenderer(renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera, element: HTMLElement) {
-  const { width, height } = element.getBoundingClientRect()
-  const nextWidth = Math.max(1, width)
-  const nextHeight = Math.max(1, height)
+function wrapPoint(point: FlowPoint) {
+  if (point.x > FIELD_WIDTH / 2) point.x = -FIELD_WIDTH / 2
+  if (point.x < -FIELD_WIDTH / 2) point.x = FIELD_WIDTH / 2
+  if (point.y > FIELD_HEIGHT / 2) point.y = -FIELD_HEIGHT / 2
+  if (point.y < -FIELD_HEIGHT / 2) point.y = FIELD_HEIGHT / 2
+  if (point.z > DEPTH / 2) point.z = -DEPTH / 2
+  if (point.z < -DEPTH / 2) point.z = DEPTH / 2
+}
 
-  renderer.setSize(nextWidth, nextHeight, false)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-  camera.aspect = nextWidth / nextHeight
-  camera.updateProjectionMatrix()
+function project(point: FlowPoint, width: number, height: number, yaw: number, pitch: number): ProjectedPoint {
+  const cosYaw = Math.cos(yaw)
+  const sinYaw = Math.sin(yaw)
+  const cosPitch = Math.cos(pitch)
+  const sinPitch = Math.sin(pitch)
+  const rotatedX = point.x * cosYaw - point.z * sinYaw
+  const rotatedZ = point.x * sinYaw + point.z * cosYaw
+  const rotatedY = point.y * cosPitch - rotatedZ * sinPitch
+  const depth = point.y * sinPitch + rotatedZ * cosPitch
+  const scale = FOCAL_LENGTH / (FOCAL_LENGTH + depth + DEPTH * 0.5)
+
+  return {
+    x: width / 2 + rotatedX * scale,
+    y: height / 2 + rotatedY * scale,
+    scale,
+  }
 }
 
 export function LoginAnimatedBackdrop() {
-  const containerRef = React.useRef<HTMLDivElement | null>(null)
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
 
   React.useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    const canvas = canvasRef.current
+    if (!canvas) return
 
+    const context = canvas.getContext('2d')
+    if (!context) return
+
+    const ctx = context
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const points = Array.from({ length: reducedMotion ? REDUCED_POINT_COUNT : POINT_COUNT }, createPoint)
-    const maxSegments = points.length * 7
+    const projected = new Array<ProjectedPoint>(points.length)
     const linksByKey = new Map<string, FlowLink>()
-    const pointPositions = new Float32Array(points.length * 3)
-    const linePositions = new Float32Array(maxSegments * 2 * 3)
-
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
-      preserveDrawingBuffer: true,
-    })
-    renderer.setClearColor(0x000000, 0)
-    container.appendChild(renderer.domElement)
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(54, 1, 1, 1800)
-    camera.position.set(0, 0, 780)
-
-    const field = new THREE.Group()
-    field.rotation.x = THREE.MathUtils.degToRad(-3)
-    field.rotation.y = THREE.MathUtils.degToRad(-10)
-    scene.add(field)
-
-    const pointGeometry = new THREE.BufferGeometry()
-    pointGeometry.setAttribute('position', new THREE.BufferAttribute(pointPositions, 3))
-
-    const dotTexture = createDotTexture()
-    const pointMaterial = new THREE.PointsMaterial({
-      color: 0xe8eef7,
-      depthWrite: false,
-      map: dotTexture ?? undefined,
-      opacity: 0.78,
-      size: 4.4,
-      sizeAttenuation: true,
-      transparent: true,
-    })
-
-    const pointCloud = new THREE.Points(pointGeometry, pointMaterial)
-    field.add(pointCloud)
-
-    const lineGeometry = new THREE.BufferGeometry()
-    lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
-    lineGeometry.setDrawRange(0, 0)
-
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xc8d6ec,
-      opacity: 0.18,
-      transparent: true,
-    })
-
-    const links = new THREE.LineSegments(lineGeometry, lineMaterial)
-    field.add(links)
-
-    resizeRenderer(renderer, camera, container)
-
-    const resizeObserver = new ResizeObserver(() => {
-      resizeRenderer(renderer, camera, container)
-    })
-    resizeObserver.observe(container)
-
-    const spin = animate(field, {
-      rotateY: [-10, 8, -10],
-      rotateX: [-3, 4, -3],
-      duration: reducedMotion ? 26000 : 19000,
-      ease: 'inOutSine',
-      loop: true,
-    })
-
-    const cameraBreath = animate(camera, {
-      z: [780, 690, 780],
-      duration: reducedMotion ? 24000 : 17000,
-      ease: 'inOutSine',
-      loop: true,
-    })
-
+    let size = resizeCanvas(canvas)
     let frame = 0
     let raf = 0
+
+    const resizeObserver = new ResizeObserver(() => {
+      size = resizeCanvas(canvas)
+    })
+    resizeObserver.observe(canvas)
+
+    function drawLine(from: ProjectedPoint, to: ProjectedPoint, progress: number, alpha: number) {
+      const easedProgress = 1 - Math.pow(1 - progress, 3)
+      const endX = from.x + (to.x - from.x) * easedProgress
+      const endY = from.y + (to.y - from.y) * easedProgress
+
+      ctx.strokeStyle = `rgba(205, 217, 236, ${alpha})`
+      ctx.lineWidth = 0.72
+      ctx.beginPath()
+      ctx.moveTo(from.x, from.y)
+      ctx.lineTo(endX, endY)
+      ctx.stroke()
+    }
+
     function renderFrame() {
-      frame += 1
-      const motionScale = reducedMotion ? 0.38 : 0.68
+      const { width, height, dpr } = size
+      const motionScale = reducedMotion ? 0.34 : 0.7
+      const yaw = Math.sin(frame * 0.0032) * 0.2
+      const pitch = Math.cos(frame * 0.0026) * 0.075
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+
+      const gradient = ctx.createRadialGradient(width * 0.53, height * 0.48, 0, width * 0.53, height * 0.48, width * 0.72)
+      gradient.addColorStop(0, 'rgba(92, 118, 166, 0.07)')
+      gradient.addColorStop(0.48, 'rgba(12, 14, 18, 0.03)')
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, width, height)
 
       for (let i = 0; i < points.length; i += 1) {
         const point = points[i]
-        const waveX = Math.sin(point.y * 0.006 + frame * 0.008 + point.phase) * 0.008
-        const waveY = Math.cos(point.z * 0.008 + frame * 0.01 + point.phase) * 0.01
-        const waveZ = Math.sin(point.x * 0.005 + frame * 0.007 + point.phase) * 0.012
+        const waveX = Math.sin(point.y * 0.006 + frame * 0.007 + point.phase) * 0.007
+        const waveY = Math.cos(point.z * 0.008 + frame * 0.009 + point.phase) * 0.009
+        const waveZ = Math.sin(point.x * 0.005 + frame * 0.006 + point.phase) * 0.011
 
         point.vx += waveX
         point.vy += waveY
         point.vz += waveZ
 
         const speed = Math.hypot(point.vx, point.vy, point.vz)
-        const maxSpeed = 0.92
+        const maxSpeed = 0.9
         if (speed > maxSpeed) {
           point.vx = (point.vx / speed) * maxSpeed
           point.vy = (point.vy / speed) * maxSpeed
@@ -182,19 +159,8 @@ export function LoginAnimatedBackdrop() {
         point.y += point.vy * motionScale
         point.z += point.vz * motionScale
         point.phase += point.pulseSpeed
-
-        if (point.x > FIELD_WIDTH / 2) point.x = -FIELD_WIDTH / 2
-        if (point.x < -FIELD_WIDTH / 2) point.x = FIELD_WIDTH / 2
-        if (point.y > FIELD_HEIGHT / 2) point.y = -FIELD_HEIGHT / 2
-        if (point.y < -FIELD_HEIGHT / 2) point.y = FIELD_HEIGHT / 2
-        if (point.z > DEPTH / 2) point.z = -DEPTH / 2
-        if (point.z < -DEPTH / 2) point.z = DEPTH / 2
-
-        const depthScale = THREE.MathUtils.mapLinear(point.z, -DEPTH / 2, DEPTH / 2, 0.72, 1.18)
-        const pulse = 0.9 + Math.sin(point.phase) * 0.1
-        pointPositions[i * 3] = point.x
-        pointPositions[i * 3 + 1] = point.y
-        pointPositions[i * 3 + 2] = point.z * depthScale * pulse
+        wrapPoint(point)
+        projected[i] = project(point, width, height, yaw, pitch)
       }
 
       for (const link of linksByKey.values()) {
@@ -206,7 +172,7 @@ export function LoginAnimatedBackdrop() {
 
         for (let j = i + 1; j < points.length; j += 1) {
           const second = points[j]
-          const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.7)
+          const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.62)
 
           if (distance < CONNECTION_DISTANCE) {
             const key = `${i}-${j}`
@@ -218,16 +184,15 @@ export function LoginAnimatedBackdrop() {
             }
 
             link.active = true
-            link.progress = Math.min(1, link.progress + (reducedMotion ? 0.018 : 0.032))
+            link.progress = Math.min(1, link.progress + (reducedMotion ? 0.016 : 0.028))
             linksByKey.set(key, link)
           }
         }
       }
 
-      let segment = 0
       for (const [key, link] of linksByKey) {
         if (!link.active) {
-          link.progress -= reducedMotion ? 0.014 : 0.024
+          link.progress -= reducedMotion ? 0.012 : 0.022
 
           if (link.progress <= 0) {
             linksByKey.delete(key)
@@ -235,29 +200,30 @@ export function LoginAnimatedBackdrop() {
           }
         }
 
-        if (segment >= maxSegments) break
-
         const first = points[link.from]
         const second = points[link.to]
-        const easedProgress = 1 - Math.pow(1 - THREE.MathUtils.clamp(link.progress, 0, 1), 3)
-        const endX = THREE.MathUtils.lerp(first.x, second.x, easedProgress)
-        const endY = THREE.MathUtils.lerp(first.y, second.y, easedProgress)
-        const endZ = THREE.MathUtils.lerp(first.z, second.z, easedProgress)
-        const index = segment * 6
+        const from = projected[link.from]
+        const to = projected[link.to]
+        const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.62)
+        const alpha = Math.max(0.025, (1 - distance / CONNECTION_DISTANCE) * 0.22) * Math.min(1, link.progress + 0.2)
 
-        linePositions[index] = first.x
-        linePositions[index + 1] = first.y
-        linePositions[index + 2] = first.z
-        linePositions[index + 3] = endX
-        linePositions[index + 4] = endY
-        linePositions[index + 5] = endZ
-        segment += 1
+        drawLine(from, to, Math.max(0, Math.min(1, link.progress)), alpha)
       }
 
-      pointGeometry.attributes.position.needsUpdate = true
-      lineGeometry.attributes.position.needsUpdate = true
-      lineGeometry.setDrawRange(0, segment * 2)
-      renderer.render(scene, camera)
+      for (let i = 0; i < points.length; i += 1) {
+        const point = points[i]
+        const current = projected[i]
+        const pulse = 0.9 + Math.sin(point.phase) * 0.1
+        const radius = Math.max(0.75, 2.25 * current.scale * pulse)
+        const alpha = Math.min(0.85, 0.42 + current.scale * 0.24)
+
+        ctx.fillStyle = `rgba(239, 244, 252, ${alpha})`
+        ctx.beginPath()
+        ctx.arc(current.x, current.y, radius, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      frame += 1
       raf = window.requestAnimationFrame(renderFrame)
     }
 
@@ -265,18 +231,9 @@ export function LoginAnimatedBackdrop() {
 
     return () => {
       window.cancelAnimationFrame(raf)
-      spin.pause()
-      cameraBreath.pause()
       resizeObserver.disconnect()
-      pointGeometry.dispose()
-      lineGeometry.dispose()
-      pointMaterial.dispose()
-      lineMaterial.dispose()
-      dotTexture?.dispose()
-      renderer.dispose()
-      renderer.domElement.remove()
     }
   }, [])
 
-  return <div ref={containerRef} className="login-particles pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden="true" />
+  return <canvas ref={canvasRef} className="login-particles pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden="true" />
 }

@@ -1,0 +1,8 @@
+[2m03:23:52[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/components/login/LoginAnimatedBackdrop.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m03:23:56[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31m[Unhandled error] [1mTypeError[22m: Failed to fetch dynamically imported module: http://127.0.0.1:5184/src/components/login/LoginAnimatedBackdrop.tsx?t=1787898231305
+[39m
+[2m03:23:56[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mAn error occurred in one of your React components.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
