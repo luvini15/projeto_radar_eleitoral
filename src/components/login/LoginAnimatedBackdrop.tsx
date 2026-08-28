@@ -31,42 +31,53 @@ export function LoginAnimatedBackdrop() {
           },
           particles: {
             number: {
-              value: reducedMotion ? 28 : 64,
+              value: reducedMotion ? 42 : 118,
               density: {
                 enable: true,
-                width: 1200,
-                height: 900,
+                width: 1100,
+                height: 820,
               },
             },
             color: {
-              value: ['#f4f4f5', '#a1a1aa', '#7f8aa1'],
+              value: ['#f8fafc', '#c9d1dc', '#8291a8', '#6688c8'],
             },
             opacity: {
-              value: { min: 0.2, max: 0.6 },
+              value: { min: 0.18, max: 0.72 },
               animation: {
                 enable: true,
-                speed: 0.8,
+                speed: reducedMotion ? 0.35 : 1.8,
                 sync: false,
               },
             },
             size: {
-              value: { min: 1, max: 2.2 },
+              value: { min: 1, max: 2.8 },
+              animation: {
+                enable: !reducedMotion,
+                speed: 3.2,
+                sync: false,
+              },
             },
             links: {
               enable: true,
-              distance: 72,
-              color: '#f4f4f5',
-              opacity: 0.08,
+              distance: 104,
+              color: '#dce5f2',
+              opacity: 0.13,
               width: 1,
+              blink: false,
             },
             move: {
               enable: !reducedMotion,
-              speed: 1.85,
-              direction: 'none',
-              random: true,
+              speed: 2.65,
+              direction: 'right',
+              random: false,
               straight: false,
+              drift: { min: -0.45, max: 0.45 },
+              angle: {
+                offset: 0,
+                value: 12,
+              },
               outModes: {
-                default: 'bounce',
+                default: 'out',
               },
             },
           },
