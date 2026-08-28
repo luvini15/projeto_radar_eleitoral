@@ -41,6 +41,7 @@ export default function Login() {
         <div className="mb-8 flex flex-col items-center text-center">
           <DataSightLogo
             className="mb-6 flex-col justify-center gap-4 text-white"
+            animated
             markClassName="h-20 w-20"
             textClassName="[&_p:first-child]:text-4xl [&_p:first-child]:font-bold [&_p:last-child]:mt-2 [&_p:last-child]:text-sm"
           />

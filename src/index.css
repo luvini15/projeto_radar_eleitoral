@@ -106,6 +106,48 @@ body {
   background: #111111;
 }
 
+.data-sight-logo--animated {
+  filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+}
+
+.data-sight-logo--animated .data-sight-logo__iris {
+  transform-origin: 32px 32px;
+  animation: data-sight-eye-glow 3.8s ease-in-out infinite;
+}
+
+.data-sight-logo--animated .data-sight-logo__glint {
+  transform-origin: 32px 32px;
+  animation: data-sight-eye-glint 3.8s ease-in-out infinite;
+}
+
+@keyframes data-sight-eye-glow {
+  0%,
+  100% {
+    opacity: 0.74;
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+    transform: scale(1);
+  }
+
+  48% {
+    opacity: 1;
+    filter: drop-shadow(0 0 7px rgba(230, 238, 255, 0.32));
+    transform: scale(1.035);
+  }
+}
+
+@keyframes data-sight-eye-glint {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translateX(-0.5px) scale(0.88);
+  }
+
+  46% {
+    opacity: 0.95;
+    transform: translateX(0.8px) scale(1.08);
+  }
+}
+
 .uiverse-login-card {
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.08);

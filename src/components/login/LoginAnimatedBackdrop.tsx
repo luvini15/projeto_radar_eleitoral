@@ -26,9 +26,9 @@ function createPoint(): FlowPoint {
     x: (Math.random() - 0.5) * FIELD_WIDTH,
     y: (Math.random() - 0.5) * FIELD_HEIGHT,
     z: (Math.random() - 0.5) * DEPTH,
-    vx: 0.34 + Math.random() * 0.72,
-    vy: (Math.random() - 0.5) * 0.34,
-    vz: (Math.random() - 0.5) * 0.52,
+    vx: 0.18 + Math.random() * 0.34,
+    vy: (Math.random() - 0.5) * 0.18,
+    vz: (Math.random() - 0.5) * 0.24,
     phase: Math.random() * Math.PI * 2,
     pulseSpeed: 0.025 + Math.random() * 0.035,
   }
@@ -134,14 +134,14 @@ export function LoginAnimatedBackdrop() {
     const spin = animate(field, {
       rotateY: [-10, 8, -10],
       rotateX: [-3, 4, -3],
-      duration: reducedMotion ? 16000 : 10500,
+      duration: reducedMotion ? 26000 : 19000,
       ease: 'inOutSine',
       loop: true,
     })
 
     const cameraBreath = animate(camera, {
       z: [780, 690, 780],
-      duration: reducedMotion ? 14000 : 9000,
+      duration: reducedMotion ? 24000 : 17000,
       ease: 'inOutSine',
       loop: true,
     })
@@ -149,72 +149,72 @@ export function LoginAnimatedBackdrop() {
     let frame = 0
     let raf = 0
     function renderFrame() {
-        frame += 1
-        const motionScale = reducedMotion ? 0.55 : 1
+      frame += 1
+      const motionScale = reducedMotion ? 0.38 : 0.68
 
-        for (let i = 0; i < points.length; i += 1) {
-          const point = points[i]
-          const waveX = Math.sin(point.y * 0.006 + frame * 0.015 + point.phase) * 0.018
-          const waveY = Math.cos(point.z * 0.008 + frame * 0.018 + point.phase) * 0.022
-          const waveZ = Math.sin(point.x * 0.005 + frame * 0.012 + point.phase) * 0.026
+      for (let i = 0; i < points.length; i += 1) {
+        const point = points[i]
+        const waveX = Math.sin(point.y * 0.006 + frame * 0.008 + point.phase) * 0.008
+        const waveY = Math.cos(point.z * 0.008 + frame * 0.01 + point.phase) * 0.01
+        const waveZ = Math.sin(point.x * 0.005 + frame * 0.007 + point.phase) * 0.012
 
-          point.vx += waveX
-          point.vy += waveY
-          point.vz += waveZ
+        point.vx += waveX
+        point.vy += waveY
+        point.vz += waveZ
 
-          const speed = Math.hypot(point.vx, point.vy, point.vz)
-          const maxSpeed = 2.15
-          if (speed > maxSpeed) {
-            point.vx = (point.vx / speed) * maxSpeed
-            point.vy = (point.vy / speed) * maxSpeed
-            point.vz = (point.vz / speed) * maxSpeed
-          }
-
-          point.x += point.vx * motionScale
-          point.y += point.vy * motionScale
-          point.z += point.vz * motionScale
-          point.phase += point.pulseSpeed
-
-          if (point.x > FIELD_WIDTH / 2) point.x = -FIELD_WIDTH / 2
-          if (point.x < -FIELD_WIDTH / 2) point.x = FIELD_WIDTH / 2
-          if (point.y > FIELD_HEIGHT / 2) point.y = -FIELD_HEIGHT / 2
-          if (point.y < -FIELD_HEIGHT / 2) point.y = FIELD_HEIGHT / 2
-          if (point.z > DEPTH / 2) point.z = -DEPTH / 2
-          if (point.z < -DEPTH / 2) point.z = DEPTH / 2
-
-          const depthScale = THREE.MathUtils.mapLinear(point.z, -DEPTH / 2, DEPTH / 2, 0.72, 1.18)
-          const pulse = 0.9 + Math.sin(point.phase) * 0.1
-          pointPositions[i * 3] = point.x
-          pointPositions[i * 3 + 1] = point.y
-          pointPositions[i * 3 + 2] = point.z * depthScale * pulse
+        const speed = Math.hypot(point.vx, point.vy, point.vz)
+        const maxSpeed = 0.92
+        if (speed > maxSpeed) {
+          point.vx = (point.vx / speed) * maxSpeed
+          point.vy = (point.vy / speed) * maxSpeed
+          point.vz = (point.vz / speed) * maxSpeed
         }
 
-        let segment = 0
-        for (let i = 0; i < points.length; i += 1) {
-          const first = points[i]
+        point.x += point.vx * motionScale
+        point.y += point.vy * motionScale
+        point.z += point.vz * motionScale
+        point.phase += point.pulseSpeed
 
-          for (let j = i + 1; j < points.length && segment < maxSegments; j += 1) {
-            const second = points[j]
-            const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.7)
+        if (point.x > FIELD_WIDTH / 2) point.x = -FIELD_WIDTH / 2
+        if (point.x < -FIELD_WIDTH / 2) point.x = FIELD_WIDTH / 2
+        if (point.y > FIELD_HEIGHT / 2) point.y = -FIELD_HEIGHT / 2
+        if (point.y < -FIELD_HEIGHT / 2) point.y = FIELD_HEIGHT / 2
+        if (point.z > DEPTH / 2) point.z = -DEPTH / 2
+        if (point.z < -DEPTH / 2) point.z = DEPTH / 2
 
-            if (distance < CONNECTION_DISTANCE) {
-              const index = segment * 6
-              linePositions[index] = first.x
-              linePositions[index + 1] = first.y
-              linePositions[index + 2] = first.z
-              linePositions[index + 3] = second.x
-              linePositions[index + 4] = second.y
-              linePositions[index + 5] = second.z
-              segment += 1
-            }
+        const depthScale = THREE.MathUtils.mapLinear(point.z, -DEPTH / 2, DEPTH / 2, 0.72, 1.18)
+        const pulse = 0.9 + Math.sin(point.phase) * 0.1
+        pointPositions[i * 3] = point.x
+        pointPositions[i * 3 + 1] = point.y
+        pointPositions[i * 3 + 2] = point.z * depthScale * pulse
+      }
+
+      let segment = 0
+      for (let i = 0; i < points.length; i += 1) {
+        const first = points[i]
+
+        for (let j = i + 1; j < points.length && segment < maxSegments; j += 1) {
+          const second = points[j]
+          const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.7)
+
+          if (distance < CONNECTION_DISTANCE) {
+            const index = segment * 6
+            linePositions[index] = first.x
+            linePositions[index + 1] = first.y
+            linePositions[index + 2] = first.z
+            linePositions[index + 3] = second.x
+            linePositions[index + 4] = second.y
+            linePositions[index + 5] = second.z
+            segment += 1
           }
         }
+      }
 
-        pointGeometry.attributes.position.needsUpdate = true
-        lineGeometry.attributes.position.needsUpdate = true
-        lineGeometry.setDrawRange(0, segment * 2)
-        renderer.render(scene, camera)
-        raf = window.requestAnimationFrame(renderFrame)
+      pointGeometry.attributes.position.needsUpdate = true
+      lineGeometry.attributes.position.needsUpdate = true
+      lineGeometry.setDrawRange(0, segment * 2)
+      renderer.render(scene, camera)
+      raf = window.requestAnimationFrame(renderFrame)
     }
 
     renderFrame()
