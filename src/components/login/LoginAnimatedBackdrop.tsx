@@ -14,6 +14,13 @@ type FlowPoint = {
   pulseSpeed: number
 }
 
+type FlowLink = {
+  from: number
+  to: number
+  progress: number
+  active: boolean
+}
+
 const DEPTH = 520
 const FIELD_WIDTH = 1280
 const FIELD_HEIGHT = 760
@@ -73,6 +80,7 @@ export function LoginAnimatedBackdrop() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const points = Array.from({ length: reducedMotion ? REDUCED_POINT_COUNT : POINT_COUNT }, createPoint)
     const maxSegments = points.length * 7
+    const linksByKey = new Map<string, FlowLink>()
     const pointPositions = new Float32Array(points.length * 3)
     const linePositions = new Float32Array(maxSegments * 2 * 3)
 
@@ -189,25 +197,61 @@ export function LoginAnimatedBackdrop() {
         pointPositions[i * 3 + 2] = point.z * depthScale * pulse
       }
 
-      let segment = 0
+      for (const link of linksByKey.values()) {
+        link.active = false
+      }
+
       for (let i = 0; i < points.length; i += 1) {
         const first = points[i]
 
-        for (let j = i + 1; j < points.length && segment < maxSegments; j += 1) {
+        for (let j = i + 1; j < points.length; j += 1) {
           const second = points[j]
           const distance = Math.hypot(first.x - second.x, first.y - second.y, (first.z - second.z) * 0.7)
 
           if (distance < CONNECTION_DISTANCE) {
-            const index = segment * 6
-            linePositions[index] = first.x
-            linePositions[index + 1] = first.y
-            linePositions[index + 2] = first.z
-            linePositions[index + 3] = second.x
-            linePositions[index + 4] = second.y
-            linePositions[index + 5] = second.z
-            segment += 1
+            const key = `${i}-${j}`
+            const link = linksByKey.get(key) ?? {
+              from: i,
+              to: j,
+              progress: 0,
+              active: false,
+            }
+
+            link.active = true
+            link.progress = Math.min(1, link.progress + (reducedMotion ? 0.018 : 0.032))
+            linksByKey.set(key, link)
           }
         }
+      }
+
+      let segment = 0
+      for (const [key, link] of linksByKey) {
+        if (!link.active) {
+          link.progress -= reducedMotion ? 0.014 : 0.024
+
+          if (link.progress <= 0) {
+            linksByKey.delete(key)
+            continue
+          }
+        }
+
+        if (segment >= maxSegments) break
+
+        const first = points[link.from]
+        const second = points[link.to]
+        const easedProgress = 1 - Math.pow(1 - THREE.MathUtils.clamp(link.progress, 0, 1), 3)
+        const endX = THREE.MathUtils.lerp(first.x, second.x, easedProgress)
+        const endY = THREE.MathUtils.lerp(first.y, second.y, easedProgress)
+        const endZ = THREE.MathUtils.lerp(first.z, second.z, easedProgress)
+        const index = segment * 6
+
+        linePositions[index] = first.x
+        linePositions[index + 1] = first.y
+        linePositions[index + 2] = first.z
+        linePositions[index + 3] = endX
+        linePositions[index + 4] = endY
+        linePositions[index + 5] = endZ
+        segment += 1
       }
 
       pointGeometry.attributes.position.needsUpdate = true
