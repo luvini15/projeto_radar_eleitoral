@@ -1,5 +1,89 @@
 # Radar Eleitoral
 
+## Arquitetura operacional — dados reais
+
+O frontend integrado está em `radar-eleitoral/`; o frontend da raiz foi preservado como protótipo histórico e ainda usa mocks. O fluxo operacional é `Apify → FastAPI → PostgreSQL → API agregada → React`.
+
+- Backend: FastAPI/SQLModel, porta `8000`.
+- Frontend integrado: React/Vite, porta `5173`.
+- PostgreSQL 16: Docker, host `localhost`, porta `5433`, banco `radar_eleitoral`.
+- Autenticação: simulada; Supabase está preparado, mas ainda não é autenticação de produção.
+
+### Executar
+
+```bash
+docker compose up -d postgres
+cd backend
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\uvicorn app.main:app --reload
+```
+
+Em outro terminal:
+
+```bash
+cd radar-eleitoral
+npm install
+npm run dev
+```
+
+Frontend: `http://localhost:5173`. API: `http://127.0.0.1:8000`. Swagger: `http://127.0.0.1:8000/docs`. PostgreSQL: `localhost:5433`.
+
+### Ambiente e segurança
+
+Copie `backend/.env.example` para `backend/.env` e defina `DATABASE_URL` e `APIFY_TOKEN`. A senha PostgreSQL deve existir apenas no `.env` local. Copie `radar-eleitoral/.env.example` para `radar-eleitoral/.env.local` e configure `VITE_API_URL` e `VITE_CAMPAIGN_ID`. O token Apify nunca vai para o frontend. Se um token tiver sido versionado anteriormente, revogue-o e gere outro.
+
+### Inteligência territorial
+
+A inicialização cria aditivamente as 35 RAs e os temas iniciais, sem inventar população. Associe perfil e RA com `PUT /api/profiles/{profile_id}/region`. Classifique posts com `POST /api/campaigns/{campaign_id}/classify-posts`; a operação é idempotente.
+
+O score de tendência usa 30% participação no volume, 25% crescimento limitado, 25% participação nas interações e 20% recorrência. Crescimento é `(atual - anterior) / anterior`; período anterior igual a zero retorna “sem base”. Conclusões carregam links reais de evidência.
+
+### Monitoramento contínuo
+
+Cada execução cria um registro em `collection_runs` e um detalhe por perfil em `profile_collection_runs`. A janela recente é coletada com limite configurável; `shortcode` impede duplicação de posts, enquanto novos `post_snapshots` e `profile_snapshots` preservam a evolução das métricas e seguidores. Uma falha isolada não cancela os demais perfis e produz status `PARTIAL` ou `FAILED` com erro resumido, sem incluir credenciais.
+
+Coleta manual via API:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/campaigns/1/collections?limit=25"
+```
+
+Coleta automática em processo separado:
+
+```bash
+cd backend
+.venv\Scripts\python -m app.scheduler
+```
+
+Configure no `backend/.env`:
+
+```dotenv
+COLLECTION_DAILY_TIME=03:00
+COLLECTION_TIMEZONE=America/Sao_Paulo
+COLLECTION_POST_LIMIT=25
+```
+
+O scheduler deve permanecer como processo independente da API. Em produção, execute o comando por serviço do sistema, container ou gerenciador de processos com reinício automático. Não execute múltiplas instâncias do scheduler para o mesmo banco. A tela **Coletas** mostra próxima execução, sucesso, coleta parcial, falhas, novos posts e snapshots.
+
+O endpoint analítico `GET /api/campaigns/{id}/analytics` aplica no backend período, RA, múltiplos perfis, tema e formato. Ele alimenta séries diárias, desempenho por tema/formato, comparação de perfis e comparação territorial. Perfis sem associação explícita não entram em agregações por RA.
+
+A página **Concorrentes** reutiliza esse endpoint em uma única chamada por alteração de filtro. Métricas de escalas incompatíveis são exibidas em gráficos separados. O ranking permite alternar a métrica sem combinar eixos; o gráfico tema × desempenho usa publicações no eixo X e interação média no eixo Y; e a matriz tema × perfil responde quem está falando sobre cada assunto.
+
+### Relatórios, migração e testes
+
+`POST /api/campaigns/{campaign_id}/reports` persiste o pacote e o HTML executivo. Para PDF, abra o HTML retornado e use **Imprimir → Salvar como PDF**; estilos A4 e links são preservados.
+
+```bash
+docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrations/001_territorial_intelligence.sql
+docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrations/002_continuous_monitoring.sql
+set PYTHONPATH=backend
+python -m unittest discover -s backend/tests -v
+cd radar-eleitoral && npm run build
+```
+
+Troubleshooting: confirme `docker compose ps` e porta `5433` em erros de banco; confirme `VITE_CAMPAIGN_ID` quando a API vier vazia; associe perfis explicitamente para filtrar por RA; confira token/saldo/actors quando a sincronização Apify falhar.
+
 Dashboard privado de inteligência digital para acompanhamento do Instagram da campanha de **Cláudio Borcem**, candidato a Deputado Distrital do Distrito Federal.
 
 > **CONFIDENCIAL — Uso exclusivo da campanha de Cláudio Borcem.**

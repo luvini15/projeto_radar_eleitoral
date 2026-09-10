@@ -5,6 +5,11 @@ from app.database import create_db_and_tables
 from app.routers.sync import router as sync_router
 from app.routers.campaigns import router as campaigns_router
 from app.routers.analytics import router as analytics_router
+from app.routers.territorial import router as territorial_router, seed_reference_data
+from app.routers.collections import router as collections_router
+from app.routers.filtered_analytics import router as filtered_analytics_router
+from app.database import engine
+from sqlmodel import Session
 
 
 app = FastAPI(
@@ -28,11 +33,16 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    with Session(engine) as session:
+        seed_reference_data(session)
 
 
 app.include_router(sync_router)
 app.include_router(campaigns_router)
 app.include_router(analytics_router)
+app.include_router(territorial_router)
+app.include_router(collections_router)
+app.include_router(filtered_analytics_router)
 
 
 @app.get("/")

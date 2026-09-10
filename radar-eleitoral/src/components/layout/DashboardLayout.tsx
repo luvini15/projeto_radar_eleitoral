@@ -6,6 +6,18 @@ import { ConfidentialBanner } from './ConfidentialBanner'
 import { Footer } from './Footer'
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
+  '/coletas': {
+    title: 'Saúde das Coletas',
+    subtitle: 'Execuções automáticas e manuais, novos posts, snapshots e falhas por período.',
+  },
+  '/tendencias': {
+    title: 'Tendências',
+    subtitle: 'O que está acontecendo por região, tema e período, com comparação e evidências.',
+  },
+  '/relatorios': {
+    title: 'Relatórios',
+    subtitle: 'Diagnósticos executivos gerados com dados reais, evidências e metodologia.',
+  },
   '/': {
     title: 'Central de Inteligência do Instagram',
     subtitle: 'Acompanhamento estratégico da comunicação digital da campanha.',

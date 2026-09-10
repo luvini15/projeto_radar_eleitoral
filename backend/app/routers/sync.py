@@ -4,9 +4,9 @@ from sqlmodel import Session
 from app.database import get_session
 from app.models import Campaign
 from app.services.instagram_sync import (
-    sync_campaign,
     sync_instagram_profile,
 )
+from app.services.monitoring_sync import collect_campaign
 
 router = APIRouter(
     prefix="/api",
@@ -50,8 +50,9 @@ def sync_campaign_route(
             detail="Campanha inativa",
         )
 
-    return sync_campaign(
+    return collect_campaign(
         session=session,
         campaign_id=campaign_id,
         limit=limit,
+        trigger="MANUAL",
     )

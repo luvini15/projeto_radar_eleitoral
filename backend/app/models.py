@@ -166,4 +166,95 @@ class ProfileSnapshot(SQLModel, table=True):
     collected_at: datetime = Field(
         default_factory=utc_now,
         index=True,
-    )    
+    )
+
+
+class AdministrativeRegion(SQLModel, table=True):
+    __tablename__ = "administrative_regions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True)
+    state: str = Field(default="DF", index=True)
+    population: int | None = None
+    description: str | None = None
+    active: bool = True
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class ProfileRegion(SQLModel, table=True):
+    __tablename__ = "profile_regions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int = Field(foreign_key="instagram_profiles.id", index=True, unique=True)
+    region_id: int = Field(foreign_key="administrative_regions.id", index=True)
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class Theme(SQLModel, table=True):
+    __tablename__ = "themes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True)
+    description: str | None = None
+    active: bool = True
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class PostTheme(SQLModel, table=True):
+    __tablename__ = "post_themes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="instagram_posts.id", index=True, unique=True)
+    theme_id: int = Field(foreign_key="themes.id", index=True)
+    source: str = "RULES"
+    confidence: float | None = None
+    reviewed: bool = False
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class GeneratedReport(SQLModel, table=True):
+    __tablename__ = "generated_reports"
+
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    region_id: int | None = Field(default=None, foreign_key="administrative_regions.id", index=True)
+    period_start: datetime = Field(index=True)
+    period_end: datetime = Field(index=True)
+    report_type: str = Field(index=True)
+    status: str = Field(default="GENERATED", index=True)
+    html_content: str | None = None
+    structured_content: str | None = None
+    created_at: datetime = Field(default_factory=utc_now, index=True)
+
+
+class CollectionRun(SQLModel, table=True):
+    __tablename__ = "collection_runs"
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    trigger: str = Field(default="MANUAL", index=True)
+    status: str = Field(default="RUNNING", index=True)
+    started_at: datetime = Field(default_factory=utc_now, index=True)
+    finished_at: datetime | None = Field(default=None, index=True)
+    profiles_total: int = 0
+    profiles_succeeded: int = 0
+    profiles_failed: int = 0
+    posts_found: int = 0
+    new_posts: int = 0
+    post_snapshots_created: int = 0
+    followers_updated: int = 0
+    errors: str | None = None
+
+
+class ProfileCollectionRun(SQLModel, table=True):
+    __tablename__ = "profile_collection_runs"
+    id: int | None = Field(default=None, primary_key=True)
+    collection_run_id: int = Field(foreign_key="collection_runs.id", index=True)
+    profile_id: int = Field(foreign_key="instagram_profiles.id", index=True)
+    status: str = Field(default="RUNNING", index=True)
+    started_at: datetime = Field(default_factory=utc_now, index=True)
+    finished_at: datetime | None = Field(default=None, index=True)
+    posts_found: int = 0
+    new_posts: int = 0
+    post_snapshots_created: int = 0
+    followers_updated: bool = False
+    error: str | None = None

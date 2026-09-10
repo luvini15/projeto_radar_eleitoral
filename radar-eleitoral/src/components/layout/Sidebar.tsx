@@ -7,6 +7,9 @@ import {
   Users,
   Swords,
   Sparkles,
+  TrendingUp,
+  FileText,
+  Activity,
   Settings,
   ShieldCheck,
   X,
@@ -15,6 +18,9 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/authContext'
 
 const navItems = [
+  { to: '/coletas', label: 'Coletas', icon: Activity },
+  { to: '/tendencias', label: 'Tendências', icon: TrendingUp },
+  { to: '/relatorios', label: 'Relatórios', icon: FileText },
   { to: '/', label: 'Visão Geral', icon: LayoutGrid, end: true },
   { to: '/conteudos', label: 'Conteúdos', icon: FileStack },
   { to: '/concorrentes', label: 'Concorrentes', icon: Swords },

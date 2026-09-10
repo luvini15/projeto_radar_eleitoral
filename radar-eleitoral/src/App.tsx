@@ -6,11 +6,14 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import Login from '@/pages/Login'
 import Overview from '@/pages/Overview'
 import Content from '@/pages/Content'
-import Competitors from '@/pages/Competitors'
+import Competitors from '@/pages/Comparison'
 import Topics from '@/pages/Topics'
 import Schedule from '@/pages/Schedule'
 import Audience from '@/pages/Audience'
-import Insights from '@/pages/Insights'
+import Insights from '@/pages/TerritorialIntelligence'
 import Settings from '@/pages/Settings'
+import Trends from '@/pages/Trends'
+import Reports from '@/pages/Reports'
+import Collections from '@/pages/Collections'
 
-export default function App(){return <AuthProvider><ToastProvider><BrowserRouter><Routes><Route path="/login" element={<Login/>}/><Route element={<ProtectedRoute><DashboardLayout/></ProtectedRoute>}><Route path="/" element={<Overview/>}/><Route path="/conteudos" element={<Content/>}/><Route path="/concorrentes" element={<Competitors/>}/><Route path="/temas-formatos" element={<Topics/>}/><Route path="/dias-horarios" element={<Schedule/>}/><Route path="/audiencia" element={<Audience/>}/><Route path="/insights" element={<Insights/>}/><Route path="/configuracoes" element={<Settings/>}/></Route></Routes></BrowserRouter></ToastProvider></AuthProvider>}
+export default function App(){return <AuthProvider><ToastProvider><BrowserRouter><Routes><Route path="/login" element={<Login/>}/><Route element={<ProtectedRoute><DashboardLayout/></ProtectedRoute>}><Route path="/" element={<Overview/>}/><Route path="/conteudos" element={<Content/>}/><Route path="/tendencias" element={<Trends/>}/><Route path="/concorrentes" element={<Competitors/>}/><Route path="/temas-formatos" element={<Topics/>}/><Route path="/dias-horarios" element={<Schedule/>}/><Route path="/audiencia" element={<Audience/>}/><Route path="/insights" element={<Insights/>}/><Route path="/relatorios" element={<Reports/>}/><Route path="/coletas" element={<Collections/>}/><Route path="/configuracoes" element={<Settings/>}/></Route></Routes></BrowserRouter></ToastProvider></AuthProvider>}
