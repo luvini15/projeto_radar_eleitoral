@@ -6,10 +6,11 @@ from datetime import datetime, timedelta, timezone
 from statistics import mean
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlmodel import Session, select
 
 from app.database import get_session
+from app.services.media_preview import PreviewUnavailable, get_post_preview
 from app.models import (
     Campaign,
     CampaignProfile,
@@ -54,6 +55,14 @@ def _links(session: Session, campaign_id: int) -> list[CampaignProfile]:
             )
         ).all()
     )
+
+
+def _campaign_post_or_404(session: Session, campaign_id: int, post_id: int) -> InstagramPost:
+    _campaign_or_404(session, campaign_id)
+    post = session.get(InstagramPost, post_id)
+    if not post or not any(link.profile_id == post.profile_id for link in _links(session, campaign_id)):
+        raise HTTPException(status_code=404, detail="Publicação não encontrada nesta campanha.")
+    return post
 
 
 def _latest_posts(session: Session, profile_id: int, limit: int) -> list[InstagramPost]:
@@ -552,10 +561,7 @@ def competitors(campaign_id: int, limit: int = 25, days: int = 60, session: Sess
 
 @router.get('/{campaign_id}/posts/{post_id}')
 def campaign_post_detail(campaign_id: int, post_id: int, session: Session = Depends(get_session), days: int = Query(default=30, ge=1, le=365)):
-    _campaign_or_404(session, campaign_id)
-    post = session.get(InstagramPost, post_id)
-    if not post:
-        raise HTTPException(status_code=404, detail='Publicação não encontrada.')
+    post = _campaign_post_or_404(session, campaign_id, post_id)
     link = next((link for link in _links(session, campaign_id) if link.profile_id == post.profile_id), None)
     profile = session.get(InstagramProfile, post.profile_id)
     if not link or not profile:
@@ -564,3 +570,13 @@ def campaign_post_detail(campaign_id: int, post_id: int, session: Session = Depe
     since = datetime.now(timezone.utc) - timedelta(days=period_days)
     history = session.exec(select(PostSnapshot).where(PostSnapshot.post_id == post_id, PostSnapshot.collected_at >= since).order_by(PostSnapshot.collected_at.desc()).limit(2000)).all()
     return {'post': _post_payload(post, profile, link.role, _latest_snapshot(session, post_id)), 'history': history, 'period_days': period_days, 'comments': read_comment_sample(session, post_id)}
+
+
+@router.get('/{campaign_id}/posts/{post_id}/thumbnail', summary='Obter prévia persistente da publicação')
+def campaign_post_thumbnail(campaign_id: int, post_id: int, session: Session = Depends(get_session)):
+    post = _campaign_post_or_404(session, campaign_id, post_id)
+    try:
+        content, content_type = get_post_preview(post)
+    except PreviewUnavailable:
+        raise HTTPException(status_code=404, detail='Prévia indisponível para esta publicação.') from None
+    return Response(content=content, media_type=content_type, headers={'Cache-Control': 'public, max-age=604800, immutable'})

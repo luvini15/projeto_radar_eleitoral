@@ -12,6 +12,7 @@ const metricLabels: Record<Metric, string> = {
   avg_observed_interactions: 'Interações',
   avg_comments: 'Comentários',
 }
+const heatColors = ['#342A5E', '#315878', '#28766F', '#718E55', '#C7A84B']
 
 export default function Schedule() {
   const { limit } = useCampaign()
@@ -78,9 +79,8 @@ export default function Schedule() {
                       const value = cell?.[metric]
                       const key = `${weekdayIndex}-${hour}`
                       const intensity = value == null ? 0 : Math.log1p(Math.max(0, value)) / Math.log1p(max)
-                      const background = value == null
-                        ? 'rgba(255,255,255,0.025)'
-                        : `rgba(214, 204, 178, ${0.08 + intensity * 0.54})`
+                      const colorIndex = Math.min(heatColors.length - 1, Math.floor(intensity * heatColors.length))
+                      const background = value == null ? 'rgba(255,255,255,0.025)' : heatColors[colorIndex]
                       return (
                         <td key={hour} className="p-0.5">
                           <button
@@ -106,8 +106,8 @@ export default function Schedule() {
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate">
             <span className="font-medium text-white/75">Intensidade</span>
             <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-sm border border-white/10 bg-white/[0.025]" />Sem dados</span>
-            <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-sm bg-[rgba(214,204,178,0.16)]" />Menor intensidade</span>
-            <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-sm bg-[rgba(214,204,178,0.62)]" />Maior intensidade</span>
+            <span className="flex items-center gap-1">{heatColors.map(color => <i key={color} className="h-3 w-5 first:rounded-l-sm last:rounded-r-sm" style={{backgroundColor: color}} />)}</span>
+            <span>Menor</span><span>Maior</span>
           </div>
         </Panel>
       ) : <Empty />}

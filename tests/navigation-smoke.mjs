@@ -3,7 +3,7 @@ const browser=await chromium.launch()
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
  await page.addInitScript(()=>sessionStorage.setItem('data-sight:session-simulada',JSON.stringify({nome:'Teste'})))
- await page.route('**/api/**', async route=>{const url=new URL(route.request().url());url.port='8001';await route.fulfill({response:await route.fetch({url:url.toString()})})})
+ await page.route('**/api/**', async route=>{const url=new URL(route.request().url());if(url.pathname.endsWith('/thumbnail'))return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#333"/></svg>'});url.port='8001';await route.fulfill({response:await route.fetch({url:url.toString()})})})
  await page.goto('http://localhost:5173/conteudos')
  await expect(page.getByText('12 conteúdos encontrados')).toBeVisible()
  await page.getByRole('button',{name:'Recolher sidebar',exact:true}).first().click()

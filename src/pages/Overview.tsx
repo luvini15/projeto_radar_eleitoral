@@ -41,7 +41,7 @@ export default function Overview() {
 
       <section className="grid items-start gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]">
         <div className="min-w-0 space-y-5">
-          <LatestPostCard key={latestPost?.post_id ?? 'empty'} post={latestPost} />
+          <LatestPostCard key={latestPost?.post_id ?? 'empty'} post={latestPost} campaignId={selected} />
           {latestPost ? (
             <PostAIAnalysis
               campaignId={selected}

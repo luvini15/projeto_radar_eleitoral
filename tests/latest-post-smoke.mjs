@@ -8,6 +8,7 @@ try {
  await page.route('**/api/**',r=>{
   const u=new URL(r.request().url())
   if(u.pathname==='/api/campaigns') return r.fulfill({json:[{id:1,name:'Teste',active:true}]})
+  if(u.pathname.endsWith('/thumbnail')) return r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#333"/></svg>'})
   if(u.pathname.endsWith('/overview')) return r.fulfill({json:{summary:{posts_analyzed:2,profiles_monitored:1,comments:999,observed_interactions:999},profiles:[]}})
   if(u.pathname.endsWith('/analysis')) {analysisRequests++;return r.fulfill({json:{text:'Contexto automático do post.',created_at:'2026-09-13T12:00:00Z',cached:true,evidence:{comments:{sample_size:2}}}})}
   if(u.pathname.endsWith('/posts')) {

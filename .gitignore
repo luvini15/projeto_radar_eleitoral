@@ -8,6 +8,7 @@ radar-eleitoral/.env.local
 backend/.venv/
 backend/__pycache__/
 backend/**/*.pyc
+backend/.cache/
 
 # Node
 node_modules/

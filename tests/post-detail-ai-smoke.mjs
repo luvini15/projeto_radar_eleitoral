@@ -11,6 +11,7 @@ try {
   ))
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url())
+    if (url.pathname.endsWith('/thumbnail')) return route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#333"/></svg>' })
     if (url.pathname.endsWith('/analysis')) {
       if (route.request().method() !== 'POST') throw new Error('A análise deve usar POST')
       return route.fulfill({

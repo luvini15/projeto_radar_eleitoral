@@ -26,7 +26,7 @@ export default function ContentDetail() {
     <Link to="/conteudos" className="inline-flex rounded-full border border-border bg-muted px-4 py-2 text-sm hover:bg-white/10">← Voltar aos conteúdos</Link>
     <DataFrame data={data} error={error}>{data ? <>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <LatestPostCard key={data.post.post_id} post={data.post} detail />
+        <LatestPostCard key={data.post.post_id} post={data.post} campaignId={selected} detail />
         <div className="min-w-0 space-y-4">
           <PostAIAnalysis campaignId={selected} postId={data.post.post_id} version={`${data.post.metrics.collected_at}|${data.comments?.collected_at}`} />
           <Panel title="Sobre a publicação"><dl className="space-y-4 text-sm"><div><dt className="text-slate">Perfil</dt><dd>@{data.post.profile.username}</dd></div><div><dt className="text-slate">Formato</dt><dd>{data.post.content.format}</dd></div><div><dt className="text-slate">Tema identificado por palavras-chave</dt><dd>{data.post.content.theme}</dd></div><div><dt className="text-slate">Publicação</dt><dd>{date(data.post.content.published_at)}</dd></div></dl></Panel>

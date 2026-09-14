@@ -4,6 +4,7 @@ import { ArrowUpRight, Bookmark, Eye, Film, Heart, Image as ImageIcon, Layers, M
 import type { Post } from '@/types/radar'
 import { Empty, InstagramLink } from './ApiData'
 import { date, number } from '@/utils/apiFormat'
+import { apiAsset } from '@/services/radarApi'
 
 function embedUrl(url: string | null) {
   try {
@@ -14,14 +15,15 @@ function embedUrl(url: string | null) {
   } catch { return null }
 }
 
-export function LatestPostCard({ post, detail = false }: { post: Post | null; detail?: boolean }) {
+export function LatestPostCard({ post, detail = false, campaignId }: { post: Post | null; detail?: boolean; campaignId?: string }) {
   const [imageFailed, setImageFailed] = React.useState(false)
   const [showEmbed, setShowEmbed] = React.useState(false)
   const isReel = post?.content.format === 'Reels'
   const isCarousel = post?.content.format === 'Carrossel'
   const Icon = isReel ? Film : isCarousel ? Layers : ImageIcon
   const embed = post ? embedUrl(post.content.url) : null
-  React.useEffect(() => setImageFailed(false), [post?.content.thumbnail_url])
+  const preview = post && campaignId ? apiAsset(`/campaigns/${campaignId}/posts/${post.post_id}/thumbnail`) : post?.content.thumbnail_url
+  React.useEffect(() => setImageFailed(false), [preview])
 
   if (!post) return <article aria-label={detail ? 'Publicação selecionada' : 'Último post do perfil'}><Empty>Ainda não há publicações coletadas do perfil principal desta campanha.</Empty></article>
 
@@ -62,8 +64,8 @@ export function LatestPostCard({ post, detail = false }: { post: Post | null; de
           <iframe title={`Post de @${post.profile.username} no Instagram`} src={embed} className="h-[560px] w-full border-0" allow="encrypted-media; fullscreen" loading="lazy" />
         ) : (
           <>
-            {post.content.thumbnail_url && !imageFailed ? (
-              <img src={post.content.thumbnail_url} alt={`Prévia de ${post.content.format.toLowerCase()} de @${post.profile.username}`} className="h-full max-h-[590px] w-full object-contain" referrerPolicy="no-referrer" onError={() => setImageFailed(true)} />
+            {preview && !imageFailed ? (
+              <img src={preview} alt={`Prévia de ${post.content.format.toLowerCase()} de @${post.profile.username}`} className="h-full max-h-[590px] w-full object-contain" onError={() => setImageFailed(true)} />
             ) : (
               <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center text-slate"><Icon className="h-12 w-12" /><p className="text-sm">Prévia indisponível</p></div>
             )}
