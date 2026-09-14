@@ -175,3 +175,24 @@ class SyncSchedule(SQLModel, table=True):
     last_finished_at: datetime | None = None
     status: str = 'waiting'
     error: str | None = None
+
+class PostCommentSample(SQLModel, table=True):
+    __tablename__ = 'post_comment_samples'
+    post_id: int = Field(primary_key=True, foreign_key='instagram_posts.id')
+    texts_json: str = '[]'
+    collected_at: datetime = Field(default_factory=utc_now)
+
+
+class PostAnalysis(SQLModel, table=True):
+    __tablename__ = 'post_analyses'
+    fingerprint: str = Field(primary_key=True)
+    post_id: int = Field(index=True, foreign_key='instagram_posts.id')
+    text: str
+    model: str
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class AIUsage(SQLModel, table=True):
+    __tablename__ = 'ai_usage'
+    day: str = Field(primary_key=True)
+    requests: int = 0

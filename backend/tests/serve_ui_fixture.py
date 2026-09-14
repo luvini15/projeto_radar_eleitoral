@@ -8,12 +8,14 @@ fd, database_path = tempfile.mkstemp(suffix='.db', prefix='radar-ui-')
 os.close(fd)
 os.environ['DATABASE_URL'] = 'sqlite:///' + database_path.replace('\\', '/')
 os.environ['APIFY_TOKEN'] = ''
+os.environ['OPENROUTER_API_KEY'] = ''
 os.environ['AUTO_SYNC_CAMPAIGN_IDS'] = ''
 
 from app.database import create_db_and_tables, engine
 from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot, ProfileSnapshot
 from sqlmodel import Session
 import uvicorn
+from app.services.comments import save_comment_sample
 
 create_db_and_tables()
 with Session(engine) as session:
@@ -30,6 +32,12 @@ with Session(engine) as session:
     session.add(ProfileSnapshot(profile_id=1, followers_count=1000, collected_at=now-timedelta(days=10)))
     session.add(ProfileSnapshot(profile_id=1, followers_count=1050, collected_at=now))
     session.commit()
+
+with Session(engine) as session:
+    session.add(PostSnapshot(post_id=2, comments_count=0, collected_at=now-timedelta(days=10)))
+    session.add(PostSnapshot(post_id=2, comments_count=None, collected_at=now-timedelta(days=2)))
+    session.commit()
+    save_comment_sample(session,2,{'latestComments':[{'text':'Comentário de teste sobre o evento.'},{'text':'Onde encontro os dados citados?'}]})
 
 if __name__ == '__main__':
     try:

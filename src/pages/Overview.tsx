@@ -3,21 +3,16 @@ import { NavLink } from 'react-router-dom'
 import {
   ArrowRight,
   CalendarClock,
-  Eye,
   FileStack,
   Layers3,
-  MousePointerClick,
-  SlidersHorizontal,
   Sparkles,
   Users,
 } from 'lucide-react'
 import { useCampaign, useCampaignData } from '@/lib/campaignContext'
-import type { OverviewData, Follower } from '@/types/radar'
+import type { OverviewData, Post } from '@/types/radar'
 import { DataFrame } from '@/components/dashboard/ApiData'
-import { Dialog } from '@/components/ui/dialog'
-import { number } from '@/utils/apiFormat'
+import { LatestPostCard } from '@/components/dashboard/LatestPostCard'
 
-type MetricKey = 'seguidores' | 'alcance' | 'interacoes'
 
 const hubActions = [
   {
@@ -65,50 +60,15 @@ const hubActions = [
 export default function Overview() {
   const { limit, selected, campaigns } = useCampaign()
   const overview = useCampaignData<OverviewData>('overview', `limit=${limit}`)
-  const followers = useCampaignData<{profiles: Follower[]}>('followers-history', 'days=90')
-  const [selectedMetric, setSelectedMetric] = React.useState<MetricKey>('seguidores')
-  const [metricModalOpen, setMetricModalOpen] = React.useState(false)
-  const principal = followers.data?.profiles.find(profile => profile.role === 'CLIENT')
-  const points = principal?.history.filter(point => point.followers != null) || []
-  const hasGrowth = points.length > 1
-  const growth = hasGrowth ? points.at(-1)!.followers! - points[0].followers! : null
-  const growthPercent = growth != null && points[0].followers ? growth / points[0].followers * 100 : null
+  const latest = useCampaignData<{posts: Post[]}>('posts', 'role=CLIENT&limit_per_profile=1')
   const summary = overview.data?.summary
   const campaignName = campaigns.find(campaign => String(campaign.id) === selected)?.name || 'Campanha'
   const needsCollection = !summary?.posts_analyzed
-  const metricOptions: Record<MetricKey, MetricOption> = {
-    seguidores: {
-      key: 'seguidores', label: 'Seguidores',
-      helper: principal ? `@${principal.username} · últimos 90 dias` : 'Perfil principal não cadastrado',
-      value: number(principal?.current_followers),
-      delta: growth == null ? 'É preciso ter duas coletas com dados.' : `${growth > 0 ? '+' : ''}${number(growth)} entre coletas disponíveis`,
-      period: growthPercent == null ? '—' : `${growthPercent > 0 ? '+' : ''}${number(growthPercent)}%`,
-      values: principal?.history.map(point => point.followers) || [],
-      emptyLabel: 'O histórico aparecerá após duas coletas de seguidores.',
-      chartLabel: points.length ? `Coletas de ${points[0].date} a ${points.at(-1)!.date}` : 'Sem histórico disponível',
-      icon: Users,
-    },
-    alcance: {
-      key: 'alcance', label: 'Alcance', helper: 'Contas alcançadas', value: '—',
-      delta: 'Não disponível nesta integração.', period: '—', values: [],
-      emptyLabel: 'A coleta atual não fornece alcance. Nenhuma estimativa é exibida.',
-      chartLabel: 'Métrica indisponível', icon: Eye,
-    },
-    interacoes: {
-      key: 'interacoes', label: 'Interações observadas', helper: `Até ${limit} posts por perfil`,
-      value: number(summary?.observed_interactions), delta: 'Sem série histórica comparável.',
-      period: '—', values: [], emptyLabel: 'O total usa a última coleta de cada post. Histórico de variação indisponível.',
-      chartLabel: 'Total da campanha · pode ser parcial', icon: MousePointerClick,
-    },
-  }
 
   return (
-    <DataFrame data={overview.data && followers.data} error={overview.error || followers.error}>
+    <DataFrame data={overview.data && latest.data} error={overview.error || latest.error}>
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
-        <MainMetricChart
-          metric={metricOptions[selectedMetric]}
-          onOpenModal={() => setMetricModalOpen(true)}
-        />
+        <LatestPostCard key={latest.data?.posts[0]?.post_id ?? 'empty'} post={latest.data?.posts[0] ?? null} />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
           <div className="rounded-[1.5rem] border border-white/10 bg-card/80 p-5">
@@ -150,118 +110,7 @@ export default function Overview() {
         </div>
       </section>
 
-      <Dialog
-        open={metricModalOpen}
-        onClose={() => setMetricModalOpen(false)}
-        title="Alterar visao"
-      >
-        <div className="grid gap-2">
-          {Object.values(metricOptions).map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => {
-                setSelectedMetric(option.key)
-                setMetricModalOpen(false)
-              }}
-              className={`flex items-center justify-between gap-4 rounded-xl border px-3 py-3 text-left transition-colors ${
-                selectedMetric === option.key
-                  ? 'border-white/35 bg-white/10 text-white'
-                  : 'border-white/10 bg-white/5 text-slate hover:border-white/25 hover:bg-white/8 hover:text-white'
-              }`}
-            >
-              <span className="flex min-w-0 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/8 text-white">
-                  <option.icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">{option.label}</span>
-                  <span className="block truncate text-xs text-slate">{option.helper}</span>
-                </span>
-              </span>
-              <span className="shrink-0 text-sm font-semibold text-white">{option.value}</span>
-            </button>
-          ))}
-        </div>
-      </Dialog>
     </DataFrame>
-  )
-}
-
-interface MetricOption {
-  key: MetricKey
-  label: string
-  helper: string
-  value: string
-  delta: string
-  period: string
-  values: (number | null)[]
-  emptyLabel: string
-  chartLabel: string
-  icon: React.ElementType
-}
-
-function MainMetricChart({ metric, onOpenModal }: { metric: MetricOption; onOpenModal: () => void }) {
-  const gradientId = React.useId()
-  const sparkline = React.useMemo(() => buildSparkline(metric.values), [metric.values])
-  const Icon = metric.icon
-
-  return (
-    <article className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#080D16]/88 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase text-slate">Data Sight hub</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-white md:text-3xl">
-            O resumo para decidir rapido.
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenModal}
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-sm font-semibold text-slate transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/35"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Alterar visao
-        </button>
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/8 text-white">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate">{metric.helper}</p>
-              <p className="text-lg font-semibold text-white">{metric.label}</p>
-            </div>
-          </div>
-          <p className="mt-5 text-5xl font-semibold tracking-normal text-white">{metric.value}</p>
-        </div>
-        <div className="grid min-w-[170px] gap-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="font-mono text-[10px] uppercase text-slate">variacao</p>
-          <p className="text-2xl font-semibold text-white">{metric.period}</p>
-          <p className="text-xs leading-5 text-slate">{metric.delta}</p>
-        </div>
-      </div>
-
-      <div className="relative mt-6 h-[230px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#050812] p-4">
-        <div className="absolute inset-0 data-rule opacity-20" />
-        {metric.values.filter(value => value != null).length > 1 ? <svg role="img" aria-label={metric.chartLabel} className="relative h-full w-full" viewBox="0 0 300 120" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F5F5F4" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#F5F5F4" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={sparkline.area} fill={`url(#${gradientId})`} />
-          <path d={sparkline.line} fill="none" stroke="#F5F5F4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx={sparkline.dot.x * 3} cy={sparkline.dot.y * 1.2} r="2.5" fill="#F5F5F4" />
-        </svg> : <div role="status" className="relative flex h-full items-center justify-center p-6 text-center text-sm leading-6 text-slate">{metric.emptyLabel}</div>}
-
-      </div>
-      <p className="mt-3 text-xs text-slate">{metric.chartLabel}</p>
-    </article>
   )
 }
 
@@ -303,35 +152,4 @@ function HubActionCard({ to, title, metric, tag, icon: Icon, summary }: HubActio
       </p>
     </NavLink>
   )
-}
-
-function buildSparkline(values: (number | null)[]) {
-  const cleanValues = values.filter((value): value is number => value != null && Number.isFinite(value))
-  const safeValues = cleanValues.length > 1 ? cleanValues : [0, 0]
-  const min = Math.min(...safeValues)
-  const max = Math.max(...safeValues)
-  const range = max - min || 1
-  const points = safeValues.map((value, index) => {
-    const x = safeValues.length === 1 ? 150 : (index / (safeValues.length - 1)) * 300
-    const y = 104 - ((value - min) / range) * 88
-    return { x, y }
-  })
-
-  const line = points
-    .map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(1)},${point.y.toFixed(1)}`)
-    .join(' ')
-  const area = `M0,120 L${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} ${points
-    .slice(1)
-    .map((point) => `L${point.x.toFixed(1)},${point.y.toFixed(1)}`)
-    .join(' ')} L300,120 Z`
-  const last = points.at(-1) ?? { x: 300, y: 60 }
-
-  return {
-    line,
-    area,
-    dot: {
-      x: (last.x / 300) * 100,
-      y: (last.y / 120) * 100,
-    },
-  }
 }

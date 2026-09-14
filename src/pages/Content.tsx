@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom'
+import { PostThumbnail } from '@/components/tables/PostThumbnail'
 import { number, date } from '@/utils/apiFormat'
 import * as React from 'react'
 import { useCampaign, useCampaignData } from '@/lib/campaignContext'
-import { DataFrame, DataTable, Empty, Panel, InstagramLink } from '@/components/dashboard/ApiData'
+import { DataFrame, DataTable, Empty } from '@/components/dashboard/ApiData'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import type { Post } from '@/types/radar'
 export default function Content() {
   const { limit } = useCampaign()
@@ -11,10 +12,8 @@ export default function Content() {
   const [search, setSearch] = React.useState('')
   const [format, setFormat] = React.useState('')
   const [order, setOrder] = React.useState('date')
-  const [selected, setSelected] = React.useState<number | null>(null)
   const posts = (data?.posts || []).filter(p => (!format || p.content.format === format) && `${p.profile.username} ${p.content.caption || ''}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))
     .toSorted((a,b) => order === 'comments' ? (b.metrics.comments ?? -1) - (a.metrics.comments ?? -1) : order === 'interactions' ? (b.metrics.observed_interactions ?? -1) - (a.metrics.observed_interactions ?? -1) : (b.content.published_at || '').localeCompare(a.content.published_at || ''))
-  const chosen = data?.posts.find(p => p.post_id === selected)
   return <DataFrame data={data} error={error}>
     <div className="flex flex-wrap items-end gap-3">
       <label className="text-sm">Buscar perfil ou legenda<Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar conteúdos" /></label>
@@ -22,9 +21,9 @@ export default function Content() {
       <label className="flex flex-col gap-2 text-sm">Ordenar<select aria-label="Ordenar" className="h-10 rounded-md bg-muted px-3" value={order} onChange={e => setOrder(e.target.value)}><option value="date">Mais recentes</option><option value="comments">Mais comentários</option><option value="interactions">Mais interações</option></select></label>
     </div>
     <p className="text-sm text-slate">{posts.length} conteúdos encontrados</p>
-    {!posts.length ? <Empty>{data?.posts.length ? 'Nenhum conteúdo corresponde aos filtros. Ajuste a busca ou o formato.' : 'Nenhum conteúdo coletado para esta campanha.'}</Empty> : <DataTable headers={['Conteúdo', 'Formato', 'Curtidas', 'Comentários', 'Interações', 'Detalhes']}>{posts.map(p => <tr key={p.post_id}>
-      <td className="max-w-xs p-3"><p className="text-blue">@{p.profile.username}</p><p className="line-clamp-2">{p.content.caption || 'Sem legenda'}</p><p className="mt-1 text-xs text-slate">{date(p.content.published_at)}</p></td><td className="p-3">{p.content.format}</td><td className="p-3">{number(p.metrics.likes)}</td><td className="p-3">{number(p.metrics.comments)}</td><td className="p-3">{number(p.metrics.observed_interactions)}</td><td className="p-3"><Button variant="secondary" onClick={() => setSelected(p.post_id)} aria-label={`Detalhes do post ${p.post_id}`}>Ver detalhes</Button></td>
+    {!posts.length ? <Empty>{data?.posts.length ? 'Nenhum conteúdo corresponde aos filtros. Ajuste a busca ou o formato.' : 'Nenhum conteúdo coletado para esta campanha.'}</Empty> : <DataTable headers={['Prévia', 'Conteúdo', 'Formato', 'Curtidas', 'Comentários', 'Interações', 'Detalhes']}>{posts.map(p => <tr key={p.post_id}>
+      <td className="p-3"><Link to={`/conteudos/${p.post_id}`} aria-label={`Abrir prévia do post ${p.post_id}`}><PostThumbnail post={p} /></Link></td><td className="min-w-48 max-w-xs p-3"><p className="text-blue">@{p.profile.username}</p><p className="line-clamp-2">{p.content.caption || 'Sem legenda'}</p><p className="mt-1 text-xs text-slate">{date(p.content.published_at)}</p></td><td className="p-3">{p.content.format}</td><td className="p-3">{number(p.metrics.likes)}</td><td className="p-3">{number(p.metrics.comments)}</td><td className="p-3">{number(p.metrics.observed_interactions)}</td><td className="p-3"><Link className="inline-flex whitespace-nowrap rounded-full border border-border bg-muted px-4 py-2 hover:bg-white/10" to={`/conteudos/${p.post_id}`} aria-label={`Detalhes do post ${p.post_id}`}>Ver detalhes</Link></td>
     </tr>)}</DataTable>}
-    {chosen ? <Panel title={`Detalhes · @${chosen.profile.username}`}><div className="space-y-4"><Button variant="secondary" onClick={() => setSelected(null)}>Fechar detalhes</Button><p className="whitespace-pre-wrap break-words">{chosen.content.caption || 'Sem legenda'}</p><p>Tema: {chosen.content.theme} · Classificação por palavras-chave</p><dl className="grid grid-cols-2 gap-3">{(['likes','comments','views','plays','shares','saves'] as const).map((key,i) => <div key={key}><dt className="text-xs text-slate">{['Curtidas','Comentários','Visualizações','Reproduções','Compartilhamentos','Salvamentos'][i]}</dt><dd>{number(chosen.metrics[key])}</dd></div>)}</dl><p className="text-xs text-slate">Coletado em {date(chosen.metrics.collected_at)} · {chosen.metrics.interactions_complete ? 'Interações completas' : 'Interações parciais'}</p><InstagramLink url={chosen.content.url} /></div></Panel> : null}
+
   </DataFrame>
 }

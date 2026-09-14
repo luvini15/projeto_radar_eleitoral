@@ -1,5 +1,44 @@
 # Radar Eleitoral
 
+## Detalhamento de posts, IA e OpenCode
+
+A tabela de Conteúdos mostra uma prévia de cada publicação. O link **Ver detalhes**
+abre uma página própria com mídia, métricas atuais, textos de comentários disponíveis
+e histórico de coletas. A linha evolutiva pode ser filtrada por 7, 30, 90 ou 365 dias
+e por comentário, curtida, visualização, reprodução, interação, compartilhamento ou
+salvamento. Os pontos são snapshots acumulados observados em cada coleta.
+
+O painel de IA usa o roteador gratuito do OpenRouter e guarda a resposta no banco
+enquanto os dados do post não mudarem. Por padrão, no máximo 20 análises novas são
+enviadas por dia; resultados em cache não consomem esse limite. A evidência enviada
+contém métricas, legenda e no máximo 30 textos da amostra de comentários, sem token
+da Apify ou autores. A análise é descritiva e não representa intenção de voto,
+opinião de todo o público ou análise completa dos comentários.
+
+Crie uma chave na sua conta OpenRouter e configure somente em `backend/.env`:
+
+```env
+OPENROUTER_API_KEY=sua_chave
+OPENROUTER_MODEL=openrouter/free
+AI_DAILY_LIMIT=20
+```
+
+Reinicie o backend depois de salvar. O Swagger expõe a operação em
+`POST /api/campaigns/{campaign_id}/posts/{post_id}/analysis`.
+
+O arquivo `opencode.json` configura o mesmo modelo gratuito e o servidor MCP local
+`radar`. Com o backend rodando, inicie o OpenCode sem expor a chave no terminal:
+
+```powershell
+backend/.venv/Scripts/python.exe backend/start_opencode.py
+```
+
+O MCP fornece seis ferramentas somente de leitura para campanhas, perfis, resumo,
+posts, detalhe com comentários/histórico e seguidores. Confira a conexão com
+`opencode mcp list`. O teste do protocolo é `backend/tests/check_mcp.py`, usando a
+fixture na porta 8001. As perguntas de avaliação ficam em
+`backend/tests/mcp_evaluations.xml`.
+
 Dashboard privado de inteligência digital para acompanhamento do Instagram da campanha de **Cláudio Borcem**, candidato a Deputado Distrital do Distrito Federal.
 
 > **CONFIDENCIAL — Uso exclusivo da campanha de Cláudio Borcem.**

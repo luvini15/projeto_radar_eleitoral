@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import Login from '@/pages/Login'
 import Overview from '@/pages/Overview'
 import Content from '@/pages/Content'
+import ContentDetail from '@/pages/ContentDetail'
 import Topics from '@/pages/Topics'
 import Schedule from '@/pages/Schedule'
 import Audience from '@/pages/Audience'
@@ -29,6 +30,7 @@ export default function App() {
             >
               <Route path="/" element={<Overview />} />
               <Route path="/conteudos" element={<Content />} />
+              <Route path="/conteudos/:postId" element={<ContentDetail />} />
               <Route path="/temas-formatos" element={<Topics />} />
               <Route path="/dias-horarios" element={<Schedule />} />
               <Route path="/audiencia" element={<Audience />} />

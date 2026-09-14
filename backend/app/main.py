@@ -7,6 +7,7 @@ from app.database import create_db_and_tables
 from app.routers.sync import router as sync_router
 from app.routers.campaigns import router as campaigns_router
 from app.routers.analytics import router as analytics_router
+from app.routers.ai import router as ai_router
 
 
 @asynccontextmanager
@@ -47,6 +48,7 @@ app.add_middleware(
 app.include_router(sync_router)
 app.include_router(campaigns_router)
 app.include_router(analytics_router)
+app.include_router(ai_router)
 
 
 @app.get("/")

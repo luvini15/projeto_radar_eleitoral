@@ -34,16 +34,32 @@ export function DashboardLayout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const campaign = useCampaign()
+  const [desktopOpen, setDesktopOpen] = React.useState(() => {
+    try { return localStorage.getItem('radar:sidebar:v1') !== 'closed' } catch { return true }
+  })
+  function toggleDesktop() {
+    setDesktopOpen(open => {
+      try { localStorage.setItem('radar:sidebar:v1', open ? 'closed' : 'open') } catch { /* Works without storage. */ }
+      return !open
+    })
+  }
+  React.useEffect(() => {
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileOpen(false) }
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [])
 
-  const meta = pageMeta[location.pathname] ?? pageMeta['/']
+  const meta = location.pathname.startsWith('/conteudos/') ? {title: 'Detalhes do conteúdo'} : pageMeta[location.pathname] ?? pageMeta['/']
 
   return (
     <div className="intel-grid-bg flex min-h-screen bg-bg text-ink">
-      <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+      <Sidebar desktopOpen={desktopOpen} onCloseDesktop={toggleDesktop} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <ConfidentialBanner />
         <Topbar
           title={meta.title}
+          desktopOpen={desktopOpen}
+          onToggleDesktop={toggleDesktop}
 
 
           onOpenMobileMenu={() => setMobileOpen(true)}

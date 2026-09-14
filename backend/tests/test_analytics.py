@@ -1,10 +1,11 @@
-﻿import os
+import os
 import unittest
 from datetime import datetime, timezone
 os.environ['DATABASE_URL'] = 'sqlite://'
 from sqlmodel import Session, SQLModel, create_engine
 from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot
-from app.routers.analytics import campaign_overview, campaign_posts
+from app.routers.analytics import campaign_overview, campaign_posts, campaign_post_detail
+from fastapi import HTTPException
 
 class AnalyticsTests(unittest.TestCase):
     def setUp(self):
@@ -37,6 +38,17 @@ class AnalyticsTests(unittest.TestCase):
     def test_posts_without_dates_sort_last(self):
         result = campaign_posts(1, session=self.session)
         self.assertEqual([post['post_id'] for post in result['posts']], [2, 1])
+
+    def test_post_details_are_scoped_and_include_history(self):
+        self.session.add(PostSnapshot(post_id=2, comments_count=12))
+        self.session.add(Campaign(id=2, name='Outra', slug='outra'))
+        self.session.commit()
+        result = campaign_post_detail(1, 2, self.session)
+        self.assertEqual(result['post']['post_id'], 2)
+        self.assertEqual(result['history'][0].comments_count, 12)
+        with self.assertRaises(HTTPException) as error:
+            campaign_post_detail(2, 2, self.session)
+        self.assertEqual(error.exception.status_code, 404)
 
 if __name__ == '__main__':
     unittest.main()

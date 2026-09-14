@@ -1,11 +1,12 @@
 from __future__ import annotations
+from app.services.comments import read_comment_sample
 
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from statistics import mean
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from app.database import get_session
@@ -548,3 +549,18 @@ def competitors(campaign_id: int, limit: int = 25, days: int = 60, session: Sess
         f = follower_map.get(item["profile_id"], {})
         profiles.append({**item, "current_followers": f.get("current_followers"), "growth_absolute": f.get("growth_absolute"), "growth_percent": f.get("growth_percent")})
     return {"campaign": benchmark["campaign"], "profiles": profiles}
+
+@router.get('/{campaign_id}/posts/{post_id}')
+def campaign_post_detail(campaign_id: int, post_id: int, session: Session = Depends(get_session), days: int = Query(default=30, ge=1, le=365)):
+    _campaign_or_404(session, campaign_id)
+    post = session.get(InstagramPost, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail='Publicação não encontrada.')
+    link = next((link for link in _links(session, campaign_id) if link.profile_id == post.profile_id), None)
+    profile = session.get(InstagramProfile, post.profile_id)
+    if not link or not profile:
+        raise HTTPException(status_code=404, detail='Publicação não encontrada nesta campanha.')
+    period_days = days if isinstance(days, int) else 30
+    since = datetime.now(timezone.utc) - timedelta(days=period_days)
+    history = session.exec(select(PostSnapshot).where(PostSnapshot.post_id == post_id, PostSnapshot.collected_at >= since).order_by(PostSnapshot.collected_at.desc()).limit(2000)).all()
+    return {'post': _post_payload(post, profile, link.role, _latest_snapshot(session, post_id)), 'history': history, 'period_days': period_days, 'comments': read_comment_sample(session, post_id)}

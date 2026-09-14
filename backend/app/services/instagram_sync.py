@@ -1,3 +1,4 @@
+from app.services.comments import save_comment_sample
 from sqlmodel import Session, select
 
 from app.integrations.apify import collect_posts
@@ -165,6 +166,8 @@ def sync_instagram_profile(
             profile,
             item,
         )
+
+        save_comment_sample(session, post.id, raw_post)
 
         if created:
             created_posts += 1

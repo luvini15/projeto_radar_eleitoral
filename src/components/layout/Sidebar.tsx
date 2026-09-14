@@ -25,11 +25,13 @@ const navItems = [
 ]
 
 interface SidebarProps {
+  desktopOpen: boolean
+  onCloseDesktop: () => void
   mobileOpen: boolean
   onCloseMobile: () => void
 }
 
-export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
+export function Sidebar({ desktopOpen, onCloseDesktop, mobileOpen, onCloseMobile }: SidebarProps) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -50,6 +52,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           <DataSightLogo markClassName="h-8 w-8" />
         </button>
 
+        <button type="button" onClick={onCloseDesktop} className="hidden rounded-md p-1.5 text-slate hover:bg-white/8 md:block" aria-label="Recolher sidebar"><X className="h-4 w-4" /></button>
         <button
           onClick={onCloseMobile}
           className="rounded-md p-1.5 text-slate transition-colors hover:bg-white/8 hover:text-ink md:hidden"
@@ -129,11 +132,11 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen shrink-0 border-r border-border md:flex md:w-72 md:flex-col">
+      {desktopOpen ? <aside id="desktop-sidebar" className="sticky top-0 hidden h-screen shrink-0 border-r border-border md:flex md:w-72 md:flex-col">
         {content}
-      </aside>
+      </aside> : null}
 
-      <div
+      {mobileOpen ? <div
         className={cn(
           'fixed inset-0 z-50 transition-opacity md:hidden',
           mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
@@ -148,7 +151,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         >
           {content}
         </div>
-      </div>
+      </div> : null}
     </>
   )
 }
