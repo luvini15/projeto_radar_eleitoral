@@ -38,6 +38,19 @@ class MediaPreviewTests(unittest.TestCase):
             with self.assertRaises(PreviewUnavailable):
                 get_post_preview(post, Path(directory), client)
 
+    def test_accepts_twitter_image_used_by_older_reels(self):
+        def handler(request: httpx.Request):
+            if request.url.host == 'www.instagram.com':
+                return httpx.Response(200, text='<meta name="twitter:image" content="https://fresh.cdninstagram.com/reel.jpg">')
+            if request.url.host == 'fresh.cdninstagram.com':
+                return httpx.Response(200, content=b'reel-cover', headers={'content-type': 'image/jpeg'})
+            return httpx.Response(404)
+
+        post = InstagramPost(id=9, profile_id=1, shortcode='reel', url='https://www.instagram.com/p/reel/')
+        with tempfile.TemporaryDirectory() as directory, httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            content, content_type = get_post_preview(post, Path(directory), client)
+            self.assertEqual((content, content_type), (b'reel-cover', 'image/jpeg'))
+
 
 if __name__ == '__main__':
     unittest.main()

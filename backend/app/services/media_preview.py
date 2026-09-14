@@ -30,7 +30,8 @@ class OpenGraphParser(HTMLParser):
         if tag != "meta" or self.image_url:
             return
         values = dict(attrs)
-        if values.get("property") == "og:image" and values.get("content"):
+        image_kind = values.get("property") or values.get("name")
+        if image_kind in {"og:image", "twitter:image", "twitter:image:src"} and values.get("content"):
             self.image_url = html.unescape(values["content"] or "")
 
 
@@ -79,7 +80,7 @@ def get_post_preview(
     http = client or httpx.Client(
         timeout=20,
         follow_redirects=True,
-        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"},
+        headers={"User-Agent": "Mozilla/5.0"},
     )
     with CACHE_LOCKS_GUARD:
         post_lock = CACHE_LOCKS.setdefault(post.id or 0, Lock())
