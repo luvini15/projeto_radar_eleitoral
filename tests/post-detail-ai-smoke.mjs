@@ -28,9 +28,9 @@ try {
   })
 
   await page.goto('http://localhost:5173/conteudos/2')
-  await expect(page.getByRole('heading', { name: 'Visão geral por IA' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Leitura do post' })).toBeVisible()
   await expect(page.getByText('A amostra menciona saúde.')).toBeVisible()
-  await expect(page.getByText('2 comentário(s) na amostra analisada.', { exact: false })).toBeVisible()
+  await expect(page.getByText('Baseado em 2 comentário(s) coletado(s).', { exact: false })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Comentários coletados' })).toBeVisible()
   await expect(page.getByText('2 texto(s) disponíveis na amostra', { exact: false })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Evolução de Comentários nos últimos 30 dias' })).toBeVisible()

@@ -17,12 +17,12 @@ export function PostAIAnalysis({campaignId, postId, version}: {campaignId: strin
       .finally(() => {if (!controller.signal.aborted) setLoading(false)})
     return () => controller.abort()
   }, [campaignId,postId,version,retry])
-  return <Panel title="Visão geral por IA">
-    <p className="mb-4 text-xs leading-5 text-slate">Leitura descritiva de métricas, legenda e amostra de comentários. A análise usa até 90 dias de coletas e pode conter erros.</p>
+  return <Panel title="Leitura do post">
+    <p className="mb-4 text-xs leading-5 text-slate">Resumo das métricas, da legenda e dos comentários coletados nos últimos 90 dias.</p>
     {loading ? <p role="status" className="text-sm">Preparando análise do post…</p> : error ? <div className="space-y-3 text-sm"><p role="alert">{error}</p><button className="rounded-full border border-border bg-muted px-4 py-2" onClick={refresh}>Tentar análise novamente</button></div> : data ? <>
       <div className="whitespace-pre-wrap break-words text-sm leading-7">{data.text}</div>
-      <p className="mt-4 text-xs text-slate">{data.model} · {date(data.created_at)} · {data.cached ? 'Análise salva' : 'Nova análise'}</p>
-      <p className="mt-2 text-xs text-slate">{data.evidence.comments.sample_size} comentário(s) na amostra analisada. Não representa a opinião de todo o público.</p>
+      <p className="mt-4 border-t border-white/10 pt-3 text-xs text-slate">Atualizado em {date(data.created_at)} · {data.cached ? 'Resultado salvo' : 'Novo resultado'}</p>
+      <p className="mt-2 text-xs text-slate">Baseado em {data.evidence.comments.sample_size} comentário(s) coletado(s). A amostra pode ser parcial.</p>
     </> : null}
   </Panel>
 }
