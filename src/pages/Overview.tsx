@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { ArrowUpRight, CalendarDays, FileText, LayoutGrid, MessageSquareText, Users } from 'lucide-react'
 import { DataFrame } from '@/components/dashboard/ApiData'
 import { LatestPostCard } from '@/components/dashboard/LatestPostCard'
+import { PostAIAnalysis } from '@/components/dashboard/PostAIAnalysis'
 import { useCampaign, useCampaignData } from '@/lib/campaignContext'
 import type { OverviewData, Post } from '@/types/radar'
 import { number } from '@/utils/apiFormat'
@@ -10,9 +11,9 @@ import { number } from '@/utils/apiFormat'
 const sections = [
   { to: '/conteudos', title: 'Conteúdos', description: 'Publicações, métricas e comentários.', icon: FileText },
   { to: '/temas-formatos', title: 'Temas e formatos', description: 'Desempenho por assunto e formato.', icon: LayoutGrid },
-  { to: '/dias-horarios', title: 'Dias e horários', description: 'Resposta do público por dia e faixa de horário.', icon: CalendarDays },
-  { to: '/audiencia', title: 'Audiência', description: 'Histórico agregado dos perfis acompanhados.', icon: Users },
-  { to: '/insights', title: 'Inteligência', description: 'Rankings e sinais encontrados nos dados.', icon: MessageSquareText },
+  { to: '/dias-horarios', title: 'Dias e horários', description: 'Dados por dia e faixa de horário.', icon: CalendarDays },
+  { to: '/audiencia', title: 'Audiência', description: 'Histórico agregado dos perfis.', icon: Users },
+  { to: '/insights', title: 'Inteligência', description: 'Leituras dos dados coletados.', icon: MessageSquareText },
 ] as const
 
 export default function Overview() {
@@ -20,6 +21,7 @@ export default function Overview() {
   const overview = useCampaignData<OverviewData>('overview', `limit=${limit}`)
   const latest = useCampaignData<{ posts: Post[] }>('posts', 'role=CLIENT&limit_per_profile=1')
   const summary = overview.data?.summary
+  const latestPost = latest.data?.posts[0] ?? null
   const campaignName = campaigns.find(campaign => String(campaign.id) === selected)?.name || 'Campanha'
   const needsCollection = !summary?.posts_analyzed
 
@@ -37,8 +39,18 @@ export default function Overview() {
         </p>
       </section>
 
-      <section className="grid items-start gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(260px,0.5fr)]">
-        <LatestPostCard key={latest.data?.posts[0]?.post_id ?? 'empty'} post={latest.data?.posts[0] ?? null} />
+      <section className="grid items-start gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]">
+        <div className="min-w-0 space-y-5">
+          <LatestPostCard key={latestPost?.post_id ?? 'empty'} post={latestPost} />
+          {latestPost ? (
+            <PostAIAnalysis
+              campaignId={selected}
+              postId={latestPost.post_id}
+              version={`${latestPost.metrics.collected_at}|${latestPost.post_id}`}
+              disclosure
+            />
+          ) : null}
+        </div>
 
         <aside className="border-t border-white/10 pt-5 xl:border-l xl:border-t-0 xl:pl-8 xl:pt-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate">Resumo da coleta</p>
@@ -55,18 +67,14 @@ export default function Overview() {
             {needsCollection ? 'Configurar coleta' : 'Abrir conteúdos'}
             <ArrowUpRight className="h-4 w-4" />
           </NavLink>
-          <p className="mt-4 text-xs leading-5 text-slate">Valores ausentes indicam métricas que a fonte não forneceu.</p>
-        </aside>
-      </section>
 
-      <section className="pt-2">
-        <div className="mb-4 flex items-baseline justify-between gap-4">
-          <h2 className="text-lg font-semibold text-white">Áreas do painel</h2>
-          <span className="hidden text-xs text-slate sm:inline">Dados da campanha organizados por assunto</span>
-        </div>
-        <nav aria-label="Áreas do painel" className="grid border-t border-white/10 md:grid-cols-2 xl:grid-cols-5">
-          {sections.map(section => <SectionLink key={section.to} {...section} />)}
-        </nav>
+          <nav aria-label="Áreas do painel" className="mt-8 border-t border-white/10">
+            <h2 className="py-4 text-sm font-semibold text-white">Áreas do painel</h2>
+            <div className="border-t border-white/10">
+              {sections.map(section => <SectionLink key={section.to} {...section} />)}
+            </div>
+          </nav>
+        </aside>
       </section>
     </DataFrame>
   )
@@ -80,14 +88,11 @@ function SectionLink({ to, title, description, icon: Icon }: { to: string; title
   return (
     <NavLink
       to={to}
-      className="group flex min-h-36 flex-col border-b border-white/10 py-5 pr-5 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40 md:px-5 md:first:pl-0 xl:border-r xl:last:border-r-0"
+      className="group grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-white/10 py-4 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
     >
-      <div className="flex items-center justify-between text-white/70">
-        <Icon className="h-5 w-5 stroke-[1.5]" />
-        <ArrowUpRight className="h-4 w-4 opacity-40 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
-      </div>
-      <h3 className="mt-6 text-sm font-semibold text-white">{title}</h3>
-      <p className="mt-1 text-xs leading-5 text-slate">{description}</p>
+      <Icon className="h-4 w-4 text-white/60" />
+      <span className="min-w-0"><strong className="block text-sm font-medium text-white">{title}</strong><small className="mt-0.5 block text-xs leading-5 text-slate">{description}</small></span>
+      <ArrowUpRight className="h-4 w-4 text-white/35 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
     </NavLink>
   )
 }
