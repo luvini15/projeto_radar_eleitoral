@@ -11,11 +11,11 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
-import { instagramService } from '@/services/instagramService'
-import type { AccountSummary, AlertaItem, DailyMetric } from '@/types/instagram'
-import { PageLoader } from '@/components/dashboard/PageLoader'
+import { useCampaign, useCampaignData } from '@/lib/campaignContext'
+import type { OverviewData, Follower } from '@/types/radar'
+import { DataFrame } from '@/components/dashboard/ApiData'
 import { Dialog } from '@/components/ui/dialog'
-import { formatNumber, formatPercent } from '@/utils/metrics'
+import { number } from '@/utils/apiFormat'
 
 type MetricKey = 'seguidores' | 'alcance' | 'interacoes'
 
@@ -63,68 +63,47 @@ const hubActions = [
 ]
 
 export default function Overview() {
-  const [account, setAccount] = React.useState<AccountSummary | null>(null)
-  const [daily, setDaily] = React.useState<DailyMetric[]>([])
-  const [alertas, setAlertas] = React.useState<AlertaItem[]>([])
-  const [selectedMetric, setSelectedMetric] = React.useState<MetricKey>('alcance')
+  const { limit, selected, campaigns } = useCampaign()
+  const overview = useCampaignData<OverviewData>('overview', `limit=${limit}`)
+  const followers = useCampaignData<{profiles: Follower[]}>('followers-history', 'days=90')
+  const [selectedMetric, setSelectedMetric] = React.useState<MetricKey>('seguidores')
   const [metricModalOpen, setMetricModalOpen] = React.useState(false)
-
-  React.useEffect(() => {
-    Promise.all([
-      instagramService.getAccountSummary(),
-      instagramService.getDailyMetrics(),
-      instagramService.getAlerts(),
-    ]).then(([acc, dm, al]) => {
-      setAccount(acc)
-      setDaily(dm)
-      setAlertas(al)
-    })
-  }, [])
-
-  if (!account) return <PageLoader />
-
-  const lastPoint = daily.at(-1)
-  const firstPoint = daily.at(0)
-  const reachDelta = firstPoint && lastPoint ? lastPoint.alcance - firstPoint.alcance : 0
-  const topAlert = alertas[0]
-  const alertLabel =
-    topAlert?.tipo === 'positivo' ? 'Sinal positivo' : topAlert?.tipo === 'atencao' ? 'Ponto de atencao' : 'Monitoramento'
-
+  const principal = followers.data?.profiles.find(profile => profile.role === 'CLIENT')
+  const points = principal?.history.filter(point => point.followers != null) || []
+  const hasGrowth = points.length > 1
+  const growth = hasGrowth ? points.at(-1)!.followers! - points[0].followers! : null
+  const growthPercent = growth != null && points[0].followers ? growth / points[0].followers * 100 : null
+  const summary = overview.data?.summary
+  const campaignName = campaigns.find(campaign => String(campaign.id) === selected)?.name || 'Campanha'
+  const needsCollection = !summary?.posts_analyzed
   const metricOptions: Record<MetricKey, MetricOption> = {
     seguidores: {
-      key: 'seguidores',
-      label: 'Seguidores',
-      helper: 'Base monitorada',
-      value: formatNumber(account.seguidores),
-      delta: `+${formatNumber(account.seguidoresVariacao)} no periodo`,
-      period: formatPercent(account.seguidoresVariacaoPercentual),
-      values: daily.map((point) => point.seguidores),
+      key: 'seguidores', label: 'Seguidores',
+      helper: principal ? `@${principal.username} · últimos 90 dias` : 'Perfil principal não cadastrado',
+      value: number(principal?.current_followers),
+      delta: growth == null ? 'É preciso ter duas coletas com dados.' : `${growth > 0 ? '+' : ''}${number(growth)} entre coletas disponíveis`,
+      period: growthPercent == null ? '—' : `${growthPercent > 0 ? '+' : ''}${number(growthPercent)}%`,
+      values: principal?.history.map(point => point.followers) || [],
+      emptyLabel: 'O histórico aparecerá após duas coletas de seguidores.',
+      chartLabel: points.length ? `Coletas de ${points[0].date} a ${points.at(-1)!.date}` : 'Sem histórico disponível',
       icon: Users,
     },
     alcance: {
-      key: 'alcance',
-      label: 'Alcance',
-      helper: 'Ultimos 30 dias',
-      value: formatNumber(account.alcance),
-      delta: `${formatNumber(reachDelta)} na janela`,
-      period: formatPercent(account.alcanceVariacaoPercentual),
-      values: daily.map((point) => point.alcance),
-      icon: Eye,
+      key: 'alcance', label: 'Alcance', helper: 'Contas alcançadas', value: '—',
+      delta: 'Não disponível nesta integração.', period: '—', values: [],
+      emptyLabel: 'A coleta atual não fornece alcance. Nenhuma estimativa é exibida.',
+      chartLabel: 'Métrica indisponível', icon: Eye,
     },
     interacoes: {
-      key: 'interacoes',
-      label: 'Interacoes',
-      helper: 'Resposta do publico',
-      value: formatNumber(account.interacoes),
-      delta: `${account.engajamentoPorAlcance}% por alcance`,
-      period: formatPercent(account.interacoesVariacaoPercentual),
-      values: daily.map((point) => point.interacoes),
-      icon: MousePointerClick,
+      key: 'interacoes', label: 'Interações observadas', helper: `Até ${limit} posts por perfil`,
+      value: number(summary?.observed_interactions), delta: 'Sem série histórica comparável.',
+      period: '—', values: [], emptyLabel: 'O total usa a última coleta de cada post. Histórico de variação indisponível.',
+      chartLabel: 'Total da campanha · pode ser parcial', icon: MousePointerClick,
     },
   }
 
   return (
-    <div className="space-y-6">
+    <DataFrame data={overview.data && followers.data} error={overview.error || followers.error}>
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
         <MainMetricChart
           metric={metricOptions[selectedMetric]}
@@ -134,20 +113,20 @@ export default function Overview() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
           <div className="rounded-[1.5rem] border border-white/10 bg-card/80 p-5">
             <p className="font-mono text-[10px] uppercase text-slate">proxima acao</p>
-            <p className="mt-3 text-2xl font-semibold leading-tight text-white">Quinta, 19h</p>
+            <p className="mt-3 text-2xl font-semibold leading-tight text-white">{needsCollection ? 'Coletar dados' : 'Explorar conteúdos'}</p>
             <p className="mt-3 text-sm leading-6 text-slate">
-              Publicar Reel curto sobre transporte publico com chamada local e legenda revisavel.
+              {needsCollection ? `Vincule o perfil principal de ${campaignName} e faça a primeira coleta.` : `${summary?.posts_analyzed} posts analisados em ${summary?.profiles_monitored} perfil(is). Consulte os detalhes dos conteúdos coletados.`}
             </p>
-            <div className="mt-5 h-2 rounded-full bg-white/10">
-              <div className="h-2 w-[78%] rounded-full bg-white/70" />
-            </div>
+            <NavLink to={needsCollection ? '/configuracoes' : '/conteudos'} className="mt-5 inline-flex items-center gap-2 text-sm text-blue underline">
+              {needsCollection ? 'Gerenciar coleta' : 'Ver conteúdos'} <ArrowRight className="h-4 w-4" />
+            </NavLink>
           </div>
 
           <div className="rounded-[1.5rem] border border-white/10 bg-card/80 p-5">
             <p className="font-mono text-[10px] uppercase text-slate">alerta principal</p>
-            <p className="mt-3 text-lg font-semibold leading-snug text-white">{alertLabel}</p>
+            <p className="mt-3 text-lg font-semibold leading-snug text-white">{needsCollection ? 'Aguardando coleta' : 'Cobertura das métricas'}</p>
             <p className="mt-3 text-sm leading-6 text-slate">
-              {topAlert?.texto ?? 'Os sinais principais estao estaveis no periodo monitorado.'}
+              {needsCollection ? 'Nenhum post coletado nesta campanha. Os indicadores serão preenchidos com os dados disponíveis.' : 'Interações podem ser parciais. Alcance e variação de interações ainda não estão disponíveis; valores ausentes aparecem como —.'}
             </p>
           </div>
         </div>
@@ -205,7 +184,7 @@ export default function Overview() {
           ))}
         </div>
       </Dialog>
-    </div>
+    </DataFrame>
   )
 }
 
@@ -216,7 +195,9 @@ interface MetricOption {
   value: string
   delta: string
   period: string
-  values: number[]
+  values: (number | null)[]
+  emptyLabel: string
+  chartLabel: string
   icon: React.ElementType
 }
 
@@ -266,7 +247,7 @@ function MainMetricChart({ metric, onOpenModal }: { metric: MetricOption; onOpen
 
       <div className="relative mt-6 h-[230px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#050812] p-4">
         <div className="absolute inset-0 data-rule opacity-20" />
-        <svg className="relative h-full w-full" viewBox="0 0 300 120" preserveAspectRatio="none">
+        {metric.values.filter(value => value != null).length > 1 ? <svg role="img" aria-label={metric.chartLabel} className="relative h-full w-full" viewBox="0 0 300 120" preserveAspectRatio="none">
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#F5F5F4" stopOpacity="0.18" />
@@ -275,15 +256,11 @@ function MainMetricChart({ metric, onOpenModal }: { metric: MetricOption; onOpen
           </defs>
           <path d={sparkline.area} fill={`url(#${gradientId})`} />
           <path d={sparkline.line} fill="none" stroke="#F5F5F4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div
-          className="absolute"
-          style={{ left: `calc(${sparkline.dot.x}% + 16px)`, top: `calc(${sparkline.dot.y}% + 16px)` }}
-        >
-          <div className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg shadow-white/20" />
-          <div className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-white/20" />
-        </div>
+          <circle cx={sparkline.dot.x * 3} cy={sparkline.dot.y * 1.2} r="2.5" fill="#F5F5F4" />
+        </svg> : <div role="status" className="relative flex h-full items-center justify-center p-6 text-center text-sm leading-6 text-slate">{metric.emptyLabel}</div>}
+
       </div>
+      <p className="mt-3 text-xs text-slate">{metric.chartLabel}</p>
     </article>
   )
 }
@@ -328,8 +305,8 @@ function HubActionCard({ to, title, metric, tag, icon: Icon, summary }: HubActio
   )
 }
 
-function buildSparkline(values: number[]) {
-  const cleanValues = values.filter((value) => Number.isFinite(value))
+function buildSparkline(values: (number | null)[]) {
+  const cleanValues = values.filter((value): value is number => value != null && Number.isFinite(value))
   const safeValues = cleanValues.length > 1 ? cleanValues : [0, 0]
   const min = Math.min(...safeValues)
   const max = Math.max(...safeValues)

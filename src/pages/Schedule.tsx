@@ -1,62 +1,19 @@
-import * as React from 'react'
-import { instagramService } from '@/services/instagramService'
-import type { HeatmapCelula } from '@/types/instagram'
-import { EngagementHeatmap } from '@/components/charts/EngagementHeatmap'
-import { PageLoader } from '@/components/dashboard/PageLoader'
-import { Card } from '@/components/ui/card'
-import { CalendarDays, Clock, TrendingDown, Info } from 'lucide-react'
-
+import { number } from '@/utils/apiFormat'
+import { useCampaign, useCampaignData } from '@/lib/campaignContext'
+import { DataFrame, Empty, Panel } from '@/components/dashboard/ApiData'
+import type { Cell } from '@/types/radar'
 export default function Schedule() {
-  const [heatmap, setHeatmap] = React.useState<HeatmapCelula[] | null>(null)
-
-  React.useEffect(() => {
-    instagramService.getHeatmap().then(setHeatmap)
-  }, [])
-
-  if (!heatmap) return <PageLoader />
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-positive/10 text-positive">
-            <CalendarDays className="h-4 w-4" />
-          </div>
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
-            Melhor dia histórico
-          </p>
-          <p className="font-display text-2xl font-bold text-ink">Quinta-feira</p>
-        </Card>
-        <Card className="p-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue">
-            <Clock className="h-4 w-4" />
-          </div>
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
-            Melhor horário histórico
-          </p>
-          <p className="font-display text-2xl font-bold text-ink">19h</p>
-        </Card>
-        <Card className="p-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-alert/10 text-alert">
-            <TrendingDown className="h-4 w-4" />
-          </div>
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate">
-            Faixa de menor desempenho
-          </p>
-          <p className="font-display text-xl font-bold text-ink">
-            Segunda-feira, 9h–12h
-          </p>
-        </Card>
-      </div>
-
-      <EngagementHeatmap data={heatmap} />
-
-      <Card className="flex items-start gap-3 p-4">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate" />
-        <p className="text-sm text-slate">
-          Os resultados representam associações históricas entre data/hora de publicação e métricas oficiais do conteúdo. O horário não deve ser interpretado isoladamente como causa do desempenho futuro.
-        </p>
-      </Card>
-    </div>
-  )
+  const {limit} = useCampaign()
+  const {data,error} = useCampaignData<{cells: Cell[]; best_observed_interactions: Cell | null}>('time-performance', `limit_per_profile=${limit}`)
+  const max = Math.max(1, ...(data?.cells.map(c => c.avg_observed_interactions ?? 0) || []))
+  const best = data?.best_observed_interactions
+  return <DataFrame data={data} error={error}>
+    <Panel title="Faixa com mais interações observadas">{best ? <><p className="font-display text-3xl">{best.weekday} · {best.hour_label}</p><p className="mt-2 text-sm text-slate">{number(best.avg_observed_interactions)} interações médias em {best.posts} post(s).</p></> : <p className="text-slate">Ainda não há métricas suficientes para comparar horários.</p>}</Panel>
+    {data?.cells.length ? <Panel title="Interações por dia e horário"><div className="overflow-x-auto"><table className="w-full min-w-[600px] text-center text-xs"><thead><tr><th className="p-2">Dia</th>{Array.from({length:8},(_,i) => <th className="p-2" key={i}>{i*3}h–{(i*3+3)%24}h</th>)}</tr></thead><tbody>{['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((day,index) => <tr key={day}><th className="p-2">{day}</th>{Array.from({length:8},(_,i) => {
+      const cell = data.cells.find(c => c.weekday_index === index && c.hour === i*3)
+      const value = cell?.avg_observed_interactions
+      return <td className="border-4 border-card p-3" key={i} title={cell ? `${cell.posts} post(s), ${number(value)} interações médias` : 'Sem dados'} style={{backgroundColor:value == null ? '#1F1F22' : `rgba(127,161,232,${0.12 + value/max*0.58})`}}>{number(value)}</td>
+    })}</tr>)}</tbody></table></div></Panel> : <Empty />}
+    <p className="text-sm text-slate">Horários de São Paulo, agrupados em faixas de três horas. São associações históricas; o horário isolado não explica o desempenho. — indica ausência de dados.</p>
+  </DataFrame>
 }

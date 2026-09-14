@@ -1,109 +1,24 @@
+import { number } from '@/utils/apiFormat'
 import * as React from 'react'
-import { instagramService } from '@/services/instagramService'
-import type { AudienceSummary } from '@/types/instagram'
-import { PageLoader } from '@/components/dashboard/PageLoader'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { MetricCard } from '@/components/dashboard/MetricCard'
-import { Users, UserPlus, Eye, MousePointerClick, Radar, Handshake } from 'lucide-react'
-import { formatNumber } from '@/utils/metrics'
-
+import { useCampaign, useCampaignData } from '@/lib/campaignContext'
+import { DataFrame, DataTable, Empty, Panel } from '@/components/dashboard/ApiData'
+import type { Follower } from '@/types/radar'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 export default function Audience() {
-  const [audience, setAudience] = React.useState<AudienceSummary | null>(null)
-
-  React.useEffect(() => {
-    instagramService.getAudience().then(setAudience)
-  }, [])
-
-  if (!audience) return <PageLoader />
-
-  const maxRegiao = Math.max(...audience.regioes.map((r) => r.percentual))
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <MetricCard label="Seguidores" value={formatNumber(audience.seguidores)} deltaLabel="Base atual" icon={Users} />
-        <MetricCard label="Cresc. líquido" value={formatNumber(audience.novosSeguidores)} deltaLabel="Calculado por snapshots" icon={UserPlus} />
-        <MetricCard label="Visitas ao perfil" value={formatNumber(audience.visitasPerfil)} deltaLabel="No período" icon={Eye} />
-        <MetricCard label="Cliques no link" value={formatNumber(audience.cliquesLink)} deltaLabel="No período" icon={MousePointerClick} />
-        <MetricCard label="Contas alcançadas" value={formatNumber(audience.contasAlcancadas)} deltaLabel="No período" icon={Radar} />
-        <MetricCard label="Contas engajadas" value={formatNumber(audience.contasEngajadas)} deltaLabel="No período" icon={Handshake} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por faixa etária</CardTitle>
-            <CardDescription>Dado agregado quando disponível e elegível.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {audience.faixaEtaria.map((f) => (
-              <div key={f.faixa}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="text-ink">{f.faixa} anos</span>
-                  <span className="font-medium text-ink">{f.percentual}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-blue" style={{ width: `${f.percentual}%` }} />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por gênero</CardTitle>
-            <CardDescription>Dado agregado quando disponível e elegível.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {audience.genero.map((g, i) => (
-              <div key={g.genero}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="text-ink">{g.genero}</span>
-                  <span className="font-medium text-ink">{g.percentual}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${g.percentual}%`,
-                      backgroundColor: ['#8EA4FF', '#5CE1A7', '#F2B45C'][i % 3],
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Localizações agregadas do público</CardTitle>
-          <CardDescription>Exemplo demonstrativo. A Meta pode retornar localidades agregadas quando houver volume mínimo; isto não deve ser tratado como mapa completo por Região Administrativa.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {audience.regioes
-            .slice()
-            .sort((a, b) => b.percentual - a.percentual)
-            .map((r, i) => (
-              <div key={r.cidade} className="flex items-center gap-3">
-                <span className="w-5 shrink-0 text-xs font-semibold text-slate">{i + 1}</span>
-                <span className="w-32 shrink-0 text-sm text-ink">{r.cidade}</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-blue"
-                    style={{ width: `${(r.percentual / maxRegiao) * 100}%` }}
-                  />
-                </div>
-                <span className="w-12 shrink-0 text-right text-sm font-medium text-ink">
-                  {r.percentual}%
-                </span>
-              </div>
-            ))}
-        </CardContent>
-      </Card>
-    </div>
-  )
+  const {days,limit} = useCampaign()
+  const history = useCampaignData<{profiles: Follower[]}>('followers-history', `days=${days}`)
+  const comparison = useCampaignData<{profiles: {profile_id:number; username:string; followers:number|null; avg_comments_per_post:number|null; avg_observed_interactions:number|null}[]}>('benchmark', `limit=${limit}`)
+  const [profileId,setProfileId] = React.useState('')
+  const current = history.data?.profiles.find(p => String(p.profile_id) === profileId) || history.data?.profiles[0]
+  return <DataFrame data={history.data && comparison.data} error={history.error || comparison.error}>
+    <p className="text-sm text-slate">Histórico nos últimos {days} dias. Crescimento calculado entre coletas disponíveis; uma única coleta não permite medir evolução.</p>
+    {history.data?.profiles.length ? <>
+      <Panel title="Seguidores por perfil"><DataTable headers={['Perfil','Última coleta no período','Variação','Variação %','Dias com dados']}>{history.data.profiles.map(p => <tr key={p.profile_id}><td className="p-3">@{p.username}</td><td className="p-3">{number(p.current_followers)}</td><td className="p-3">{p.days_with_data > 1 ? number(p.growth_absolute) : '—'}</td><td className="p-3">{p.days_with_data > 1 && p.growth_percent != null ? `${number(p.growth_percent)}%` : '—'}</td><td className="p-3">{p.days_with_data}</td></tr>)}</DataTable></Panel>
+      <Panel title="Evolução de seguidores"><label className="flex flex-col gap-2 text-sm">Perfil do gráfico<select className="h-10 rounded-md bg-muted px-3" value={current?.profile_id || ''} onChange={e => setProfileId(e.target.value)}>{history.data.profiles.map(p => <option key={p.profile_id} value={p.profile_id}>@{p.username}</option>)}</select></label>
+        {current?.history.some(p => p.followers != null) ? <div className="mt-5 h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={current.history}><XAxis dataKey="date" tick={{fill:'#A1A1AA',fontSize:11}}/><YAxis tick={{fill:'#A1A1AA'}} domain={['auto','auto']}/><Tooltip contentStyle={{background:'#141414',borderColor:'#333'}}/><Line dataKey="followers" name="Seguidores" stroke="#7FA1E8" strokeWidth={2} dot connectNulls={false}/></LineChart></ResponsiveContainer></div> : <div className="mt-4"><Empty>Sem coletas de seguidores neste período.</Empty></div>}
+      </Panel>
+      <Panel title="Comparação de perfis"><DataTable headers={['Perfil','Seguidores (última coleta)','Comentários por post','Interações por post']}>{comparison.data?.profiles.map(p => <tr key={p.profile_id}><td className="p-3">@{p.username}</td><td className="p-3">{number(p.followers)}</td><td className="p-3">{number(p.avg_comments_per_post)}</td><td className="p-3">{number(p.avg_observed_interactions)}</td></tr>)}</DataTable></Panel>
+    </> : <Empty />}
+    <Panel title="Dados de público indisponíveis"><p className="text-sm text-slate">Esta coleta não fornece idade, gênero, localização do público, visitas ao perfil ou cliques. Esses indicadores não são estimados a partir de seguidores.</p></Panel>
+  </DataFrame>
 }
-

@@ -1,29 +1,30 @@
+import { number, date } from '@/utils/apiFormat'
 import * as React from 'react'
-import { instagramService } from '@/services/instagramService'
-import type { MediaItem } from '@/types/instagram'
-import { MediaTable } from '@/components/tables/MediaTable'
-import { MediaDetailPanel } from '@/components/tables/MediaDetailPanel'
-import { PageLoader } from '@/components/dashboard/PageLoader'
-
+import { useCampaign, useCampaignData } from '@/lib/campaignContext'
+import { DataFrame, DataTable, Empty, Panel, InstagramLink } from '@/components/dashboard/ApiData'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import type { Post } from '@/types/radar'
 export default function Content() {
-  const [media, setMedia] = React.useState<MediaItem[] | null>(null)
-  const [selected, setSelected] = React.useState<MediaItem | null>(null)
-
-  React.useEffect(() => {
-    instagramService.getMedia().then(setMedia)
-  }, [])
-
-  if (!media) return <PageLoader />
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-muted/60 p-4">
-        <p className="text-sm leading-6 text-slate">
-          {media.length} conteudos no periodo selecionado. Metricas exibidas seguem o que pode vir da API oficial da Meta e variam por formato e permissao concedida.
-        </p>
-      </div>
-      <MediaTable media={media} onSelect={setSelected} />
-      <MediaDetailPanel item={selected} onClose={() => setSelected(null)} />
+  const { limit } = useCampaign()
+  const {data, error} = useCampaignData<{posts: Post[]}>('posts', `limit_per_profile=${limit}`)
+  const [search, setSearch] = React.useState('')
+  const [format, setFormat] = React.useState('')
+  const [order, setOrder] = React.useState('date')
+  const [selected, setSelected] = React.useState<number | null>(null)
+  const posts = (data?.posts || []).filter(p => (!format || p.content.format === format) && `${p.profile.username} ${p.content.caption || ''}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))
+    .toSorted((a,b) => order === 'comments' ? (b.metrics.comments ?? -1) - (a.metrics.comments ?? -1) : order === 'interactions' ? (b.metrics.observed_interactions ?? -1) - (a.metrics.observed_interactions ?? -1) : (b.content.published_at || '').localeCompare(a.content.published_at || ''))
+  const chosen = data?.posts.find(p => p.post_id === selected)
+  return <DataFrame data={data} error={error}>
+    <div className="flex flex-wrap items-end gap-3">
+      <label className="text-sm">Buscar perfil ou legenda<Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar conteúdos" /></label>
+      <label className="flex flex-col gap-2 text-sm">Formato<select aria-label="Formato" className="h-10 rounded-md bg-muted px-3" value={format} onChange={e => setFormat(e.target.value)}><option value="">Todos os formatos</option>{[...new Set(data?.posts.map(p => p.content.format))].map(f => <option key={f}>{f}</option>)}</select></label>
+      <label className="flex flex-col gap-2 text-sm">Ordenar<select aria-label="Ordenar" className="h-10 rounded-md bg-muted px-3" value={order} onChange={e => setOrder(e.target.value)}><option value="date">Mais recentes</option><option value="comments">Mais comentários</option><option value="interactions">Mais interações</option></select></label>
     </div>
-  )
+    <p className="text-sm text-slate">{posts.length} conteúdos encontrados</p>
+    {!posts.length ? <Empty>{data?.posts.length ? 'Nenhum conteúdo corresponde aos filtros. Ajuste a busca ou o formato.' : 'Nenhum conteúdo coletado para esta campanha.'}</Empty> : <DataTable headers={['Conteúdo', 'Formato', 'Curtidas', 'Comentários', 'Interações', 'Detalhes']}>{posts.map(p => <tr key={p.post_id}>
+      <td className="max-w-xs p-3"><p className="text-blue">@{p.profile.username}</p><p className="line-clamp-2">{p.content.caption || 'Sem legenda'}</p><p className="mt-1 text-xs text-slate">{date(p.content.published_at)}</p></td><td className="p-3">{p.content.format}</td><td className="p-3">{number(p.metrics.likes)}</td><td className="p-3">{number(p.metrics.comments)}</td><td className="p-3">{number(p.metrics.observed_interactions)}</td><td className="p-3"><Button variant="secondary" onClick={() => setSelected(p.post_id)} aria-label={`Detalhes do post ${p.post_id}`}>Ver detalhes</Button></td>
+    </tr>)}</DataTable>}
+    {chosen ? <Panel title={`Detalhes · @${chosen.profile.username}`}><div className="space-y-4"><Button variant="secondary" onClick={() => setSelected(null)}>Fechar detalhes</Button><p className="whitespace-pre-wrap break-words">{chosen.content.caption || 'Sem legenda'}</p><p>Tema: {chosen.content.theme} · Classificação por palavras-chave</p><dl className="grid grid-cols-2 gap-3">{(['likes','comments','views','plays','shares','saves'] as const).map((key,i) => <div key={key}><dt className="text-xs text-slate">{['Curtidas','Comentários','Visualizações','Reproduções','Compartilhamentos','Salvamentos'][i]}</dt><dd>{number(chosen.metrics[key])}</dd></div>)}</dl><p className="text-xs text-slate">Coletado em {date(chosen.metrics.collected_at)} · {chosen.metrics.interactions_complete ? 'Interações completas' : 'Interações parciais'}</p><InstagramLink url={chosen.content.url} /></div></Panel> : null}
+  </DataFrame>
 }

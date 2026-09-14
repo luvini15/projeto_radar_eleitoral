@@ -166,4 +166,12 @@ class ProfileSnapshot(SQLModel, table=True):
     collected_at: datetime = Field(
         default_factory=utc_now,
         index=True,
-    )    
+    )
+class SyncSchedule(SQLModel, table=True):
+    __tablename__ = 'sync_schedules'
+    campaign_id: int = Field(primary_key=True, foreign_key='campaigns.id')
+    next_run_at: datetime
+    last_started_at: datetime | None = None
+    last_finished_at: datetime | None = None
+    status: str = 'waiting'
+    error: str | None = None

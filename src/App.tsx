@@ -1,3 +1,4 @@
+import { CampaignProvider } from '@/lib/CampaignProvider'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/lib/authContext'
 import { ToastProvider } from '@/components/ui/toast'
@@ -22,7 +23,7 @@ export default function App() {
             <Route
               element={
                 <ProtectedRoute>
-                  <DashboardLayout />
+                  <CampaignProvider><DashboardLayout /></CampaignProvider>
                 </ProtectedRoute>
               }
             >

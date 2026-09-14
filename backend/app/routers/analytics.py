@@ -86,6 +86,11 @@ def _avg(values: list[int | float]) -> float | None:
     return round(mean(values), 2) if values else None
 
 
+def _sum_available(values) -> int | float | None:
+    available = [value for value in values if value is not None]
+    return sum(available) if available else None
+
+
 def _format_name(post: InstagramPost) -> str:
     if post.content_type == "Sidecar":
         return "Carrossel"
@@ -166,10 +171,10 @@ def campaign_overview(campaign_id: int, limit: int = 25, session: Session = Depe
         snapshots = [s for s in snapshots if s is not None]
 
         likes_values = [s.likes_count for s in snapshots if s.likes_count is not None]
-        comments = sum(s.comments_count or 0 for s in snapshots)
-        views = sum(s.views_count or 0 for s in snapshots)
-        plays = sum(s.plays_count or 0 for s in snapshots)
-        observed = sum(s.interactions_count or 0 for s in snapshots)
+        comments = _sum_available(s.comments_count for s in snapshots)
+        views = _sum_available(s.views_count for s in snapshots)
+        plays = _sum_available(s.plays_count for s in snapshots)
+        observed = _sum_available(s.interactions_count for s in snapshots)
 
         profiles_data.append(
             {
@@ -200,10 +205,10 @@ def campaign_overview(campaign_id: int, limit: int = 25, session: Session = Depe
         "summary": {
             "profiles_monitored": len(profiles_data),
             "posts_analyzed": sum(p["posts_analyzed"] for p in profiles_data),
-            "comments": sum(p["comments"] for p in profiles_data),
-            "views": sum(p["views"] for p in profiles_data),
-            "plays": sum(p["plays"] for p in profiles_data),
-            "observed_interactions": sum(p["observed_interactions"] for p in profiles_data),
+            "comments": _sum_available(p["comments"] for p in profiles_data),
+            "views": _sum_available(p["views"] for p in profiles_data),
+            "plays": _sum_available(p["plays"] for p in profiles_data),
+            "observed_interactions": _sum_available(p["observed_interactions"] for p in profiles_data),
         },
         "profiles": profiles_data,
     }
@@ -305,7 +310,10 @@ def campaign_posts(
                 continue
             results.append(_post_payload(post, profile, link.role, _latest_snapshot(session, post.id)))
 
-    results.sort(key=lambda x: x["content"]["published_at"] or datetime.min, reverse=True)
+    results.sort(
+        key=lambda x: _local_dt(x["content"]["published_at"]) or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
     return {
         "campaign": {"id": campaign.id, "name": campaign.name},
         "filters": {"role": role, "username": username, "content_type": content_type, "limit_per_profile": limit_per_profile},

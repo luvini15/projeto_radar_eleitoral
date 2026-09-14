@@ -5,10 +5,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = ApifyClient(os.environ["APIFY_TOKEN"])
+def get_client():
+    token = os.getenv("APIFY_TOKEN")
+    if not token:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=503, detail="Configure APIFY_TOKEN no backend/.env para executar a coleta.")
+    return ApifyClient(token)
 
 
 def collect_posts(username: str, limit: int = 3):
+    client = get_client()
     run_input = {
         "username": [username],
         "resultsLimit": limit,
@@ -30,6 +37,7 @@ def collect_posts(username: str, limit: int = 3):
     return result.items
 
 def collect_profile(username: str):
+    client = get_client()
     run_input = {
         "usernames": [username],
     }

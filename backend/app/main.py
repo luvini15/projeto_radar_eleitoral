@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+from app.services.auto_sync import start_scheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,9 +9,26 @@ from app.routers.campaigns import router as campaigns_router
 from app.routers.analytics import router as analytics_router
 
 
+@asynccontextmanager
+async def lifespan(app):
+    create_db_and_tables()
+    stop = start_scheduler()
+    try:
+        yield
+    finally:
+        stop.set()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Data Sight API",
     version="0.1.0",
+    description=(
+        "API do Radar Eleitoral. Os endpoints de sincronização coletam perfis e posts "
+        "do Instagram pela Apify e persistem os resultados no banco. "
+        "Configure APIFY_TOKEN no backend/.env antes de executar uma coleta. "
+        "Executar a sincronização consome créditos da conta Apify."
+    ),
 )
 
 
@@ -23,11 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
 
 
 app.include_router(sync_router)
