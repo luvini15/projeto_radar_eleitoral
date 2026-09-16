@@ -1,10 +1,33 @@
-import { Loader2 } from 'lucide-react'
-
 export function PageLoader() {
   return (
-    <div className="flex items-center justify-center py-24 text-slate">
-      <Loader2 className="h-5 w-5 animate-spin" />
-      <span className="ml-2 text-sm">Carregando dados demonstrativos…</span>
+    <div className="flex min-h-[360px] flex-col items-center justify-center gap-8 text-slate">
+      <div className="boxes" aria-label="Carregando dados">
+        <div className="box">
+          <div />
+          <div />
+          <div />
+          <div />
+        </div>
+        <div className="box">
+          <div />
+          <div />
+          <div />
+          <div />
+        </div>
+        <div className="box">
+          <div />
+          <div />
+          <div />
+          <div />
+        </div>
+        <div className="box">
+          <div />
+          <div />
+          <div />
+          <div />
+        </div>
+      </div>
+      <p className="text-sm text-slate">Carregando dados...</p>
     </div>
   )
 }

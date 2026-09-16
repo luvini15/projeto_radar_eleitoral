@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 
 from app.integrations.apify import collect_posts, collect_profile
 from app.models import CampaignProfile, CollectionRun, InstagramPost, InstagramProfile, PostSnapshot, ProfileCollectionRun, ProfileSnapshot
+from app.services.comments import save_comment_sample
 from app.services.normalizer import normalize_apify_post, normalize_non_negative
 
 
@@ -32,7 +33,7 @@ def collect_one_profile(session: Session, profile: InstagramProfile, limit: int)
             session.add(ProfileSnapshot(profile_id=profile.id, followers_count=normalize_non_negative(raw_profile.get("followersCount")), following_count=normalize_non_negative(raw_profile.get("followingCount")), posts_count=normalize_non_negative(raw_profile.get("postsCount")), source="APIFY_PUBLIC"))
             session.flush()
     except Exception as exc:
-        follower_error = f"{type(exc).__name__}: {str(exc)[:300]}"
+        follower_error = f"{type(exc).__name__}: falha na coleta de seguidores"
 
     raw_posts = collect_posts(profile.username, limit)
     new_posts = snapshots = skipped = 0
@@ -41,7 +42,13 @@ def collect_one_profile(session: Session, profile: InstagramProfile, limit: int)
         if not item.get("shortcode") or not item.get("url"):
             skipped += 1
             continue
+        if item.get("owner_full_name"):
+            profile.full_name = item["owner_full_name"]
+        if item.get("owner_id"):
+            profile.instagram_id = item["owner_id"]
+        session.add(profile)
         post, created = upsert_post(session, profile, item)
+        save_comment_sample(session, post.id, raw, commit=False)
         new_posts += int(created)
         session.add(PostSnapshot(post_id=post.id, likes_count=item.get("likes_count"), comments_count=item.get("comments_count"), shares_count=item.get("shares_count"), saves_count=item.get("saves_count"), views_count=item.get("views_count"), plays_count=item.get("plays_count"), interactions_count=item.get("interactions_count"), interactions_complete=item.get("interactions_complete", False), source=item.get("source", "APIFY_PUBLIC")))
         snapshots += 1
@@ -69,11 +76,11 @@ def collect_campaign(session: Session, campaign_id: int, limit: int = 25, trigge
             results.append({**result, "profile_id": profile.id, "role": link.role, "status": detail.status})
         except Exception as exc:
             session.rollback(); detail = session.get(ProfileCollectionRun, detail.id); run = session.get(CollectionRun, run.id)
-            detail.status = "FAILED"; detail.error = f"{type(exc).__name__}: {str(exc)[:500]}"; run.profiles_failed += 1
+            detail.status = "FAILED"; detail.error = f"{type(exc).__name__}: falha na coleta do perfil"; run.profiles_failed += 1
             errors.append(f"@{profile.username}: {type(exc).__name__}"); results.append({"profile_id": profile.id, "username": profile.username, "role": link.role, "status": "FAILED", "error": detail.error})
         detail.finished_at = now(); session.add(detail); session.add(run); session.commit()
     run = session.get(CollectionRun, run.id); run.finished_at = now()
     run.status = "FAILED" if run.profiles_succeeded == 0 and run.profiles_failed else "PARTIAL" if errors else "SUCCESS"
     run.errors = json.dumps(errors, ensure_ascii=False) if errors else None
     session.add(run); session.commit(); session.refresh(run)
-    return {"run_id": run.id, "campaign_id": campaign_id, "status": run.status, "started_at": run.started_at, "finished_at": run.finished_at, "profiles_total": run.profiles_total, "profiles_succeeded": run.profiles_succeeded, "profiles_failed": run.profiles_failed, "posts_found": run.posts_found, "new_posts": run.new_posts, "post_snapshots_created": run.post_snapshots_created, "followers_updated": run.followers_updated, "errors": errors, "posts_requested_per_profile": limit, "results": results}
+    return {"profiles_synced": run.profiles_succeeded, "run_id": run.id, "campaign_id": campaign_id, "status": run.status, "started_at": run.started_at, "finished_at": run.finished_at, "profiles_total": run.profiles_total, "profiles_succeeded": run.profiles_succeeded, "profiles_failed": run.profiles_failed, "posts_found": run.posts_found, "new_posts": run.new_posts, "post_snapshots_created": run.post_snapshots_created, "followers_updated": run.followers_updated, "errors": errors, "posts_requested_per_profile": limit, "results": results}

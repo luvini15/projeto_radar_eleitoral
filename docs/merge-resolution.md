@@ -1,0 +1,195 @@
+# Resolução do merge main + redesign/data-sight-interface
+
+Os cinco conflitos foram integrados preservando os modelos, rotas e funcionalidades das duas branches. O commit do merge permanece pendente.
+
+## Integração
+
+- O lifespan inicializa banco e referências territoriais e inicia o auto sync.
+- A coleta manual e o auto sync salvam histórico de execuções, seguidores, métricas, nomes dos perfis e amostras de comentários para a análise de posts.
+- Falhas parciais e totais são diferenciadas; a coleta de comentários respeita a transação do perfil. As duas rotas de coleta manual compartilham o bloqueio do auto sync dentro do processo.
+- Campanhas do auto sync por intervalo são excluídas do scheduler diário, evitando dois agendamentos para a mesma campanha. A API deve executar com um único worker; o scheduler diário continua sendo um processo separado.
+- Coletas, concorrentes, tendências, inteligência territorial e relatórios foram incorporados ao frontend Data Sight, com os filtros existentes e a campanha selecionada no painel. O frontend anterior permanece preservado.
+- Inteligência territorial mantém `/insights`; a análise estratégica do redesign fica em `/analise-estrategica`. Detalhes, comentários e IA continuam em `/conteudos/:postId`.
+- Corrigidos os totais das séries diárias da comparação e adaptados os componentes incorporados ao tema escuro.
+
+## Validação executada
+
+- Git: zero entradas em conflito, zero arquivos com marcadores e `git diff --cached --check` aprovado. Arquivos adicionados ao índice; commit do merge pendente.
+
+- Backend: 32 testes aprovados, incluindo 8 testes novos de regressão do merge; SQLite isolado e provedores externos simulados.
+- Frontend: `npm run build` aprovado (TypeScript + Vite).
+- Lint: `npm run lint` aprovado, sem erros; 6 avisos de Fast Refresh em arquivos que exportam componentes e funções/contextos.
+- Navegador: os cinco scripts abaixo passaram com Chromium headless, frontend em 5174 e fixture isolada em 8002:
+  - `tests/merge-integration-smoke.mjs`: telas incorporadas, filtros, histórico de seguidores, troca de campanha, relatório e mobile.
+  - `tests/navigation-smoke.mjs`: navegação, sidebar, detalhes, reload, 404 e mobile.
+  - `tests/post-detail-ai-smoke.mjs`: IA, comentários e evolução temporal.
+  - `tests/latest-post-smoke.mjs`: Reel, carrossel, incorporação, métricas e estados vazios.
+  - `tests/ui-smoke.mjs`: telas do redesign, coleta sem token, filtros, persistência, falha de rede e responsividade.
+- O teste geral foi ajustado para aceitar singular e plural de publicação; todos os testes de navegador podem usar `UI_BASE_URL` e `UI_FIXTURE_PORT`.
+- As validações não consumiram créditos Apify/OpenRouter nem modificaram a base de produção.
+- Avisos restantes: bundle principal de aproximadamente 774 kB (227 kB gzip) e aviso de depreciação do httpx no TestClient do Starlette. Não impedem o build nem os testes.
+
+## Arquivos alterados nesta resolução
+
+- [README.md](../README.md)
+- [backend/.env.example](../backend/.env.example)
+- [backend/app/main.py](../backend/app/main.py)
+- [backend/app/models.py](../backend/app/models.py)
+- [backend/app/routers/collections.py](../backend/app/routers/collections.py)
+- [backend/app/routers/sync.py](../backend/app/routers/sync.py)
+- [backend/app/scheduler.py](../backend/app/scheduler.py)
+- [backend/app/services/auto_sync.py](../backend/app/services/auto_sync.py)
+- [backend/app/services/comments.py](../backend/app/services/comments.py)
+- [backend/app/services/monitoring_sync.py](../backend/app/services/monitoring_sync.py)
+- [backend/tests/serve_ui_fixture.py](../backend/tests/serve_ui_fixture.py)
+- [backend/tests/test_merge_integration.py](../backend/tests/test_merge_integration.py)
+- [docs/merge-resolution.md](../docs/merge-resolution.md)
+- [src/App.tsx](../src/App.tsx)
+- [src/components/comparison/AnalysisCard.tsx](../src/components/comparison/AnalysisCard.tsx)
+- [src/components/comparison/FollowersTooltip.tsx](../src/components/comparison/FollowersTooltip.tsx)
+- [src/components/comparison/ThemeProfileHeatmap.tsx](../src/components/comparison/ThemeProfileHeatmap.tsx)
+- [src/components/comparison/ThemeScatterTooltip.tsx](../src/components/comparison/ThemeScatterTooltip.tsx)
+- [src/components/dashboard/AutoSyncStatus.tsx](../src/components/dashboard/AutoSyncStatus.tsx)
+- [src/components/dashboard/CampaignPage.tsx](../src/components/dashboard/CampaignPage.tsx)
+- [src/components/dashboard/PageLoader.tsx](../src/components/dashboard/PageLoader.tsx)
+- [src/components/dashboard/TerritorialFilters.tsx](../src/components/dashboard/TerritorialFilters.tsx)
+- [src/components/layout/DashboardLayout.tsx](../src/components/layout/DashboardLayout.tsx)
+- [src/components/layout/Sidebar.tsx](../src/components/layout/Sidebar.tsx)
+- [src/components/layout/Topbar.tsx](../src/components/layout/Topbar.tsx)
+- [src/pages/Collections.tsx](../src/pages/Collections.tsx)
+- [src/pages/Comparison.tsx](../src/pages/Comparison.tsx)
+- [src/pages/Reports.tsx](../src/pages/Reports.tsx)
+- [src/pages/Settings.tsx](../src/pages/Settings.tsx)
+- [src/pages/TerritorialIntelligence.tsx](../src/pages/TerritorialIntelligence.tsx)
+- [src/pages/Trends.tsx](../src/pages/Trends.tsx)
+- [src/services/api.ts](../src/services/api.ts)
+- [src/services/radarApi.ts](../src/services/radarApi.ts)
+- [src/types/api.ts](../src/types/api.ts)
+- [src/types/radar.ts](../src/types/radar.ts)
+- [tests/latest-post-smoke.mjs](../tests/latest-post-smoke.mjs)
+- [tests/merge-integration-smoke.mjs](../tests/merge-integration-smoke.mjs)
+- [tests/navigation-smoke.mjs](../tests/navigation-smoke.mjs)
+- [tests/post-detail-ai-smoke.mjs](../tests/post-detail-ai-smoke.mjs)
+- [tests/ui-smoke.mjs](../tests/ui-smoke.mjs)
+- [tmp-login-debug.err](../tmp-login-debug.err)
+
+## Lista completa de arquivos do merge em relação à main
+
+Inclui os arquivos que já vieram da branch redesign sem conflito.
+
+- `.env.example`
+- `.gitignore`
+- `README.md`
+- `backend/.env.example`
+- `backend/app/integrations/apify.py`
+- `backend/app/main.py`
+- `backend/app/models.py`
+- `backend/app/routers/ai.py`
+- `backend/app/routers/analytics.py`
+- `backend/app/routers/collections.py`
+- `backend/app/routers/sync.py`
+- `backend/app/scheduler.py`
+- `backend/app/services/auto_sync.py`
+- `backend/app/services/comments.py`
+- `backend/app/services/instagram_sync.py`
+- `backend/app/services/media_preview.py`
+- `backend/app/services/monitoring_sync.py`
+- `backend/app/services/post_ai.py`
+- `backend/radar_mcp.py`
+- `backend/requirements.txt`
+- `backend/start_opencode.py`
+- `backend/tests/__init__.py`
+- `backend/tests/check_mcp.py`
+- `backend/tests/mcp_evaluations.xml`
+- `backend/tests/serve_ui_fixture.py`
+- `backend/tests/test_analytics.py`
+- `backend/tests/test_auto_sync.py`
+- `backend/tests/test_media_preview.py`
+- `backend/tests/test_merge_integration.py`
+- `backend/tests/test_post_ai.py`
+- `components.json`
+- `docs/merge-resolution.md`
+- `index.html`
+- `opencode.json`
+- `package-lock.json`
+- `package.json`
+- `public/data-sight-logo.svg`
+- `public/data-sight-mark.svg`
+- `public/favicon.svg`
+- `public/fonts/dm-sans/DMSans-Bold.ttf`
+- `public/fonts/dm-sans/DMSans-BoldItalic.ttf`
+- `public/fonts/dm-sans/DMSans-Italic.ttf`
+- `public/fonts/dm-sans/DMSans-Medium.ttf`
+- `public/fonts/dm-sans/DMSans-MediumItalic.ttf`
+- `public/fonts/dm-sans/DMSans-Regular.ttf`
+- `public/fonts/dm-sans/DMSans-SemiBold.ttf`
+- `public/fonts/dm-sans/DMSans-SemiBoldItalic.ttf`
+- `src/App.tsx`
+- `src/components/brand/DataSightLogo.tsx`
+- `src/components/charts/EngagementByTopicChart.tsx`
+- `src/components/charts/EngagementHeatmap.tsx`
+- `src/components/charts/FollowersAreaChart.tsx`
+- `src/components/charts/ReachInteractionsChart.tsx`
+- `src/components/charts/TopicOpportunityScatter.tsx`
+- `src/components/comparison/AnalysisCard.tsx`
+- `src/components/comparison/FollowersTooltip.tsx`
+- `src/components/comparison/ThemeProfileHeatmap.tsx`
+- `src/components/comparison/ThemeScatterTooltip.tsx`
+- `src/components/dashboard/AlertList.tsx`
+- `src/components/dashboard/ApiData.tsx`
+- `src/components/dashboard/AutoSyncStatus.tsx`
+- `src/components/dashboard/CampaignPage.tsx`
+- `src/components/dashboard/ExecutiveSummary.tsx`
+- `src/components/dashboard/LatestPostCard.tsx`
+- `src/components/dashboard/MetricCard.tsx`
+- `src/components/dashboard/PageLoader.tsx`
+- `src/components/dashboard/PostAIAnalysis.tsx`
+- `src/components/dashboard/TerritorialFilters.tsx`
+- `src/components/insights/FormatComparison.tsx`
+- `src/components/insights/StrategicInsightCard.tsx`
+- `src/components/insights/TopicCard.tsx`
+- `src/components/layout/ConfidentialBanner.tsx`
+- `src/components/layout/DashboardLayout.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/layout/Topbar.tsx`
+- `src/components/login/LoginAnimatedBackdrop.tsx`
+- `src/components/tables/MediaDetailPanel.tsx`
+- `src/components/tables/MediaTable.tsx`
+- `src/components/tables/PostThumbnail.tsx`
+- `src/components/ui/button.tsx`
+- `src/components/ui/card.tsx`
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/input.tsx`
+- `src/components/ui/select.tsx`
+- `src/components/ui/sheet.tsx`
+- `src/index.css`
+- `src/lib/CampaignProvider.tsx`
+- `src/lib/authContext.tsx`
+- `src/lib/campaignContext.ts`
+- `src/pages/Audience.tsx`
+- `src/pages/Collections.tsx`
+- `src/pages/Comparison.tsx`
+- `src/pages/Content.tsx`
+- `src/pages/ContentDetail.tsx`
+- `src/pages/Insights.tsx`
+- `src/pages/Login.tsx`
+- `src/pages/Overview.tsx`
+- `src/pages/Reports.tsx`
+- `src/pages/Schedule.tsx`
+- `src/pages/Settings.tsx`
+- `src/pages/TerritorialIntelligence.tsx`
+- `src/pages/Topics.tsx`
+- `src/pages/Trends.tsx`
+- `src/services/api.ts`
+- `src/services/radarApi.ts`
+- `src/types/api.ts`
+- `src/types/instagram.ts`
+- `src/types/radar.ts`
+- `src/utils/apiFormat.ts`
+- `tests/latest-post-smoke.mjs`
+- `tests/merge-integration-smoke.mjs`
+- `tests/navigation-smoke.mjs`
+- `tests/post-detail-ai-smoke.mjs`
+- `tests/ui-smoke.mjs`
+- `tmp-login-debug.err`

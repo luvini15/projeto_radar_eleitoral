@@ -13,17 +13,18 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, deltaLabel, positive = true, icon: Icon }: MetricCardProps) {
   return (
-    <Card className="p-5">
+    <Card className="relative overflow-hidden p-4">
+      <div className="data-rule absolute inset-x-0 top-0 h-1 opacity-70" />
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate">{label}</span>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue">
+        <span className="font-mono text-[10px] uppercase text-slate">{label}</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white/5 text-blue">
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="mt-3 font-display text-3xl font-bold tracking-tight text-blue-dark">{value}</p>
+      <p className="mt-4 font-display text-3xl font-semibold leading-none text-ink">{value}</p>
       <div
         className={cn(
-          'mt-2 inline-flex items-center gap-1 text-xs font-semibold',
+          'mt-3 inline-flex items-center gap-1 text-xs font-bold',
           positive ? 'text-positive' : 'text-alert'
         )}
       >

@@ -7,30 +7,30 @@ export function FollowersAreaChart({ data }: { data: DailyMetric[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Evolução de seguidores</CardTitle>
-        <CardDescription>Últimos 30 dias</CardDescription>
+        <CardTitle>Evolucao de seguidores</CardTitle>
+        <CardDescription>Ultimos 30 dias</CardDescription>
       </CardHeader>
       <CardContent className="pl-1 pr-4">
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="seguidoresGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563EB" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                <stop offset="0%" stopColor="#8EA4FF" stopOpacity={0.34} />
+                <stop offset="100%" stopColor="#8EA4FF" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="#DFE6EF" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.1)" />
             <XAxis
               dataKey="data"
               tickFormatter={(v) => v.slice(8, 10) + '/' + v.slice(5, 7)}
-              tick={{ fontSize: 11, fill: '#64748B' }}
-              axisLine={{ stroke: '#DFE6EF' }}
+              tick={{ fontSize: 11, fill: '#8B949E' }}
+              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
               tickLine={false}
               interval={4}
             />
             <YAxis
               tickFormatter={(v) => formatCompact(v)}
-              tick={{ fontSize: 11, fill: '#64748B' }}
+              tick={{ fontSize: 11, fill: '#8B949E' }}
               axisLine={false}
               tickLine={false}
               width={48}
@@ -40,15 +40,17 @@ export function FollowersAreaChart({ data }: { data: DailyMetric[] }) {
               formatter={(value) => [formatNumber(Number(value)), 'Seguidores']}
               labelFormatter={(label) => `Data: ${label}`}
               contentStyle={{
+                backgroundColor: '#101216',
                 borderRadius: 8,
-                borderColor: '#DFE6EF',
+                borderColor: 'rgba(255,255,255,0.14)',
+                color: '#F5F7FA',
                 fontSize: 12,
               }}
             />
             <Area
               type="monotone"
               dataKey="seguidores"
-              stroke="#2563EB"
+              stroke="#8EA4FF"
               strokeWidth={2}
               fill="url(#seguidoresGradient)"
             />

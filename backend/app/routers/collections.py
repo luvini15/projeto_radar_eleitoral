@@ -10,6 +10,8 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models import Campaign, CollectionRun, InstagramProfile, ProfileCollectionRun, ProfileSnapshot
 from app.services.monitoring_sync import collect_campaign
+from app.services.auto_sync import collection_slot, config
+from app.models import SyncSchedule
 
 router = APIRouter(prefix="/api", tags=["collections"])
 
@@ -31,12 +33,19 @@ def run_collection(campaign_id: int, limit: int = Query(default=25, ge=1, le=100
         raise HTTPException(404, "Campanha não encontrada.")
     if not campaign.active:
         raise HTTPException(400, "Campanha inativa.")
-    return collect_campaign(session, campaign_id, limit, "MANUAL")
+    if not os.getenv("APIFY_TOKEN"):
+        raise HTTPException(503, "Configure APIFY_TOKEN no backend/.env para executar a coleta.")
+    with collection_slot():
+        return collect_campaign(session, campaign_id, limit, "MANUAL")
 
 
 @router.get("/campaigns/{campaign_id}/collections")
 def collection_history(campaign_id: int, limit: int = Query(default=20, ge=1, le=100), session: Session = Depends(get_session)):
     rows = list(session.exec(select(CollectionRun).where(CollectionRun.campaign_id == campaign_id).order_by(CollectionRun.started_at.desc()).limit(limit)).all())
+    ids, hours, _ = config()
+    if campaign_id in ids:
+        schedule = session.get(SyncSchedule, campaign_id)
+        return {"campaign_id": campaign_id, "next_collection": schedule.next_run_at if schedule else None, "schedule": {"mode": "interval", "interval_hours": hours, "time": f"A cada {hours} horas", "timezone": "UTC"}, "collections": rows}
     return {"campaign_id": campaign_id, "next_collection": next_collection(), "schedule": {"time": os.getenv("COLLECTION_DAILY_TIME", "03:00"), "timezone": os.getenv("COLLECTION_TIMEZONE", "America/Sao_Paulo")}, "collections": rows}
 
 

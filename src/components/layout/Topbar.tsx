@@ -1,55 +1,22 @@
 import { Menu, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
-import { useToast } from '@/components/ui/toast'
-import type { PeriodoFiltro } from '@/types/instagram'
+import { useCampaign } from '@/lib/campaignContext'
+import { useLocation } from 'react-router-dom'
 
-interface TopbarProps {
-  title: string
-  subtitle: string
-  periodo: PeriodoFiltro
-  onPeriodoChange: (p: PeriodoFiltro) => void
-  onOpenMobileMenu: () => void
-}
-
-export function Topbar({ title, subtitle, periodo, onPeriodoChange, onOpenMobileMenu }: TopbarProps) {
-  const { show } = useToast()
-
-  return (
-    <div className="border-b border-border bg-white/90 backdrop-blur px-4 py-4 md:px-8 md:py-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <button
-            onClick={onOpenMobileMenu}
-            className="md:hidden mt-1 rounded-md border border-border p-1.5 text-slate"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-          <div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-blue-dark">
-              {title}
-            </h1>
-            <p className="mt-0.5 text-sm text-slate">{subtitle}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={periodo} onChange={(e) => onPeriodoChange(e.target.value as PeriodoFiltro)}>
-            <option value="7d">Últimos 7 dias</option>
-            <option value="30d">Últimos 30 dias</option>
-            <option value="90d">Últimos 90 dias</option>
-            <option value="custom">Período personalizado</option>
-          </Select>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => show('Dados demonstrativos atualizados.')}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Atualizar dados
-          </Button>
-        </div>
+export function Topbar({ title, onOpenMobileMenu, desktopOpen, onToggleDesktop }: { title: string; onOpenMobileMenu: () => void; desktopOpen: boolean; onToggleDesktop: () => void }) {
+  const c = useCampaign()
+  const { pathname } = useLocation()
+  const field = 'h-9 max-w-full rounded-md border border-border bg-muted px-2 text-sm'
+  return <div className="border-b border-border bg-bg/55 px-4 py-4 md:px-7">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3"><button onClick={onOpenMobileMenu} className="md:hidden" aria-label="Abrir menu"><Menu className="h-5 w-5" /></button><button onClick={onToggleDesktop} className="hidden rounded-md p-2 text-slate hover:bg-white/8 md:block" aria-label={desktopOpen ? "Recolher sidebar" : "Expandir sidebar"} aria-expanded={desktopOpen} aria-controls="desktop-sidebar"><Menu className="h-5 w-5" /></button><h1 className="font-display text-2xl font-semibold">{title}</h1></div>
+      <div className="flex max-w-full flex-wrap items-end gap-2">
+        <label className="flex min-w-0 flex-col gap-1 text-xs text-slate">Campanha<select aria-label="Campanha do painel" className={field} value={c.selected} disabled={c.loading} onChange={e => c.setSelected(e.target.value)}><option value="">Selecione</option>{c.campaigns.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+        {['/', '/conteudos', '/temas-formatos', '/dias-horarios', '/audiencia', '/analise-estrategica'].includes(pathname) ? <label className="flex flex-col gap-1 text-xs text-slate">Posts recentes por perfil<select className={field} value={c.limit} onChange={e => c.setLimit(Number(e.target.value))}>{[10,25,50,100].map(n => <option key={n} value={n}>{n} posts</option>)}</select></label> : null}
+        {pathname === '/audiencia' ? <label className="flex flex-col gap-1 text-xs text-slate">Histórico de seguidores<select className={field} value={c.days} onChange={e => c.setDays(Number(e.target.value))}>{[7,30,90].map(n => <option key={n} value={n}>{n} dias</option>)}</select></label> : null}
+        <span className="self-center text-xs text-slate">Atualiza a cada 60s</span>
+        <Button variant="secondary" disabled={c.loading} onClick={c.refresh}><RefreshCw className="h-4 w-4" />Recarregar</Button>
       </div>
     </div>
-  )
+  </div>
 }

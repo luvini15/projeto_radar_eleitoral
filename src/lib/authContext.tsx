@@ -14,7 +14,7 @@ interface AuthContextValue {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null)
 
-const SESSION_KEY = 'radar-eleitoral:session-simulada'
+const SESSION_KEY = 'data-sight:session-simulada'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(() => {

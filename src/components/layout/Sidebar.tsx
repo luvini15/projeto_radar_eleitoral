@@ -1,58 +1,93 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutGrid,
+  BarChart3,
+  CalendarClock,
   FileStack,
   Layers3,
-  CalendarClock,
-  Users,
-  Sparkles,
+  LogOut,
   Settings,
   ShieldCheck,
+  Sparkles,
+  Users,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/authContext'
+import { DataSightLogo } from '@/components/brand/DataSightLogo'
 
 const navItems = [
-  { to: '/', label: 'Visão Geral', icon: LayoutGrid, end: true },
-  { to: '/conteudos', label: 'Conteúdos', icon: FileStack },
-  { to: '/temas-formatos', label: 'Temas e Formatos', icon: Layers3 },
-  { to: '/dias-horarios', label: 'Desempenho por Horário', icon: CalendarClock },
-  { to: '/audiencia', label: 'Audiência', icon: Users },
-  { to: '/insights', label: 'Inteligência Estratégica', icon: Sparkles },
-  { to: '/configuracoes', label: 'Configurações', icon: Settings },
+  { to: '/', label: 'Visao geral', icon: BarChart3, end: true },
+  { to: '/conteudos', label: 'Conteudos', icon: FileStack },
+  { to: '/temas-formatos', label: 'Temas e formatos', icon: Layers3 },
+  { to: '/dias-horarios', label: 'Dias e horarios', icon: CalendarClock },
+  { to: '/audiencia', label: 'Audiencia', icon: Users },
+  { to: '/insights', label: 'Inteligência territorial', icon: Sparkles },
+  { to: '/analise-estrategica', label: 'Análise estratégica', icon: Sparkles },
+  { to: '/tendencias', label: 'Tendências', icon: BarChart3 },
+  { to: '/concorrentes', label: 'Concorrentes', icon: Users },
+  { to: '/relatorios', label: 'Relatórios', icon: FileStack },
+  { to: '/coletas', label: 'Coletas', icon: CalendarClock },
 ]
 
 interface SidebarProps {
+  desktopOpen: boolean
+  onCloseDesktop: () => void
   mobileOpen: boolean
   onCloseMobile: () => void
 }
 
-export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
-  const { user } = useAuth()
+export function Sidebar({ desktopOpen, onCloseDesktop, mobileOpen, onCloseMobile }: SidebarProps) {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  function handleSignOut() {
+    signOut()
+    onCloseMobile()
+    navigate('/login', { replace: true })
+  }
 
   const content = (
-    <div className="flex h-full flex-col bg-blue-dark text-white">
-      <div className="flex items-center justify-between px-5 pt-6 pb-4">
-        <div>
-          <p className="font-display text-2xl font-bold leading-none tracking-tight">Radar Eleitoral</p>
-          <p className="mt-1 text-[11px] font-medium uppercase tracking-wider text-white/50">
-            Instagram Intelligence
-          </p>
-        </div>
-        <button onClick={onCloseMobile} className="md:hidden text-white/60 hover:text-white">
-          <X className="h-5 w-5" />
+    <div className="flex h-full min-h-0 flex-col bg-bg/86 text-ink backdrop-blur-xl">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-3">
+        <button
+          type="button"
+          className="flex min-w-0 items-center rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/8"
+          onClick={() => navigate('/')}
+        >
+          <DataSightLogo markClassName="h-8 w-8" />
+        </button>
+
+        <button type="button" onClick={onCloseDesktop} className="hidden rounded-md p-1.5 text-slate hover:bg-white/8 md:block" aria-label="Recolher sidebar"><X className="h-4 w-4" /></button>
+        <button
+          onClick={onCloseMobile}
+          className="rounded-md p-1.5 text-slate transition-colors hover:bg-white/8 hover:text-ink md:hidden"
+          aria-label="Fechar menu"
+        >
+          <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="mx-5 mb-5 flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1.5">
-        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-warning" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-warning">
-          Ambiente confidencial
-        </span>
+      <div className="shrink-0 px-3 py-3">
+        <div className="rounded-xl border border-border bg-white/5 p-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-ink">
+              CB
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-ink">{user?.nome ?? 'Claudio Borcem'}</p>
+              <p className="truncate text-xs text-slate">{user?.email ?? 'perfil monitorado'}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue/20 bg-blue/10 px-2.5 py-2 text-xs text-blue">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Acesso restrito da campanha</span>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-3 thin-scrollbar overflow-y-auto">
+      <div className="dashed-line-x mx-3 shrink-0" />
+
+      <nav className="thin-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-3">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -61,53 +96,67 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             onClick={onCloseMobile}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-blue text-white shadow-sm'
-                  : 'text-white/65 hover:bg-white/5 hover:text-white'
+                  ? 'bg-white/10 text-ink'
+                  : 'text-slate hover:bg-white/8 hover:text-ink'
               )
             }
           >
             <Icon className="h-4 w-4 shrink-0" />
-            {label}
+            <span className="truncate">{label}</span>
           </NavLink>
         ))}
       </nav>
 
-      <div className="mx-3 mb-4 mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue font-display text-sm font-bold text-white">
-          CB
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{user?.nome ?? 'Cláudio Borcem'}</p>
-          <p className="truncate text-[11px] text-white/50">Deputado Distrital — DF</p>
-        </div>
+      <div className="shrink-0 border-t border-border p-3">
+        <NavLink
+          to="/configuracoes"
+          onClick={onCloseMobile}
+          className={({ isActive }) =>
+            cn(
+              'flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors',
+              isActive ? 'bg-white/10 text-ink' : 'text-slate hover:bg-white/8 hover:text-ink'
+            )
+          }
+        >
+          <Settings className="h-4 w-4 shrink-0" />
+          <span className="truncate">Configuracoes</span>
+        </NavLink>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-1 flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-slate transition-colors hover:bg-white/8 hover:text-ink"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span className="truncate">Sair</span>
+        </button>
       </div>
     </div>
   )
 
   return (
     <>
-      {/* Desktop */}
-      <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col">{content}</aside>
+      {desktopOpen ? <aside id="desktop-sidebar" className="sticky top-0 hidden h-screen shrink-0 border-r border-border md:flex md:w-72 md:flex-col">
+        {content}
+      </aside> : null}
 
-      {/* Mobile */}
-      <div
+      {mobileOpen ? <div
         className={cn(
-          'fixed inset-0 z-50 md:hidden transition-opacity',
+          'fixed inset-0 z-50 transition-opacity md:hidden',
           mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
       >
-        <div className="absolute inset-0 bg-black/40" onClick={onCloseMobile} />
+        <div className="absolute inset-0 bg-black/65" onClick={onCloseMobile} />
         <div
           className={cn(
-            'absolute inset-y-0 left-0 w-72 max-w-[85%] transition-transform duration-200',
+            'absolute inset-y-0 left-0 w-80 max-w-[88%] transition-transform duration-200',
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
           {content}
         </div>
-      </div>
+      </div> : null}
     </>
   )
 }

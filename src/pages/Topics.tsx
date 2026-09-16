@@ -1,57 +1,15 @@
-import * as React from 'react'
-import { instagramService } from '@/services/instagramService'
-import type { TopicoResumo, FormatoResumo } from '@/types/instagram'
-import { TopicCard } from '@/components/insights/TopicCard'
-import { FormatComparison } from '@/components/insights/FormatComparison'
-import { EngagementByTopicChart } from '@/components/charts/EngagementByTopicChart'
-import { TopicOpportunityScatter } from '@/components/charts/TopicOpportunityScatter'
-import { PageLoader } from '@/components/dashboard/PageLoader'
-import { Card } from '@/components/ui/card'
-import { Lightbulb } from 'lucide-react'
-
+import { number } from '@/utils/apiFormat'
+import { useCampaign, useCampaignData } from '@/lib/campaignContext'
+import { DataFrame, DataTable, Empty, Panel } from '@/components/dashboard/ApiData'
+import type { Group } from '@/types/radar'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 export default function Topics() {
-  const [topicos, setTopicos] = React.useState<TopicoResumo[] | null>(null)
-  const [formatos, setFormatos] = React.useState<FormatoResumo[]>([])
-
-  React.useEffect(() => {
-    Promise.all([instagramService.getTopics(), instagramService.getFormats()]).then(
-      ([t, f]) => {
-        setTopicos(t)
-        setFormatos(f)
-      }
-    )
-  }, [])
-
-  if (!topicos) return <PageLoader />
-
-  return (
-    <div className="space-y-6">
-      <Card className="flex items-start gap-3 border-blue/20 bg-blue/5 p-4">
-        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
-        <p className="text-sm text-blue-dark">
-          A API da Meta entrega mídia, legenda, formato e métricas. O campo <strong>tema</strong> é uma camada do Radar: classificação por IA a partir da legenda, com possibilidade de revisão manual.
-        </p>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {topicos.map((t) => (
-          <TopicCard key={t.tema} topico={t} />
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <EngagementByTopicChart data={topicos} />
-        <TopicOpportunityScatter data={topicos} />
-      </div>
-
-      <FormatComparison data={formatos} />
-
-      <Card className="flex items-start gap-3 border-blue/20 bg-blue/5 p-4">
-        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
-        <p className="text-sm text-blue-dark">
-          Análise do Radar: formatos são comparados a partir das métricas oficiais de mídia disponíveis para cada tipo de conteúdo.
-        </p>
-      </Card>
-    </div>
-  )
+  const {limit} = useCampaign()
+  const {data,error} = useCampaignData<{themes: Group[]; formats: Group[]}>('themes-formats', `limit_per_profile=${limit}`)
+  return <DataFrame data={data} error={error}>
+    <p className="text-sm text-slate">Temas classificados por palavras-chave nas legendas. As médias consideram apenas métricas disponíveis; visualizações não equivalem a alcance.</p>
+    {data && !data.themes.length ? <Empty /> : null}
+    {data?.themes.length ? <Panel title="Interações médias por tema"><div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={data.themes} margin={{bottom: 40}}><XAxis dataKey="theme" tick={{fontSize:10,fill:'#A1A1AA'}} angle={-20} textAnchor="end" interval={0}/><YAxis tick={{fill:'#A1A1AA'}}/><Tooltip contentStyle={{background:'#141414',borderColor:'#333'}}/><Bar dataKey="avg_observed_interactions" name="Interações observadas" fill="#7FA1E8" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div></Panel> : null}
+    {data ? ([['Temas',data.themes],['Formatos',data.formats]] as const).map(([title,groups]) => <Panel key={title} title={title}><DataTable headers={['Grupo','Posts','Curtidas médias','Comentários médios','Interações médias']}>{groups.map(g => <tr key={g.theme || g.format}><td className="p-3">{g.theme || g.format}</td><td className="p-3">{number(g.posts)}</td><td className="p-3">{number(g.avg_likes)}</td><td className="p-3">{number(g.avg_comments)}</td><td className="p-3">{number(g.avg_observed_interactions)}</td></tr>)}</DataTable></Panel>) : null}
+  </DataFrame>
 }

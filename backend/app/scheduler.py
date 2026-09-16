@@ -12,13 +12,17 @@ from app.database import create_db_and_tables, engine
 from app.models import Campaign
 from app.routers.territorial import seed_reference_data
 from app.services.monitoring_sync import collect_campaign
+from app.services.auto_sync import config
 
 
 def run_due_collections() -> None:
     limit = int(os.getenv("COLLECTION_POST_LIMIT", "25"))
     with Session(engine) as session:
         campaigns = list(session.exec(select(Campaign).where(Campaign.active == True)).all())  # noqa: E712
+        interval_campaigns, _, _ = config()
         for campaign in campaigns:
+            if campaign.id in interval_campaigns:
+                continue
             try:
                 collect_campaign(session, campaign.id, limit, "SCHEDULED")
             except Exception as exc:

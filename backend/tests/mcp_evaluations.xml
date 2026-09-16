@@ -1,0 +1,12 @@
+<evaluation>
+  <qa_pair><question>Na fixture local, qual perfil CLIENT pertence à campanha "Campanha de teste"?</question><reference_answer>@perfil_teste</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, quantos posts e perfis monitorados aparecem no resumo da campanha "Campanha de teste"?</question><reference_answer>12 posts e 1 perfil monitorado.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, qual é o formato e a legenda do post mais recente da campanha "Campanha de teste"?</question><reference_answer>Imagem; "Saúde e educação para todos".</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, qual post tem ID 2 e quantos textos existem em sua amostra de comentários?</question><reference_answer>É o Reel "Saúde no bairro" e possui 2 textos na amostra.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, quantas coletas do post 2 ficam no período de 7 dias?</question><reference_answer>2 coletas.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, quantas coletas do post 2 ficam no período de 30 dias?</question><reference_answer>3 coletas.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, qual é a variação observada de comentários do post 2 entre a primeira e a última coleta disponível em 30 dias?</question><reference_answer>Aumento de 1 comentário, de 0 para 1.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, qual tema aparece nos posts e quantos comentários o resumo da campanha totaliza?</question><reference_answer>Saúde e 66 comentários.</reference_answer></qa_pair>
+  <qa_pair><question>Na fixture local, quantos Reels aparecem entre os 12 posts da campanha de teste?</question><reference_answer>6 Reels.</reference_answer></qa_pair>
+  <qa_pair><question>Um post da campanha 1 pode ser consultado usando o ID da campanha 2 na fixture local?</question><reference_answer>Não. A ferramenta retorna registro não encontrado para preservar o isolamento por campanha.</reference_answer></qa_pair>
+</evaluation>

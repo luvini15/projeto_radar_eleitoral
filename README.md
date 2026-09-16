@@ -2,7 +2,7 @@
 
 ## Arquitetura operacional — dados reais
 
-O frontend integrado está em `radar-eleitoral/`; o frontend da raiz foi preservado como protótipo histórico e ainda usa mocks. O fluxo operacional é `Apify → FastAPI → PostgreSQL → API agregada → React`.
+O frontend integrado Data Sight está na raiz (`src/`) e reúne monitoramento, coletas, seguidores, filtros, concorrentes, inteligência territorial, relatórios, comentários e análise de posts com IA. A pasta `radar-eleitoral/` preserva o frontend anterior. O fluxo operacional é `Apify → FastAPI → PostgreSQL → API agregada → React`.
 
 - Backend: FastAPI/SQLModel, porta `8000`.
 - Frontend integrado: React/Vite, porta `5173`.
@@ -22,7 +22,7 @@ python -m venv .venv
 Em outro terminal:
 
 ```bash
-cd radar-eleitoral
+# Na raiz do repositório
 npm install
 npm run dev
 ```
@@ -31,7 +31,7 @@ Frontend: `http://localhost:5173`. API: `http://127.0.0.1:8000`. Swagger: `http:
 
 ### Ambiente e segurança
 
-Copie `backend/.env.example` para `backend/.env` e defina `DATABASE_URL` e `APIFY_TOKEN`. A senha PostgreSQL deve existir apenas no `.env` local. Copie `radar-eleitoral/.env.example` para `radar-eleitoral/.env.local` e configure `VITE_API_URL` e `VITE_CAMPAIGN_ID`. O token Apify nunca vai para o frontend. Se um token tiver sido versionado anteriormente, revogue-o e gere outro.
+Copie `backend/.env.example` para `backend/.env` e defina `DATABASE_URL` e `APIFY_TOKEN`. A senha PostgreSQL deve existir apenas no `.env` local. Copie `.env.example` para `.env.local` e configure `VITE_API_URL`. A campanha é escolhida pelo seletor do Data Sight. O token Apify nunca vai para o frontend. Se um token tiver sido versionado anteriormente, revogue-o e gere outro.
 
 ### Inteligência territorial
 
@@ -64,7 +64,7 @@ COLLECTION_TIMEZONE=America/Sao_Paulo
 COLLECTION_POST_LIMIT=25
 ```
 
-O scheduler deve permanecer como processo independente da API. Em produção, execute o comando por serviço do sistema, container ou gerenciador de processos com reinício automático. Não execute múltiplas instâncias do scheduler para o mesmo banco. A tela **Coletas** mostra próxima execução, sucesso, coleta parcial, falhas, novos posts e snapshots.
+O scheduler diário permanece como processo independente da API. O auto sync por intervalo roda na API com um único worker e usa `AUTO_SYNC_CAMPAIGN_IDS`, `AUTO_SYNC_INTERVAL_HOURS` e `AUTO_SYNC_POST_LIMIT`. Campanhas configuradas no auto sync são excluídas do scheduler diário para evitar coleta duplicada. Ambos salvam histórico, seguidores, métricas e amostras de comentários; falhas parciais permanecem identificadas. Em produção, execute o comando por serviço do sistema, container ou gerenciador de processos com reinício automático. Não execute múltiplas instâncias do scheduler para o mesmo banco. A tela **Coletas** mostra próxima execução, sucesso, coleta parcial, falhas, novos posts e snapshots.
 
 O endpoint analítico `GET /api/campaigns/{id}/analytics` aplica no backend período, RA, múltiplos perfis, tema e formato. Ele alimenta séries diárias, desempenho por tema/formato, comparação de perfis e comparação territorial. Perfis sem associação explícita não entram em agregações por RA.
 
@@ -79,10 +79,53 @@ docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrati
 docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrations/002_continuous_monitoring.sql
 set PYTHONPATH=backend
 python -m unittest discover -s backend/tests -v
-cd radar-eleitoral && npm run build
+npm run build
 ```
 
-Troubleshooting: confirme `docker compose ps` e porta `5433` em erros de banco; confirme `VITE_CAMPAIGN_ID` quando a API vier vazia; associe perfis explicitamente para filtrar por RA; confira token/saldo/actors quando a sincronização Apify falhar.
+Troubleshooting: confirme `docker compose ps` e porta `5433` em erros de banco; confirme a campanha selecionada quando a API vier vazia; associe perfis explicitamente para filtrar por RA; confira token/saldo/actors quando a sincronização Apify falhar.
+
+## Detalhamento de posts, IA e OpenCode
+
+A tabela de Conteúdos mostra uma prévia de cada publicação. O link **Ver detalhes**
+abre uma página própria com mídia, métricas atuais, textos de comentários disponíveis
+e histórico de coletas. A linha evolutiva pode ser filtrada por 7, 30, 90 ou 365 dias
+e por comentário, curtida, visualização, reprodução, interação, compartilhamento ou
+salvamento. Os pontos são snapshots acumulados observados em cada coleta.
+
+O painel de IA usa o roteador gratuito do OpenRouter e guarda a resposta no banco
+enquanto os dados do post não mudarem. Por padrão, no máximo 20 análises novas são
+enviadas por dia; resultados em cache não consomem esse limite. A evidência enviada
+contém métricas, legenda e no máximo 30 textos da amostra de comentários, sem token
+da Apify ou autores. A análise é descritiva e não representa intenção de voto,
+opinião de todo o público ou análise completa dos comentários.
+
+Crie uma chave na sua conta OpenRouter e configure somente em `backend/.env`:
+
+```env
+OPENROUTER_API_KEY=sua_chave
+OPENROUTER_MODEL=openrouter/free
+AI_DAILY_LIMIT=20
+```
+
+Reinicie o backend depois de salvar. O Swagger expõe a operação em
+`POST /api/campaigns/{campaign_id}/posts/{post_id}/analysis`.
+
+O arquivo `opencode.json` configura o mesmo modelo gratuito e o servidor MCP local
+`radar`. Com o backend rodando, inicie o OpenCode sem expor a chave no terminal:
+
+```powershell
+backend/.venv/Scripts/python.exe backend/start_opencode.py
+```
+
+O MCP fornece seis ferramentas somente de leitura para campanhas, perfis, resumo,
+posts, detalhe com comentários/histórico e seguidores. Confira a conexão com
+`opencode mcp list`. O teste do protocolo é `backend/tests/check_mcp.py`, usando a
+fixture na porta 8001. As perguntas de avaliação ficam em
+`backend/tests/mcp_evaluations.xml`.
+
+## Referência histórica do protótipo
+
+As seções abaixo documentam o protótipo original; o fluxo integrado atual está descrito acima.
 
 Dashboard privado de inteligência digital para acompanhamento do Instagram da campanha de **Cláudio Borcem**, candidato a Deputado Distrital do Distrito Federal.
 

@@ -32,7 +32,7 @@ export function StrategicInsightCard({ insight, onMarkApplied }: StrategicInsigh
         <Badge variant={prioridadeVariant[insight.prioridade]}>Prioridade {insight.prioridade}</Badge>
         <Badge variant={statusVariant[status]}>{status}</Badge>
       </div>
-      <p className="mt-2.5 text-sm leading-relaxed text-blue-dark">{insight.texto}</p>
+      <p className="mt-2.5 text-sm leading-relaxed text-ink">{insight.texto}</p>
       {status !== 'Aplicado' && (
         <Button
           variant="secondary"

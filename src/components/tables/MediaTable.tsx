@@ -70,7 +70,7 @@ export function MediaTable({ media, onSelect }: MediaTableProps) {
         <div className="overflow-x-auto thin-scrollbar">
           <table className="w-full min-w-[1100px] text-sm">
             <thead>
-              <tr className="border-b border-border bg-bg/60 text-left text-[11px] font-semibold uppercase tracking-wide text-slate">
+              <tr className="border-b border-border bg-muted/70 text-left text-[11px] font-semibold uppercase tracking-wide text-slate">
                 <th className="px-4 py-3">Conteúdo</th>
                 <th className="px-3 py-3">Data</th>
                 <th className="px-3 py-3">Formato</th>
@@ -90,7 +90,7 @@ export function MediaTable({ media, onSelect }: MediaTableProps) {
                 <tr
                   key={item.id}
                   onClick={() => onSelect(item)}
-                  className="cursor-pointer border-b border-border last:border-0 hover:bg-bg/60 transition-colors"
+                  className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-white/5"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export function MediaTable({ media, onSelect }: MediaTableProps) {
                         className="h-9 w-9 shrink-0 rounded-md"
                         style={{ backgroundColor: item.miniaturaCor }}
                       />
-                      <span className="line-clamp-1 max-w-[220px] text-blue-dark">{item.legenda}</span>
+                      <span className="line-clamp-1 max-w-[220px] text-ink">{item.legenda}</span>
                     </div>
                   </td>
                   <td className="px-3 py-3 text-slate">
@@ -106,7 +106,7 @@ export function MediaTable({ media, onSelect }: MediaTableProps) {
                   </td>
                   <td className="px-3 py-3 text-slate">{item.formato}</td>
                   <td className="px-3 py-3 text-slate">{item.tema}</td>
-                  <td className="px-3 py-3 text-right font-medium text-blue-dark">
+                  <td className="px-3 py-3 text-right font-medium text-ink">
                     {formatNumber(item.alcance)}
                   </td>
                   <td className="px-3 py-3 text-right text-slate">{formatNumber(item.visualizacoes)}</td>
@@ -114,7 +114,7 @@ export function MediaTable({ media, onSelect }: MediaTableProps) {
                   <td className="px-3 py-3 text-right text-slate">{formatNumber(item.comentarios)}</td>
                   <td className="px-3 py-3 text-right text-slate">{formatNumber(item.compartilhamentos)}</td>
                   <td className="px-3 py-3 text-right text-slate">{formatNumber(item.salvamentos)}</td>
-                  <td className="px-3 py-3 text-right font-medium text-blue-dark">{item.engajamento}%</td>
+                  <td className="px-3 py-3 text-right font-medium text-ink">{item.engajamento}%</td>
                   <td className="px-3 py-3">
                     <Badge variant={classificacaoBadgeVariant(item.classificacao) as any}>
                       {item.classificacao}

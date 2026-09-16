@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+from app.services.auto_sync import collection_slot, config
+from app.models import SyncSchedule
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.database import get_session
@@ -14,23 +17,29 @@ router = APIRouter(
 )
 
 
-@router.post("/sync/instagram/{username}")
+@router.post(
+    "/sync/instagram/{username}",
+    summary="Coletar perfil e posts do Instagram pela Apify",
+    description="Executa os Actors instagram-profile-scraper e instagram-post-scraper e salva os dados. Consome créditos Apify. Informe o username sem @.",
+    responses={503: {"description": "Token Apify não configurado"}},
+)
 def sync_instagram(
     username: str,
-    limit: int = 25,
+    limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts por perfil"),
     session: Session = Depends(get_session),
 ):
-    return sync_instagram_profile(
-        session=session,
-        username=username,
-        limit=limit,
-    )
+    with collection_slot():
+        return sync_instagram_profile(
+            session=session,
+            username=username,
+            limit=limit,
+        )
 
 
-@router.post("/campaigns/{campaign_id}/sync")
+@router.post("/campaigns/{campaign_id}/sync", summary="Sincronizar os perfis de uma campanha pela Apify")
 def sync_campaign_route(
     campaign_id: int,
-    limit: int = 25,
+    limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts por perfil"),
     session: Session = Depends(get_session),
 ):
     campaign = session.get(
@@ -50,9 +59,26 @@ def sync_campaign_route(
             detail="Campanha inativa",
         )
 
-    return collect_campaign(
-        session=session,
-        campaign_id=campaign_id,
-        limit=limit,
-        trigger="MANUAL",
-    )
+    if not os.getenv("APIFY_TOKEN"):
+        raise HTTPException(503, "Configure APIFY_TOKEN no backend/.env para executar a coleta.")
+    with collection_slot():
+        return collect_campaign(
+            session=session,
+            campaign_id=campaign_id,
+            limit=limit,
+            trigger="MANUAL",
+        )
+
+
+@router.get('/sync/status', summary='Status da coleta automática')
+def sync_status(session: Session = Depends(get_session)):
+    ids, hours, limit = config()
+    return {
+        'enabled': bool(ids) and bool(os.getenv('APIFY_TOKEN')),
+        'interval_hours': hours,
+        'posts_per_profile': limit,
+        'campaigns': [
+            {'campaign_id': campaign_id, 'schedule': session.get(SyncSchedule, campaign_id)}
+            for campaign_id in ids
+        ],
+    }
