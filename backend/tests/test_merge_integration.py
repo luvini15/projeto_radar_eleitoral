@@ -36,7 +36,7 @@ class MergeIntegrationTests(unittest.TestCase):
             session.commit()
             session.add(CampaignProfile(campaign_id=1, profile_id=1, role="CLIENT"))
             session.commit()
-        self.stack.enter_context(patch.dict(os.environ, {"APIFY_TOKEN": "test-only", "AUTO_SYNC_CAMPAIGN_IDS": "1", "AUTO_SYNC_INTERVAL_HOURS": "6", "OPENROUTER_API_KEY": ""}))
+        self.stack.enter_context(patch.dict(os.environ, {"APP_ENV": "production", "COLLECTION_ENABLED": "true", "APIFY_TOKEN": "test-only", "AUTO_SYNC_CAMPAIGN_IDS": "1", "AUTO_SYNC_INTERVAL_HOURS": "6", "OPENROUTER_API_KEY": ""}))
         self.stack.enter_context(patch("app.services.monitoring_sync.collect_profile", return_value={"followersCount": 100}))
         self.stack.enter_context(patch("app.services.monitoring_sync.collect_posts", return_value=[RAW]))
         self.stack.enter_context(patch.object(main, "engine", self.engine))
@@ -92,7 +92,8 @@ class MergeIntegrationTests(unittest.TestCase):
             self.assertEqual(session.get(SyncSchedule, 1).status, "success")
         history = self.client.get("/api/campaigns/1/collections").json()
         self.assertEqual(history["schedule"]["mode"], "interval")
-        self.assertIsNotNone(history["next_collection"])
+        self.assertFalse(history["schedule"]["worker_alive"])
+        self.assertIsNone(history["next_collection"])
 
     def test_auto_sync_does_not_report_partial_or_failed_runs_as_success(self):
         for result, expected in [("PARTIAL", "partial"), ("FAILED", "error")]:
@@ -115,13 +116,10 @@ class MergeIntegrationTests(unittest.TestCase):
                 self.assertEqual(session.exec(select(PostSnapshot)).all(), [])
                 self.assertEqual(session.exec(select(InstagramPost)).all(), [])
 
-    def test_daily_scheduler_skips_campaigns_owned_by_auto_sync(self):
-        with patch.object(scheduler, "engine", self.engine), patch.object(scheduler, "collect_campaign") as collect:
+    def test_daily_scheduler_uses_the_shared_scheduler(self):
+        with patch.object(scheduler, "engine", self.engine), patch.object(scheduler, "tick") as tick_mock:
             scheduler.run_due_collections()
-            collect.assert_not_called()
-            with patch.dict(os.environ, {"AUTO_SYNC_CAMPAIGN_IDS": ""}):
-                scheduler.run_due_collections()
-            self.assertEqual(collect.call_args.args[1:], (1, 25, "SCHEDULED"))
+            tick_mock.assert_called_once_with(self.engine)
 
     def test_territorial_analytics_reports_and_redesign_routes_coexist(self):
         self.client.post("/api/campaigns/1/sync")

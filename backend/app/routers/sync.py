@@ -1,6 +1,10 @@
 import os
 from app.services.auto_sync import collection_slot, config
-from app.models import SyncSchedule
+from app.models import SyncSchedule, CampaignProfile, InstagramProfile
+from contextlib import ExitStack
+from sqlalchemy import func
+from sqlmodel import select
+from app.services.auto_sync import scheduler_status
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
@@ -28,7 +32,11 @@ def sync_instagram(
     limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts por perfil"),
     session: Session = Depends(get_session),
 ):
-    with collection_slot():
+    profile = session.exec(select(InstagramProfile).where(func.lower(InstagramProfile.username) == username.strip().lstrip("@").lower())).first()
+    campaign_ids = sorted(set(session.exec(select(CampaignProfile.campaign_id).where(CampaignProfile.profile_id == profile.id)).all())) if profile else []
+    with ExitStack() as stack:
+        for campaign_id in campaign_ids or ["profile:" + username.lower()]:
+            stack.enter_context(collection_slot(session, campaign_id))
         return sync_instagram_profile(
             session=session,
             username=username,
@@ -61,7 +69,7 @@ def sync_campaign_route(
 
     if not os.getenv("APIFY_TOKEN"):
         raise HTTPException(503, "Configure APIFY_TOKEN no backend/.env para executar a coleta.")
-    with collection_slot():
+    with collection_slot(session, campaign_id):
         return collect_campaign(
             session=session,
             campaign_id=campaign_id,
@@ -73,12 +81,6 @@ def sync_campaign_route(
 @router.get('/sync/status', summary='Status da coleta automática')
 def sync_status(session: Session = Depends(get_session)):
     ids, hours, limit = config()
-    return {
-        'enabled': bool(ids) and bool(os.getenv('APIFY_TOKEN')),
-        'interval_hours': hours,
-        'posts_per_profile': limit,
-        'campaigns': [
-            {'campaign_id': campaign_id, 'schedule': session.get(SyncSchedule, campaign_id)}
-            for campaign_id in ids
-        ],
-    }
+    campaigns = session.exec(select(Campaign).where(Campaign.active == True)).all()
+    items = [{"campaign_id": campaign.id, "schedule": scheduler_status(session, campaign.id)} for campaign in campaigns]
+    return {"enabled": any(item["schedule"]["enabled"] for item in items), "interval_hours": hours, "posts_per_profile": limit, "campaigns": items}

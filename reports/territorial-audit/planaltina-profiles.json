@@ -1,0 +1,57 @@
+{
+  "requested": 4,
+  "new": 4,
+  "existing": 0,
+  "linked": 4,
+  "already_linked": 0,
+  "duplicate_rows": 0,
+  "profiles": [
+    {
+      "profile_id": 44,
+      "username": "deolhoemplanaltina",
+      "url": "https://www.instagram.com/deolhoemplanaltina/",
+      "scope": "TERRITORIAL",
+      "region": "Planaltina",
+      "active": true,
+      "new": true,
+      "posts_local": 0,
+      "message": "Perfil cadastrado, mas ainda sem posts locais no banco."
+    },
+    {
+      "profile_id": 45,
+      "username": "planaltinanews",
+      "url": "https://www.instagram.com/planaltinanews/",
+      "scope": "TERRITORIAL",
+      "region": "Planaltina",
+      "active": true,
+      "new": true,
+      "posts_local": 0,
+      "message": "Perfil cadastrado, mas ainda sem posts locais no banco."
+    },
+    {
+      "profile_id": 46,
+      "username": "jornalplanaltinaa",
+      "url": "https://www.instagram.com/jornalplanaltinaa/",
+      "scope": "TERRITORIAL",
+      "region": "Planaltina",
+      "active": true,
+      "new": true,
+      "posts_local": 0,
+      "message": "Perfil cadastrado, mas ainda sem posts locais no banco."
+    },
+    {
+      "profile_id": 47,
+      "username": "fala_planaltina",
+      "url": "https://www.instagram.com/fala_planaltina/",
+      "scope": "TERRITORIAL",
+      "region": "Planaltina",
+      "active": true,
+      "new": true,
+      "posts_local": 0,
+      "message": "Perfil cadastrado, mas ainda sem posts locais no banco."
+    }
+  ],
+  "errors": [],
+  "conflicts": [],
+  "posts_processed": 0
+}

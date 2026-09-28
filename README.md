@@ -35,9 +35,26 @@ Copie `backend/.env.example` para `backend/.env` e defina `DATABASE_URL` e `APIF
 
 ### Inteligência territorial
 
-A inicialização cria aditivamente as 35 RAs e os temas iniciais, sem inventar população. Associe perfil e RA com `PUT /api/profiles/{profile_id}/region`. Classifique posts com `POST /api/campaigns/{campaign_id}/classify-posts`; a operação é idempotente.
+A inicialização cria aditivamente as 35 RAs e os temas existentes. A tabela `profile_regions` identifica a RA do perfil; `post_regions` aceita várias RAs por publicação e guarda fonte, confiança e evidência literal. Portais `DF_GENERAL` nunca recebem fallback territorial do perfil. Menções no conteúdo prevalecem sobre a associação do perfil. Casos ambíguos ficam sem RA; localidades conhecidas usam um dicionário com fontes em `backend/app/config/territorial_aliases.json`.
+
+A migração aditiva é `backend/migrations/003_post_territories.sql`. Importação XLSX/CSV e processamento local não iniciam Apify ou scheduler. No PowerShell, a partir da raiz:
+
+```powershell
+$env:PYTHONPATH='backend'
+backend/.venv/Scripts/python.exe -m app.territorial_cli migrate --output reports/territorial/migration.json
+backend/.venv/Scripts/python.exe -m app.territorial_cli import --campaign-id 1 --spreadsheet "CAMINHO_DA_PLANILHA.xlsx" --general --output reports/territorial/profile-import.json
+backend/.venv/Scripts/python.exe -m app.territorial_cli classify --output reports/territorial/classification.json
+```
+
+A conexão deve estar em `DATABASE_URL` no ambiente ou `.env` carregado pelo backend. O campo legado `profile_type` é preservado; metadados editoriais usam `profile_monitoring`. A importação normaliza usernames, não duplica registros e relata divergências sem apagar associações preexistentes. Linhas marcadas inválidas/inativas são cadastradas com vínculo inativo.
+
+Associe perfil territorial com `PUT /api/profiles/{profile_id}/region`. `POST /api/campaigns/{campaign_id}/classify-posts` processa apenas a campanha. `GET /api/campaigns/{campaign_id}/trends/posts` permite abrir todos os posts que sustentam uma tendência, com os mesmos filtros e paginação. O detalhe da publicação mostra separadamente a RA do perfil e as RAs da publicação. A taxonomia temática existente é reutilizada e revisões manuais são preservadas.
 
 O score de tendência usa 30% participação no volume, 25% crescimento limitado, 25% participação nas interações e 20% recorrência. Crescimento é `(atual - anterior) / anterior`; período anterior igual a zero retorna “sem base”. Conclusões carregam links reais de evidência.
+
+### Auditoria das decisões territoriais
+
+`GET /api/territorial/audit` lista as decisões persistidas, com legenda, evidência, RA, tema e métricas do último snapshot. `GET /api/territorial/audit/summary` consolida posts únicos, atribuições e fontes. Ambos aceitam filtros por RA, confiança, perfil, tema, datas, ausência de RA e múltiplas RAs; a consulta não reclassifica posts. Veja [o relatório da auditoria e cadastro Planaltina](reports/territorial-audit/README.md) e [o relatório visual local](reports/territorial-audit/audit.html).
 
 ### Monitoramento contínuo
 
@@ -49,24 +66,30 @@ Coleta manual via API:
 curl -X POST "http://127.0.0.1:8000/api/campaigns/1/collections?limit=25"
 ```
 
-Coleta automática em processo separado:
+Coleta automática pelo Docker (não exige iniciar `app.scheduler` manualmente):
 
 ```bash
-cd backend
-.venv\Scripts\python -m app.scheduler
+docker compose up -d --build
 ```
 
-Configure no `backend/.env`:
+Configure `backend/.env` com as credenciais locais. No `.env` da raiz, defina `POSTGRES_PASSWORD` e `DATABASE_URL_DOCKER` com a conexão PostgreSQL para o host `postgres:5432` e banco `radar_eleitoral`; use a mesma senha do volume existente. Não publique esses arquivos. A API ocupa a porta 8000: encerre uma API nativa anterior antes de iniciar o Compose. O frontend continua com `npm run dev`.
+
+Configuração padrão, disponível nos `.env.example`:
 
 ```dotenv
+COLLECTION_ENABLED=true
 COLLECTION_DAILY_TIME=03:00
 COLLECTION_TIMEZONE=America/Sao_Paulo
 COLLECTION_POST_LIMIT=25
 ```
 
-O scheduler diário permanece como processo independente da API. O auto sync por intervalo roda na API com um único worker e usa `AUTO_SYNC_CAMPAIGN_IDS`, `AUTO_SYNC_INTERVAL_HOURS` e `AUTO_SYNC_POST_LIMIT`. Campanhas configuradas no auto sync são excluídas do scheduler diário para evitar coleta duplicada. Ambos salvam histórico, seguidores, métricas e amostras de comentários; falhas parciais permanecem identificadas. Em produção, execute o comando por serviço do sistema, container ou gerenciador de processos com reinício automático. Não execute múltiplas instâncias do scheduler para o mesmo banco. A tela **Coletas** mostra próxima execução, sucesso, coleta parcial, falhas, novos posts e snapshots.
+Backend e scheduler usam a mesma implementação de `auto_sync.py`. No Docker, a API usa `COLLECTION_SCHEDULER_MODE=external` e o serviço `scheduler` executa o worker. No ambiente nativo de produção, `APP_ENV=production` e o modo `embedded` iniciam esse mesmo worker no lifespan da API. O padrão `APP_ENV=development` impede a criação do worker e a execução real de `tick`, mesmo se um `.env` antigo habilitar a coleta. No Docker operacional, os serviços declaram `APP_ENV=production`. PostgreSQL advisory locks elegem um único líder e bloqueiam coletas simultâneas da mesma campanha, inclusive entre chamadas manuais e automáticas. O lock sobrevive aos commits e é liberado na desconexão.
 
-O endpoint analítico `GET /api/campaigns/{id}/analytics` aplica no backend período, RA, múltiplos perfis, tema e formato. Ele alimenta séries diárias, desempenho por tema/formato, comparação de perfis e comparação territorial. Perfis sem associação explícita não entram em agregações por RA.
+O próximo horário fica em `sync_schedules`, em UTC, após cálculo em `America/Sao_Paulo`. Um reinício mais de cinco minutos depois da janela diária agenda o dia seguinte sem coleta retroativa. O avanço é persistido antes de chamar o provedor, evitando repetir a tentativa após reinício. O legado `AUTO_SYNC_CAMPAIGN_IDS` continua funcionando como override por intervalo no mesmo worker. Deixe vazio para usar o horário diário em todas as campanhas ativas com perfis ativos.
+
+A página **Coletas** informa atividade com base no heartbeat real, token e configuração, além de horário, timezone, última/próxima execução, status e erros por coleta. **Executar agora** mantém o fallback manual e consome créditos. Em testes, configure `COLLECTION_ENABLED=false`, `COLLECTION_SCHEDULER_MODE=disabled` e tokens vazios.
+
+O endpoint analítico `GET /api/campaigns/{id}/analytics` aplica no backend período, RA, múltiplos perfis, tema e formato. Ele alimenta séries diárias, desempenho por tema/formato, comparação de perfis e comparação territorial. A agregação usa as RAs detectadas por publicação; perfil geral sem RA fixa pode contribuir quando há evidência textual ou de localização. O filtro `territorial_origin` distingue `CONTENT`, `LOCATION` e `PROFILE`.
 
 A página **Concorrentes** reutiliza esse endpoint em uma única chamada por alteração de filtro. Métricas de escalas incompatíveis são exibidas em gráficos separados. O ranking permite alternar a métrica sem combinar eixos; o gráfico tema × desempenho usa publicações no eixo X e interação média no eixo Y; e a matriz tema × perfil responde quem está falando sobre cada assunto.
 
@@ -80,7 +103,10 @@ docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrati
 set PYTHONPATH=backend
 python -m unittest discover -s backend/tests -v
 npm run build
+npm run lint
 ```
+
+A entrega e seus resultados reais estão em [reports/territorial/IMPLEMENTATION.md](reports/territorial/IMPLEMENTATION.md).
 
 Troubleshooting: confirme `docker compose ps` e porta `5433` em erros de banco; confirme a campanha selecionada quando a API vier vazia; associe perfis explicitamente para filtrar por RA; confira token/saldo/actors quando a sincronização Apify falhar.
 
@@ -273,3 +299,11 @@ O projeto não promete, nesta versão:
 - mapa detalhado por Região Administrativa.
 
 A tela de configurações já contém o estado futuro “Conectar Instagram”, com aviso de que a autorização será feita por OAuth da Meta, sem solicitar senha do candidato.
+
+### Comparação e métricas diárias
+
+A página Concorrentes usa exclusivamente vínculos ativos `CampaignProfile.role=COMPETITOR`. O endpoint existente `GET /api/campaigns/{id}/analytics` ganhou os filtros opcionais `role` e `profile_selection=selected`; uma seleção explicitamente vazia retorna um recorte vazio. Sem esses parâmetros, os demais consumidores mantêm seu escopo anterior.
+
+Desempenho por dia soma o último snapshot de cada publicação, por data de publicação em UTC, e oferece interações, curtidas, comentários, visualizações, reproduções, compartilhamentos, salvamentos e publicações. Não mede incrementos de interações recebidas no dia. Datas sem publicações e métricas indisponíveis não são preenchidas; `metric_samples` informa a cobertura de cada métrica. O total considera todos os selecionados, com comparação visual dos cinco primeiros perfis. Audiência usa exclusivamente snapshots de seguidores, com uma série por perfil e lacunas preservadas.
+
+Os testes de navegador usam `backend/tests/serve_ui_fixture.py`, que cria SQLite temporário e desliga os provedores e o scheduler. Os testes PostgreSQL exigem `TEST_DATABASE_URL` apontando para uma instância descartável; não leem mais a conexão operacional de `backend/.env`. O script MCP aceita `UI_FIXTURE_PORT` para apontar para a mesma API isolada.

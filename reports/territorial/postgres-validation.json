@@ -1,0 +1,8 @@
+{
+  "daily_latest_snapshot_and_role": "PASS",
+  "migration_twice": "PASS",
+  "cross_process_lock_after_commit": "PASS",
+  "different_campaign_parallel": "PASS",
+  "lock_release": "PASS",
+  "lock_release_on_process_exit": "PASS"
+}

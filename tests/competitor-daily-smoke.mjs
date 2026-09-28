@@ -1,0 +1,61 @@
+import { chromium, expect } from '@playwright/test'
+const browser=await chromium.launch()
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1000}})
+  page.setDefaultTimeout(15000)
+  const errors=[];const analytics=[]
+  page.on('pageerror',error=>errors.push(error.message))
+  await page.addInitScript(()=>sessionStorage.setItem('data-sight:session-simulada',JSON.stringify({nome:'Teste'})))
+  await page.route('**/api/**',async route=>{
+    const url=new URL(route.request().url());url.hostname='127.0.0.1';url.port=process.env.UI_FIXTURE_PORT||'8001'
+    const response=await route.fetch({url:url.toString()})
+    if(url.pathname.endsWith('/analytics'))analytics.push({url,data:await response.json()})
+    await route.fulfill({response})
+  })
+  const base=process.env.UI_BASE_URL||'http://localhost:5173'
+  await page.goto(base+'/concorrentes')
+  await page.getByLabel('Campanha do painel').selectOption('3')
+  await expect(page.getByText('Desempenho por dia',{exact:true})).toBeVisible()
+  await expect(page.getByRole('checkbox',{name:'@role_competitor_10',exact:true})).toBeVisible()
+  await expect(page.getByRole('checkbox',{name:'@role_competitor_11',exact:true})).toBeVisible()
+  for(const role of ['local_page','df_general','media'])await expect(page.getByText(new RegExp('@role_'+role))).toHaveCount(0)
+  expect(analytics.at(-1).url.searchParams.get('role')).toBe('COMPETITOR')
+  expect(analytics.at(-1).data.daily[0].interactions).toBe(25)
+  for(const [metric,label] of Object.entries({interactions:'Interações',likes:'Curtidas',comments:'Comentários',views:'Visualizações',plays:'Reproduções',shares:'Compartilhamentos',posts:'Publicações'})){
+    await page.getByLabel('Métrica do desempenho por dia').selectOption(metric)
+    await expect(page.getByRole('img',{name:'Desempenho por dia: '+label,exact:true})).toBeVisible()
+  }
+  for(const [metric,label,value] of [['likes','Curtidas','21'],['comments','Comentários','4'],['shares','Compartilhamentos','0']]){
+    await page.getByLabel('Métrica do desempenho por dia').selectOption(metric)
+    const chart=page.getByRole('img',{name:'Desempenho por dia: '+label,exact:true})
+    await chart.locator('.recharts-line-dot').first().hover()
+    await expect(chart.locator('.recharts-tooltip-item-value')).toHaveText(value)
+  }
+  await page.getByLabel('Métrica do desempenho por dia').selectOption('saves')
+  await expect(page.getByText('Sem dados históricos disponíveis para salvamentos.')).toBeVisible()
+  await page.getByLabel('Métrica do desempenho por dia').selectOption('likes')
+  await page.getByLabel('Comparar perfis',{exact:true}).check()
+  await expect(page.getByRole('img',{name:'Desempenho por dia: Curtidas'}).locator('.recharts-line')).toHaveCount(2)
+  await page.getByRole('checkbox',{name:'@role_competitor_11',exact:true}).uncheck()
+  await expect.poll(()=>analytics.at(-1)?.data.daily?.[0]?.likes).toBe(10)
+  await expect(page.getByLabel('Métrica do desempenho por dia')).toHaveValue('likes')
+  await page.getByRole('checkbox',{name:'@role_competitor_10',exact:true}).uncheck()
+  await expect(page.getByText('SEM DADOS',{exact:true})).toBeVisible()
+  expect(analytics.at(-1).data.profiles).toEqual([])
+  await page.getByRole('button',{name:'Todos os perfis',exact:true}).click()
+  await expect(page.getByText('Desempenho por dia',{exact:true})).toBeVisible()
+  await page.getByLabel('Formato',{exact:true}).selectOption('Reels')
+  await expect(page.getByText('SEM DADOS',{exact:true})).toBeVisible()
+  await page.getByLabel('Formato',{exact:true}).selectOption('')
+  await page.getByLabel('Região',{exact:true}).selectOption({label:'Planaltina'})
+  await page.getByLabel('Origem territorial',{exact:true}).selectOption('CONTENT')
+  await expect(page.getByText('Desempenho por dia',{exact:true})).toBeVisible()
+  await page.goto(base+'/audiencia')
+  await expect(page.getByText('Evolução de seguidores',{exact:true})).toBeVisible()
+  await expect(page.locator('.recharts-line')).toHaveCount(5)
+  await page.getByLabel('Perfil do gráfico').selectOption('10')
+  await expect(page.locator('.recharts-line')).toHaveCount(1)
+  expect(errors).toEqual([])
+  console.log('OK: escopo COMPETITOR, oito métricas, comparação, seleção vazia, filtros, zero/null e audiência multissérie.')
+  await page.unrouteAll({behavior:'ignoreErrors'})
+} finally {await browser.close()}

@@ -1,0 +1,64 @@
+[
+  {
+    "post_id": 37,
+    "profile": "claudioborcem_",
+    "caption": "Hoje estive com o meu amigo e chefe de gabinete @ismaeldfoficial na liderança do Podemos, no Senado Federal, protocolando um projeto que vai abrir novas portas para a juventude do Distrito Federal.\n\nPlanaltina, Ceilândia, Sobradinho e cada canto do nosso DF merecem ações reais e oportunidades de verdade. É assim que a gente transforma o potencial dos nossos jovens em realidade.\n\nJuntos, nós Podemos! 🚀💥",
+    "url": "https://www.instagram.com/p/DZYgbYfOpFN/",
+    "theme": "Infraestrutura",
+    "territories": [
+      {
+        "region_id": 5,
+        "region": "Sobradinho",
+        "source": "EXPLICIT_RA",
+        "confidence": "HIGH",
+        "evidence": "Planaltina, Ceilândia, Sobradinho"
+      },
+      {
+        "region_id": 6,
+        "region": "Planaltina",
+        "source": "EXPLICIT_RA",
+        "confidence": "HIGH",
+        "evidence": "Planaltina"
+      },
+      {
+        "region_id": 9,
+        "region": "Ceilândia",
+        "source": "EXPLICIT_RA",
+        "confidence": "HIGH",
+        "evidence": "Planaltina, Ceilândia"
+      }
+    ]
+  },
+  {
+    "post_id": 78,
+    "profile": "deputadoroberio",
+    "caption": "Parabéns, Planaltina, pelos seus 167 anos de uma cidade com muita história, tradição e progresso! 🎉\n\nEntre 2022 e 2026, seguimos destinando emendas para infraestrutura, educação e cultura da região, que viabilizaram reformas em escolas, melhorias na iluminação pública, entre outros avanços. \n\nAlém disso, o programa RenovaDF, que ajudamos a idealizar, revitalizou 100 equipamentos públicos na cidade, em espaços como o CAIC Assis Chateaubriand, o Parque Ecológico Sucupira e a Praça São Sebastião.\n\nParabéns a todos os moradores e moradoras de Planaltina! #VamosJuntos 2️⃣0️⃣0️⃣0️⃣0️⃣\n\n#RobérioNegreiros #DeputadoDistirtal #MandatoParticipativo #Planaltina",
+    "url": "https://www.instagram.com/p/DcOqxSLkcQ-/",
+    "theme": "Infraestrutura",
+    "territories": [
+      {
+        "region_id": 6,
+        "region": "Planaltina",
+        "source": "EXPLICIT_RA",
+        "confidence": "HIGH",
+        "evidence": "Parabéns, Planaltina"
+      }
+    ]
+  },
+  {
+    "post_id": 92,
+    "profile": "telmarufinooficial",
+    "caption": "💬 O papo que rola na internet também chega até mim! 😂💜\n\nEntre comentários, mensagens, opiniões e muito papo, uma coisa é certa: ouvir as pessoas é o que nos faz continuar.\n\nCada mensagem de carinho, cada palavra de incentivo e até as cobranças mostram que estamos construindo um caminho de diálogo, presença e proximidade. 🫶🏽\n\nÉ na conversa com vocês que a gente entende o que precisa melhorar, o que precisa continuar e, principalmente, por que vale a pena seguir em frente.\n\nContinuem mandando mensagem, comentando e participando. O papo continua por aqui! 🗣️💛\n\nTelma Rufino | Juntos Podemos +",
+    "url": "https://www.instagram.com/p/DcE35HMlPQq/",
+    "theme": "Infraestrutura",
+    "territories": [
+      {
+        "region_id": 33,
+        "region": "Arniqueira",
+        "source": "LOCATION",
+        "confidence": "HIGH",
+        "evidence": "Arniqueira"
+      }
+    ]
+  }
+]

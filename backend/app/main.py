@@ -13,6 +13,7 @@ from app.routers.filtered_analytics import router as filtered_analytics_router
 from app.database import engine
 from sqlmodel import Session
 from app.routers.ai import router as ai_router
+from app.routers.territorial_audit import router as territorial_audit_router
 
 
 @asynccontextmanager
@@ -59,6 +60,7 @@ app.include_router(territorial_router)
 app.include_router(collections_router)
 app.include_router(filtered_analytics_router)
 app.include_router(ai_router)
+app.include_router(territorial_audit_router)
 
 
 @app.get("/")

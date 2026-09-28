@@ -1,0 +1,171 @@
+{
+  "total_posts": 467,
+  "posts_with_region": 137,
+  "posts_without_region": 330,
+  "posts_by_confidence": {
+    "HIGH": 137,
+    "MEDIUM": 0,
+    "LOW": 2
+  },
+  "assignments_by_confidence": {
+    "HIGH": 159,
+    "MEDIUM": 0,
+    "LOW": 2
+  },
+  "posts_multiple_regions": 18,
+  "regions": [
+    {
+      "region_id": 34,
+      "region_name": "Arapoanga",
+      "posts": 15
+    },
+    {
+      "region_id": 33,
+      "region_name": "Arniqueira",
+      "posts": 19
+    },
+    {
+      "region_id": 4,
+      "region_name": "Brazlândia",
+      "posts": 5
+    },
+    {
+      "region_id": 9,
+      "region_name": "Ceilândia",
+      "posts": 7
+    },
+    {
+      "region_id": 11,
+      "region_name": "Cruzeiro",
+      "posts": 1
+    },
+    {
+      "region_id": 31,
+      "region_name": "Fercal",
+      "posts": 5
+    },
+    {
+      "region_id": 2,
+      "region_name": "Gama",
+      "posts": 2
+    },
+    {
+      "region_id": 10,
+      "region_name": "Guará",
+      "posts": 1
+    },
+    {
+      "region_id": 18,
+      "region_name": "Lago Norte",
+      "posts": 1
+    },
+    {
+      "region_id": 16,
+      "region_name": "Lago Sul",
+      "posts": 2
+    },
+    {
+      "region_id": 8,
+      "region_name": "Núcleo Bandeirante",
+      "posts": 1
+    },
+    {
+      "region_id": 7,
+      "region_name": "Paranoá",
+      "posts": 1
+    },
+    {
+      "region_id": 6,
+      "region_name": "Planaltina",
+      "posts": 65
+    },
+    {
+      "region_id": 1,
+      "region_name": "Plano Piloto",
+      "posts": 3
+    },
+    {
+      "region_id": 15,
+      "region_name": "Recanto das Emas",
+      "posts": 1
+    },
+    {
+      "region_id": 17,
+      "region_name": "Riacho Fundo",
+      "posts": 3
+    },
+    {
+      "region_id": 25,
+      "region_name": "SCIA/Estrutural",
+      "posts": 2
+    },
+    {
+      "region_id": 29,
+      "region_name": "SIA",
+      "posts": 3
+    },
+    {
+      "region_id": 12,
+      "region_name": "Samambaia",
+      "posts": 2
+    },
+    {
+      "region_id": 13,
+      "region_name": "Santa Maria",
+      "posts": 3
+    },
+    {
+      "region_id": 5,
+      "region_name": "Sobradinho",
+      "posts": 6
+    },
+    {
+      "region_id": 26,
+      "region_name": "Sobradinho II",
+      "posts": 1
+    },
+    {
+      "region_id": 32,
+      "region_name": "Sol Nascente/Pôr do Sol",
+      "posts": 2
+    },
+    {
+      "region_id": 14,
+      "region_name": "São Sebastião",
+      "posts": 1
+    },
+    {
+      "region_id": 3,
+      "region_name": "Taguatinga",
+      "posts": 2
+    },
+    {
+      "region_id": 30,
+      "region_name": "Vicente Pires",
+      "posts": 1
+    },
+    {
+      "region_id": 35,
+      "region_name": "Água Quente",
+      "posts": 1
+    },
+    {
+      "region_id": 20,
+      "region_name": "Águas Claras",
+      "posts": 3
+    }
+  ],
+  "detection_sources": {
+    "EXPLICIT_RA": 110,
+    "LOCATION": 51,
+    "NONE": 328
+  },
+  "posts_by_detection_source": {
+    "EXPLICIT_RA": 94,
+    "LOCATION": 47,
+    "NONE": 328
+  },
+  "total_rows": 489,
+  "high_evidence_not_literal": 0,
+  "methodology": "Uma linha por associação/candidato. Contagens de posts são distintas; NONE não conta como LOW. Filtros por RA/confiança selecionam linhas; territories sempre mostra todas as decisões persistidas do post. Métricas usam o último snapshot, sem somar coletas."
+}

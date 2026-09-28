@@ -1,4 +1,5 @@
 from app.services.comments import save_comment_sample
+from app.services.territorial_detection import classify_post
 from sqlmodel import Session, select
 
 from app.integrations.apify import collect_posts
@@ -167,6 +168,7 @@ def sync_instagram_profile(
             item,
         )
 
+        classify_post(session, post)
         save_comment_sample(session, post.id, raw_post)
 
         if created:

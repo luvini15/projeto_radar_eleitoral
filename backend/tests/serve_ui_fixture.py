@@ -10,6 +10,8 @@ os.environ['DATABASE_URL'] = 'sqlite:///' + database_path.replace('\\', '/')
 os.environ['APIFY_TOKEN'] = ''
 os.environ['OPENROUTER_API_KEY'] = ''
 os.environ['AUTO_SYNC_CAMPAIGN_IDS'] = ''
+os.environ['COLLECTION_ENABLED'] = 'false'
+os.environ['COLLECTION_SCHEDULER_MODE'] = 'disabled'
 
 from app.database import create_db_and_tables, engine
 from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot, ProfileSnapshot
@@ -38,6 +40,36 @@ with Session(engine) as session:
     session.add(PostSnapshot(post_id=2, comments_count=None, collected_at=now-timedelta(days=2)))
     session.commit()
     save_comment_sample(session,2,{'latestComments':[{'text':'Comentário de teste sobre o evento.'},{'text':'Onde encontro os dados citados?'}]})
+
+# Territorial fixture uses only synthetic posts in the isolated SQLite database.
+from app.routers.territorial import seed_reference_data
+from app.models import AdministrativeRegion, ProfileRegion
+from app.services.territorial_detection import classify_existing
+from sqlmodel import select
+with Session(engine) as session:
+    seed_reference_data(session)
+    region = session.exec(select(AdministrativeRegion).where(AdministrativeRegion.name == 'Ceilândia')).one()
+    session.add(ProfileRegion(profile_id=1, region_id=region.id))
+    post = session.get(InstagramPost, 1)
+    post.caption += '. Moradores de Planaltina e Taguatinga precisam de atendimento.'
+    session.add(post)
+    post = session.get(InstagramPost, 2)
+    post.caption += '. Atendimento na Asa Norte.'
+    session.add(post)
+    session.commit()
+    classify_existing(session)
+
+with Session(engine) as session:
+    session.add(Campaign(id=3,name='Comparação de teste',slug='comparison-test'));session.commit()
+    for pid,role in enumerate(['COMPETITOR','COMPETITOR','LOCAL_PAGE','DF_GENERAL','MEDIA'],10):
+        session.add(InstagramProfile(id=pid,username=f'role_{role.lower()}_{pid}'));session.commit()
+        session.add(CampaignProfile(campaign_id=3,profile_id=pid,role=role))
+        session.add(InstagramPost(id=pid+100,profile_id=pid,shortcode=f'role{pid}',url=f'https://www.instagram.com/p/role{pid}/',caption='Hospital em Planaltina',content_type='Image',published_at=now-timedelta(days=1)))
+        session.commit()
+        session.add(PostSnapshot(post_id=pid+100,likes_count=pid,comments_count=2,interactions_count=pid+2,views_count=100,plays_count=50,shares_count=0,saves_count=None))
+        session.add(ProfileSnapshot(profile_id=pid,followers_count=pid*100,collected_at=now-timedelta(days=2)))
+        session.add(ProfileSnapshot(profile_id=pid,followers_count=pid*100+5,collected_at=now))
+    session.commit();classify_existing(session,3)
 
 if __name__ == '__main__':
     try:

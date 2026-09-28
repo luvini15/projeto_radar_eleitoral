@@ -1,0 +1,43 @@
+import { chromium, expect } from '@playwright/test'
+const browser = await chromium.launch()
+try {
+  const page = await browser.newPage({viewport:{width:1440,height:1000}})
+  page.setDefaultTimeout(15000)
+  const errors=[]
+  page.on('pageerror',error=>errors.push(error.message))
+  await page.addInitScript(()=>sessionStorage.setItem('data-sight:session-simulada',JSON.stringify({nome:'Teste'})))
+  await page.route('**/api/**',async route=>{
+    const url=new URL(route.request().url());url.hostname='127.0.0.1';url.port=process.env.UI_FIXTURE_PORT||'8001'
+    if(url.pathname.endsWith('/thumbnail'))return route.fulfill({status:404})
+    await route.fulfill({response:await route.fetch({url:url.toString()})})
+  })
+  const base=process.env.UI_BASE_URL||'http://localhost:5173'
+  await page.goto(base+'/tendencias')
+  await expect(page.getByText('Tendências por RA e tema',{exact:true})).toBeVisible()
+  await page.getByLabel('Região Administrativa',{exact:true}).selectOption({label:'Planaltina'})
+  await page.getByLabel('Origem territorial',{exact:true}).selectOption('CONTENT')
+  await page.getByLabel('Categoria',{exact:true}).selectOption('Saúde')
+  await page.getByLabel('Formato territorial',{exact:true}).selectOption('Imagem')
+  await page.getByLabel('Perfil territorial',{exact:true}).selectOption('1')
+  await expect(page.locator('tbody tr')).toHaveCount(1)
+  await page.getByRole('button',{name:'Ver posts',exact:true}).click()
+  await expect(page.getByText('1 posts sustentam esta tendência.',{exact:true})).toBeVisible()
+  await expect(page.getByText('“Moradores de Planaltina”',{exact:true})).toBeVisible()
+  await page.getByRole('link',{name:'Ver detalhes e legenda completa'}).click()
+  await expect(page.getByText('RA do perfil: Ceilândia',{exact:false})).toBeVisible()
+  await expect(page.getByText('Planaltina',{exact:true})).toBeVisible()
+  await expect(page.getByText('Taguatinga',{exact:true})).toBeVisible()
+  await page.goto(base+'/tendencias')
+  await page.getByLabel('Região Administrativa',{exact:true}).selectOption({label:'Planaltina'})
+  await page.getByLabel('Origem territorial',{exact:true}).selectOption('PROFILE')
+  await expect(page.getByText('Não existem dados para este período ou região.',{exact:true})).toBeVisible()
+  await page.goto(base+'/coletas')
+  await expect(page.getByText('INATIVA',{exact:true})).toBeVisible()
+  await expect(page.getByText('Horário: 03:00',{exact:true})).toBeVisible()
+  await expect(page.getByText('Timezone: America/Sao_Paulo',{exact:true})).toBeVisible()
+  await page.getByRole('button',{name:'Executar agora',exact:true}).click()
+  await expect(page.getByRole('alert')).toContainText('Configure APIFY_TOKEN')
+  expect(errors).toEqual([])
+  console.log('OK: filtros territoriais combinados, drilldown real, evidência literal, RA do perfil separada, origem e coleta inativa sem provedor.')
+  await page.unrouteAll({behavior:'ignoreErrors'})
+} finally { await browser.close() }

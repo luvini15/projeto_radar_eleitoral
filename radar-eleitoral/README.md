@@ -109,7 +109,7 @@ Configuração atual:
 | Imagem | `postgres:16` |
 | Banco | `radar_eleitoral` |
 | Usuário | `radar` |
-| Senha local | `radar123` |
+| Senha local | `<POSTGRES_PASSWORD_LOCAL>` |
 | Porta interna do container | `5432` |
 | Porta no computador | `5433` |
 
@@ -134,7 +134,7 @@ localhost:5433
 A URL de conexão atual é:
 
 ```text
-postgresql+psycopg://radar:radar123@localhost:5433/radar_eleitoral
+<DATABASE_URL_LOCAL>
 ```
 
 ---
@@ -214,7 +214,7 @@ Host: localhost
 Port: 5433
 Database: radar_eleitoral
 Username: radar
-Password: radar123
+Password: <POSTGRES_PASSWORD_LOCAL>
 ```
 
 ---
@@ -362,7 +362,7 @@ Copy-Item .env.example .env
 Conteúdo:
 
 ```env
-DATABASE_URL=postgresql+psycopg://radar:radar123@localhost:5433/radar_eleitoral
+DATABASE_URL=<DATABASE_URL_LOCAL>
 APIFY_TOKEN=SEU_TOKEN_DA_APIFY
 ```
 
@@ -995,7 +995,7 @@ Deve aparecer:
 Confira `backend/.env`:
 
 ```env
-DATABASE_URL=postgresql+psycopg://radar:radar123@localhost:5433/radar_eleitoral
+DATABASE_URL=<DATABASE_URL_LOCAL>
 ```
 
 Teste:

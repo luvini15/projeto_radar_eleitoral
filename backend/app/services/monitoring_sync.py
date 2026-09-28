@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from app.integrations.apify import collect_posts, collect_profile
 from app.models import CampaignProfile, CollectionRun, InstagramPost, InstagramProfile, PostSnapshot, ProfileCollectionRun, ProfileSnapshot
 from app.services.comments import save_comment_sample
+from app.services.territorial_detection import classify_post
 from app.services.normalizer import normalize_apify_post, normalize_non_negative
 
 
@@ -48,6 +49,7 @@ def collect_one_profile(session: Session, profile: InstagramProfile, limit: int)
             profile.instagram_id = item["owner_id"]
         session.add(profile)
         post, created = upsert_post(session, profile, item)
+        classify_post(session, post)
         save_comment_sample(session, post.id, raw, commit=False)
         new_posts += int(created)
         session.add(PostSnapshot(post_id=post.id, likes_count=item.get("likes_count"), comments_count=item.get("comments_count"), shares_count=item.get("shares_count"), saves_count=item.get("saves_count"), views_count=item.get("views_count"), plays_count=item.get("plays_count"), interactions_count=item.get("interactions_count"), interactions_complete=item.get("interactions_complete", False), source=item.get("source", "APIFY_PUBLIC")))
@@ -55,7 +57,7 @@ def collect_one_profile(session: Session, profile: InstagramProfile, limit: int)
     return {"username": profile.username, "posts_found": len(raw_posts), "new_posts": new_posts, "post_snapshots_created": snapshots, "items_skipped": skipped, "followers_updated": follower_error is None and raw_profile is not None, "follower_error": follower_error}
 
 
-def collect_campaign(session: Session, campaign_id: int, limit: int = 25, trigger: str = "MANUAL") -> dict:
+def _collect_campaign(session: Session, campaign_id: int, limit: int = 25, trigger: str = "MANUAL") -> dict:
     links = list(session.exec(select(CampaignProfile).where(CampaignProfile.campaign_id == campaign_id, CampaignProfile.active == True)).all())  # noqa: E712
     run = CollectionRun(campaign_id=campaign_id, trigger=trigger.upper(), profiles_total=len(links))
     session.add(run); session.commit(); session.refresh(run)
@@ -84,3 +86,9 @@ def collect_campaign(session: Session, campaign_id: int, limit: int = 25, trigge
     run.errors = json.dumps(errors, ensure_ascii=False) if errors else None
     session.add(run); session.commit(); session.refresh(run)
     return {"profiles_synced": run.profiles_succeeded, "run_id": run.id, "campaign_id": campaign_id, "status": run.status, "started_at": run.started_at, "finished_at": run.finished_at, "profiles_total": run.profiles_total, "profiles_succeeded": run.profiles_succeeded, "profiles_failed": run.profiles_failed, "posts_found": run.posts_found, "new_posts": run.new_posts, "post_snapshots_created": run.post_snapshots_created, "followers_updated": run.followers_updated, "errors": errors, "posts_requested_per_profile": limit, "results": results}
+
+
+def collect_campaign(session: Session, campaign_id: int, limit: int = 25, trigger: str = "MANUAL") -> dict:
+    from app.services.collection_lock import collection_slot
+    with collection_slot(session, campaign_id):
+        return _collect_campaign(session, campaign_id, limit, trigger)

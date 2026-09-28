@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlmodel import Field, SQLModel
+from sqlalchemy import CheckConstraint, UniqueConstraint
 
 
 def utc_now():
@@ -289,3 +290,40 @@ class AIUsage(SQLModel, table=True):
     __tablename__ = 'ai_usage'
     day: str = Field(primary_key=True)
     requests: int = 0
+
+
+class ProfileMonitoring(SQLModel, table=True):
+    """Editorial monitoring metadata; does not change the legacy profile_type."""
+    __tablename__ = "profile_monitoring"
+    profile_id: int = Field(primary_key=True, foreign_key="instagram_profiles.id")
+    scope: str = Field(default="TERRITORIAL", index=True)
+    url: str
+    description: str | None = None
+    relevance: str | None = None
+    source_file: str | None = None
+    source_status: str | None = None
+    source_active: str | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class PostRegion(SQLModel, table=True):
+    __tablename__ = "post_regions"
+    __table_args__ = (
+        UniqueConstraint("post_id", "region_id", name="uq_post_regions_post_region"),
+        CheckConstraint("source IN ('EXPLICIT_RA','LOCALITY','LOCATION','PROFILE','NONE')"),
+        CheckConstraint("confidence IN ('HIGH','MEDIUM','LOW')"),
+    )
+    id: int | None = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="instagram_posts.id", index=True)
+    region_id: int | None = Field(default=None, foreign_key="administrative_regions.id", index=True)
+    source: str
+    confidence: str
+    evidence: str | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class SchedulerHeartbeat(SQLModel, table=True):
+    __tablename__ = "scheduler_heartbeat"
+    id: int = Field(default=1, primary_key=True)
+    last_seen_at: datetime = Field(default_factory=utc_now)
+    mode: str = "daily"

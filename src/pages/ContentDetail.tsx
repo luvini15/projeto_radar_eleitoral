@@ -7,8 +7,10 @@ import { LatestPostCard } from '@/components/dashboard/LatestPostCard'
 import { PostAIAnalysis } from '@/components/dashboard/PostAIAnalysis'
 import { number, date, apiTimestamp } from '@/utils/apiFormat'
 import type { Post } from '@/types/radar'
+import type { Territory } from '@/types/api'
+import { TerritorialEvidence } from '@/components/dashboard/TerritorialEvidence'
 interface Snapshot {id: number; collected_at: string; likes_count: number|null; comments_count: number|null; views_count: number|null; plays_count: number|null; interactions_count: number|null; shares_count: number|null; saves_count: number|null}
-interface Detail {post: Post; history: Snapshot[]; comments: {texts: string[]; collected_at: string|null; is_sample: boolean}}
+interface Detail {territories?:Territory[];profile_region?:{id:number;name:string}|null;post: Post; history: Snapshot[]; comments: {texts: string[]; collected_at: string|null; is_sample: boolean}}
 const metrics = {comments_count:'Comentários',likes_count:'Curtidas',views_count:'Visualizações',plays_count:'Reproduções',interactions_count:'Interações observadas',shares_count:'Compartilhamentos',saves_count:'Salvamentos'} as const
 export default function ContentDetail() {
   const {postId} = useParams()
@@ -32,6 +34,7 @@ export default function ContentDetail() {
           <Panel title="Sobre a publicação"><dl className="space-y-4 text-sm"><div><dt className="text-slate">Perfil</dt><dd>@{data.post.profile.username}</dd></div><div><dt className="text-slate">Formato</dt><dd>{data.post.content.format}</dd></div><div><dt className="text-slate">Tema identificado por palavras-chave</dt><dd>{data.post.content.theme}</dd></div><div><dt className="text-slate">Publicação</dt><dd>{date(data.post.content.published_at)}</dd></div></dl></Panel>
         </div>
       </div>
+      <Panel title="Identificação territorial"><p className="mb-3 text-sm text-slate">RA do perfil: {data.profile_region?.name||'Sem associação fixa'}. A identificação abaixo pertence à publicação.</p><TerritorialEvidence items={data.territories||[]}/></Panel>
       <Panel title="Evolução do post">
         <div className="mb-5 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-2 text-sm">Período da evolução<select aria-label="Período da evolução" className="h-10 rounded-md border border-border bg-muted px-3" value={days} onChange={e=>setDays(Number(e.target.value))}><option value={7}>Última semana</option><option value={30}>Últimos 30 dias</option><option value={90}>Últimos 90 dias</option><option value={365}>Último ano</option></select></label>
