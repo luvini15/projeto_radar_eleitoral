@@ -76,6 +76,8 @@ class PostAITests(unittest.TestCase):
             result = ask_campaign(self.session, 1, 'O que chama atenção?', 'user-1')
             self.assertEqual(result['text'], 'Resumo descritivo de teste.')
             self.assertEqual(len(result['sources']), 4)
+            self.assertEqual(len(result['tools']), 4)
+            self.assertTrue(all(item['state'] == 'output-available' for item in result['tools']))
             self.assertIsNotNone(self.session.get(AssistantConversation, result['conversation_id']))
             self.assertEqual(list_conversations(self.session, 1, 'user-1')[0]['message_count'], 2)
             self.assertEqual(len(get_conversation(self.session, 1, 'user-1', result['conversation_id'])['messages']), 2)

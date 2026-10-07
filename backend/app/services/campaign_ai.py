@@ -165,6 +165,15 @@ def ask_campaign(
             {"label": "Dias e horários", "path": "/dias-horarios", "description": "Desempenho temporal da amostra"},
             {"label": "Audiência", "path": "/audiencia", "description": "Histórico observado nos últimos 30 dias"},
         ]
+        tools = [
+            {
+                "type": f"tool-{source['label'].lower().replace(' ', '_')}",
+                "state": "output-available",
+                "input": {"campaign_id": campaign_id},
+                "output": {"leitura": source["description"]},
+            }
+            for source in sources
+        ]
         if conversation is None:
             conversation = AssistantConversation(
                 id=str(uuid4()), user_id=user_id, campaign_id=campaign_id, title=question[:80].strip()
@@ -185,6 +194,7 @@ def ask_campaign(
             "text": answer.strip(),
             "model": str(payload.get("model") or model),
             "sources": sources,
+            "tools": tools,
         }
     finally:
         assistant_lock.release()
