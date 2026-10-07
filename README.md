@@ -1,5 +1,17 @@
 # Radar Eleitoral
 
+# Contexto do Projeto
+
+O Radar Eleitoral é uma plataforma de inteligência digital desenvolvida para auxiliar no acompanhamento, organização e análise de dados públicos relacionados à comunicação política nas redes sociais.
+
+O projeto surgiu a partir da necessidade de transformar informações dispersas das redes sociais em dados estruturados e indicadores estratégicos, permitindo acompanhar o desempenho de conteúdos, identificar temas relevantes, analisar a presença digital de diferentes perfis e compreender demandas regionais do Distrito Federal.
+
+O parceiro do projeto é **Cláudio Borcem**, candidato a Deputado Distrital pelo Distrito Federal, para quem a plataforma foi desenvolvida inicialmente como uma ferramenta de monitoramento e análise estratégica da comunicação digital.
+
+A solução permite acompanhar métricas de publicações, evolução de seguidores, desempenho de conteúdos, atuação de concorrentes, tendências territoriais e temas identificados a partir das publicações analisadas.
+
+Por meio da integração entre coleta automatizada de dados, processamento, armazenamento histórico e visualizações analíticas, o Radar Eleitoral busca transformar dados de redes sociais em informações organizadas para apoiar análises e decisões estratégicas baseadas em dados.
+
 ## Arquitetura operacional — dados reais
 
 O frontend integrado Data Sight está na raiz (`src/`) e reúne monitoramento, coletas, seguidores, filtros, concorrentes, inteligência territorial, relatórios, comentários e análise de posts com IA. A pasta `radar-eleitoral/` preserva o frontend anterior. O fluxo operacional é `Apify → FastAPI → PostgreSQL → API agregada → React`.
