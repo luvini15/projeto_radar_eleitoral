@@ -196,3 +196,51 @@ class AIUsage(SQLModel, table=True):
     __tablename__ = 'ai_usage'
     day: str = Field(primary_key=True)
     requests: int = 0
+
+
+class AuthSession(SQLModel, table=True):
+    __tablename__ = "auth_sessions"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(index=True)
+    first_seen_at: datetime = Field(default_factory=utc_now)
+    last_seen_at: datetime = Field(default_factory=utc_now)
+    expired: bool = False
+
+
+class AppUser(SQLModel, table=True):
+    """Application authorization record created on the first valid login."""
+
+    __tablename__ = "app_users"
+
+    id: str = Field(primary_key=True)
+    email: str | None = Field(default=None, index=True)
+    role: str = "analyst"
+    active: bool = True
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class AssistantConversation(SQLModel, table=True):
+    """A saved Data Sight assistant thread owned by one authenticated user."""
+
+    __tablename__ = "assistant_conversations"
+
+    id: str = Field(primary_key=True)
+    user_id: str = Field(index=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    title: str
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now, index=True)
+
+
+class AssistantMessage(SQLModel, table=True):
+    __tablename__ = "assistant_messages"
+
+    id: int | None = Field(default=None, primary_key=True)
+    conversation_id: str = Field(
+        foreign_key="assistant_conversations.id",
+        index=True,
+    )
+    role: str
+    content: str
+    sources_json: str = "[]"
+    created_at: datetime = Field(default_factory=utc_now)

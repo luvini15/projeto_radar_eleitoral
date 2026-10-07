@@ -1,5 +1,7 @@
 # Radar Eleitoral
 
+> **Acesso:** configure Supabase Auth, MFA opcional, cadastro automático, migrações e HTTPS antes de usar. Consulte [SECURITY.md](SECURITY.md).
+
 ## Detalhamento de posts, IA e OpenCode
 
 A tabela de Conteúdos mostra uma prévia de cada publicação. O link **Ver detalhes**
@@ -60,7 +62,16 @@ npm run dev
 
 O terminal mostrará um endereço local (algo como `http://localhost:5173`). Abra no navegador.
 
-Na tela de login, qualquer combinação de e-mail e senha preenchidos libera o acesso (autenticação simulada — veja seção "Autenticação" abaixo).
+Em outro terminal, mantenha a API ativa:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Confirme em `http://localhost:8000/health` que a resposta é `{"status":"ok"}`. O login do Supabase só abre o painel depois que essa API valida o usuário.
+
+O login exige credenciais Supabase e autorização na API. Quando o usuário ativa MFA, os próximos acessos também exigem o código do autenticador. Veja [SECURITY.md](SECURITY.md) para configurar o ambiente antes de iniciar.
 
 Para gerar a versão de produção (arquivos estáticos, prontos para hospedar):
 
@@ -80,7 +91,7 @@ Os arquivos finais aparecem em `dist/`.
 - **Recharts** (gráficos de área, linha, barra e dispersão)
 - **Lucide Icons**
 - **React Router** (rotas e proteção de páginas)
-- **Supabase JS** (preparado para autenticação futura, não ativo no protótipo)
+- **Supabase JS** (autenticação por senha e TOTP)
 
 ---
 
@@ -100,7 +111,7 @@ src/
   services/        InstagramDataProvider (interface), MockInstagramService, MetaInstagramService (stub), Supabase client
   types/           Tipos TypeScript do domínio
   utils/           Funções de formatação e cálculo (metrics.ts)
-  lib/             Contexto de autenticação simulada, utilitário de classes CSS
+  lib/             Contexto de autenticação, utilitário de classes CSS
 ```
 
 ---
@@ -129,19 +140,9 @@ Nenhum componente visual precisa ser alterado.
 
 ## Autenticação
 
-O login atual é **simulado**: qualquer e-mail e senha preenchidos liberam o
-acesso, e a sessão fica apenas em `sessionStorage` do navegador (nada de
-senha ou token real é armazenado).
-
-O projeto já inclui `@supabase/supabase-js` e um cliente preparado em
-`src/services/supabaseClient.ts`. Para ativar a autenticação real com
-Supabase Auth no futuro:
-
-1. Copie `.env.example` para `.env.local`;
-2. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com as chaves do
-   seu projeto Supabase (nunca comite esse arquivo);
-3. Substitua a lógica de `signIn` em `src/lib/authContext.tsx` por uma
-   chamada a `supabase.auth.signInWithPassword(...)`.
+O login usa Supabase Auth com senha, Google e TOTP opcional. A API valida a sessão,
+exige `aal2` de quem ativou MFA e cadastra automaticamente novos usuários como analistas. Configure o ambiente conforme
+[SECURITY.md](SECURITY.md).
 
 ---
 

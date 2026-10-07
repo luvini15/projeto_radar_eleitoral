@@ -1,7 +1,7 @@
 import os
 from app.services.auto_sync import collection_slot, config
 from app.models import SyncSchedule
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlmodel import Session
 
 from app.database import get_session
@@ -24,7 +24,7 @@ router = APIRouter(
     responses={503: {"description": "Token Apify não configurado"}},
 )
 def sync_instagram(
-    username: str,
+    username: str = Path(pattern=r"^[A-Za-z0-9._]{1,30}$"),
     limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts por perfil"),
     session: Session = Depends(get_session),
 ):

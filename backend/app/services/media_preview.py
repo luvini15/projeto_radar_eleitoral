@@ -4,6 +4,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from threading import Lock
 from urllib.parse import urlparse
+from urllib.parse import urljoin
 
 import httpx
 
@@ -52,16 +53,34 @@ def _allowed_image_url(url: str | None) -> bool:
         or hostname.endswith(".fbcdn.net")
     )
 
+def _fetch_limited(client: httpx.Client, url: str, limit: int, allowed) -> tuple[bytes, str]:
+    for _ in range(4):
+        if not allowed(url):
+            raise PreviewUnavailable()
+        with client.stream("GET", url, headers={"Referer": "https://www.instagram.com/"}) as response:
+            if response.status_code in {301, 302, 303, 307, 308}:
+                location = response.headers.get("location")
+                if not location:
+                    raise PreviewUnavailable()
+                url = urljoin(url, location)
+                continue
+            response.raise_for_status()
+            size = 0
+            chunks = []
+            for chunk in response.iter_bytes():
+                size += len(chunk)
+                if size > limit:
+                    raise PreviewUnavailable()
+                chunks.append(chunk)
+            return b"".join(chunks), response.headers.get("content-type", "").split(";", 1)[0].lower()
+    raise PreviewUnavailable()
+
 
 def _download(client: httpx.Client, url: str) -> tuple[bytes, str]:
-    if not _allowed_image_url(url):
+    content, content_type = _fetch_limited(client, url, MAX_IMAGE_BYTES, _allowed_image_url)
+    if content_type not in CONTENT_EXTENSIONS or not content:
         raise PreviewUnavailable()
-    response = client.get(url, headers={"Referer": "https://www.instagram.com/"})
-    response.raise_for_status()
-    content_type = response.headers.get("content-type", "").split(";", 1)[0].lower()
-    if content_type not in CONTENT_EXTENSIONS or not response.content or len(response.content) > MAX_IMAGE_BYTES:
-        raise PreviewUnavailable()
-    return response.content, content_type
+    return content, content_type
 
 
 def get_post_preview(
@@ -79,7 +98,7 @@ def get_post_preview(
     owns_client = client is None
     http = client or httpx.Client(
         timeout=20,
-        follow_redirects=True,
+        follow_redirects=False,
         headers={"User-Agent": "Mozilla/5.0"},
     )
     with CACHE_LOCKS_GUARD:
@@ -96,12 +115,11 @@ def get_post_preview(
             except (httpx.HTTPError, PreviewUnavailable):
                 if not _allowed_post_url(post.url):
                     raise PreviewUnavailable() from None
-                page = http.get(post.url)
-                page.raise_for_status()
-                if len(page.content) > 2 * 1024 * 1024:
+                page_content, page_type = _fetch_limited(http, post.url, 2 * 1024 * 1024, _allowed_post_url)
+                if page_type not in {"text/html", "text/plain", ""}:
                     raise PreviewUnavailable()
                 parser = OpenGraphParser()
-                parser.feed(page.text)
+                parser.feed(page_content.decode("utf-8", errors="replace"))
                 content, content_type = _download(http, parser.image_url or "")
 
             destination = root / f"{post.id}{CONTENT_EXTENSIONS[content_type]}"
