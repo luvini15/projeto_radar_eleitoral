@@ -9,6 +9,7 @@ import Login from '@/pages/Login'
 import ResetPassword from '@/pages/ResetPassword'
 import { PrivacyPolicy, TermsOfUse } from '@/pages/Legal'
 import Overview from '@/pages/Overview'
+import Assistant from '@/pages/Assistant'
 import Content from '@/pages/Content'
 import ContentDetail from '@/pages/ContentDetail'
 import Topics from '@/pages/Topics'
@@ -38,6 +39,7 @@ export default function App() {
               }
             >
               <Route path="/painel" element={<Overview />} />
+              <Route path="/ia" element={<Assistant />} />
               <Route path="/conteudos" element={<Content />} />
               <Route path="/conteudos/:postId" element={<ContentDetail />} />
               <Route path="/temas-formatos" element={<Topics />} />

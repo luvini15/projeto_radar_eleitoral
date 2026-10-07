@@ -11,3 +11,7 @@ export function Loader({ variant = "dots", className }: { variant?: LoaderVarian
     </span>
   );
 }
+
+export function DotsLoader({ className }: { className?: string }) {
+  return <Loader variant="dots" className={className} />;
+}
