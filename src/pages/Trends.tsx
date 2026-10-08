@@ -16,7 +16,7 @@ const pct=(value:number|null)=>value==null?'Sem base anterior':`${value>=0?'+':'
 export default function Trends() {
   const {selected,revision}=useCampaign()
   const campaignId=Number(selected)
-  const [filters,setFilters]=React.useState<TerritorialFilterValue>(defaultPeriod)
+  const [filters,setFilters]=React.useState<TerritorialFilterValue>(()=>({...defaultPeriod(),profileGroup:'TERRITORIAL'}))
   const [regions,setRegions]=React.useState<Region[]>([])
   const [profiles,setProfiles]=React.useState<CampaignDetails['profiles']>([])
   const [data,setData]=React.useState<TrendsResponse|null>(null)
@@ -26,22 +26,25 @@ export default function Trends() {
   const [offset,setOffset]=React.useState(0)
   const [evidence,setEvidence]=React.useState<Awaited<ReturnType<typeof getTrendPosts>>|null>(null)
   const [evidenceError,setEvidenceError]=React.useState('')
-  React.useEffect(()=>{let active=true;Promise.all([getRegions(),getCampaign(campaignId)]).then(([r,c])=>{if(active){setRegions(r.regions);setProfiles(c.profiles)}}).catch(()=>{if(active)setError('Não foi possível carregar os filtros.')});return()=>{active=false}},[campaignId])
+  React.useEffect(()=>{let active=true;Promise.all([getRegions(),getCampaign(campaignId)]).then(([r,c])=>{if(active){setRegions(r.regions);setProfiles(c.profiles)}}).catch(()=>{if(active)setError('Não foi possível carregar os filtros.')});return()=>{active=false}},[campaignId,revision])
   React.useEffect(()=>{
     let active=true;setLoading(true);setError('')
-    getTrends(filters.startDate,filters.endDate,filters.regionId,filters.theme,campaignId,filters).then(result=>{if(active)setData(result)}).catch(()=>{if(active)setError('Não foi possível carregar tendências.')}).finally(()=>{if(active)setLoading(false)})
+    getTrends(filters.startDate,filters.endDate,filters.regionId,filters.theme,campaignId,filters).then(result=>{if(active)setData(result)}).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'Não foi possível carregar tendências.')}).finally(()=>{if(active)setLoading(false)})
     return()=>{active=false}
   },[filters,campaignId,revision])
+  React.useEffect(()=>{setTarget(null);setOffset(0);setFilters(value=>({...value,profileIds:[]}))},[campaignId])
   React.useEffect(()=>{
     if(!target)return
     let active=true;setEvidence(null);setEvidenceError('')
-    getTrendPosts(filters.startDate,filters.endDate,target.region_id,target.theme,campaignId,filters,offset).then(result=>{if(active)setEvidence(result)}).catch(()=>{if(active)setEvidenceError('Não foi possível carregar as evidências.')})
+    getTrendPosts(filters.startDate,filters.endDate,target.region_id,target.theme,campaignId,filters,offset).then(result=>{if(active)setEvidence(result)}).catch(cause=>{if(active)setEvidenceError(cause instanceof Error?cause.message:'Não foi possível carregar as evidências.')})
     return()=>{active=false}
   },[target,filters,campaignId,offset,revision])
+  const visibleProfiles=profiles.filter(p=>p.active&&(filters.profileGroup==='TERRITORIAL'?['LOCAL_PAGE','MEDIA','DF_GENERAL'].includes(p.role):p.role===filters.profileGroup))
   function change(next:TerritorialFilterValue){setFilters(next);setTarget(null);setOffset(0)}
   return <div className="space-y-6">
-    <TerritorialFilters value={filters} onChange={change} regions={regions} themes={themes} profiles={profiles} extended/>
-    {loading&&!data?<PageLoader/>:error?<p role="alert" className="text-alert">{error}</p>:data?.data_status==='NO_DATA'?<p className="rounded-lg border border-border p-8">Não existem dados para este período ou região.</p>:<>
+    <p className="text-sm text-slate">Monitoramento territorial e concorrentes políticos são analisados separadamente. Escolha o grupo de perfis abaixo.</p>
+    <TerritorialFilters value={filters} onChange={change} regions={regions} themes={themes} profiles={visibleProfiles} extended/>
+    {loading?<PageLoader/>:error?<p role="alert" className="text-alert">{error}</p>:data?.data_status==='NO_DATA'?<p className="rounded-lg border border-border p-8">Não existem dados para este período ou região.</p>:<>
       <p className="text-sm text-slate">{data?.data_status==='INSUFFICIENT'?'A amostra ainda é insuficiente para conclusões robustas.':'Tendências calculadas a partir dos posts armazenados.'} Posts com várias RAs aparecem em cada região, mas são contados uma vez nos totais por tema.</p>
       <Card><CardHeader><CardTitle>Tendências por RA e tema</CardTitle></CardHeader><CardContent className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead><tr>{['RA','Tema','Posts','Interações','Crescimento','Formato','Perfil','Origem','Evidências'].map(label=><th className="p-2" key={label}>{label}</th>)}</tr></thead><tbody>{data?.territorial_trends?.filter(row=>row.volume>0).map(row=><tr key={`${row.region_id}-${row.theme}`} className="border-t border-border"><td className="p-2">{row.region}</td><td>{row.theme}</td><td>{row.volume}</td><td title={`${row.interactions_posts} de ${row.volume} posts com métrica disponível`}>{row.interactions?.toLocaleString('pt-BR')??'N/D'}</td><td>{pct(row.growth)}</td><td>{row.formats.join(', ')}</td><td>{row.profiles.map(name=>'@'+name).join(', ')}</td><td>{row.sources.map(territorialSource).join('; ')}</td><td><Button variant="secondary" onClick={()=>{setTarget(row);setOffset(0)}}>Ver posts</Button></td></tr>)}</tbody></table>{!data?.territorial_trends?.some(row=>row.volume>0)&&<p className="py-4 text-slate">Nenhum post com atribuição territorial neste recorte.</p>}</CardContent></Card>
       {target&&<Card><CardHeader><CardTitle>Posts de evidência: {target.region} · {target.theme}</CardTitle></CardHeader><CardContent className="space-y-4">{evidenceError?<p role="alert">{evidenceError}</p>:!evidence?<p role="status">Carregando evidências…</p>:<><p>{evidence.total} posts sustentam esta tendência.</p>{evidence.posts.map(post=><article key={post.post_id} className="space-y-2 rounded-lg border border-border p-4"><b>@{post.profile}</b><p className="text-xs text-slate">{post.date?new Date(post.date).toLocaleDateString('pt-BR'):'Sem data'} · {post.format}</p><p className="break-words">{post.summary}</p><TerritorialEvidence items={post.territories||[]}/><Link className="inline-block text-blue" to={`/conteudos/${post.post_id}`}>Ver detalhes e legenda completa</Link></article>)}<div className="flex gap-2"><Button variant="secondary" disabled={offset===0} onClick={()=>setOffset(Math.max(0,offset-50))}>Anterior</Button><Button variant="secondary" disabled={offset+50>=evidence.total} onClick={()=>setOffset(offset+50)}>Próxima página</Button><Button variant="ghost" onClick={()=>setTarget(null)}>Fechar evidências</Button></div></>}</CardContent></Card>}

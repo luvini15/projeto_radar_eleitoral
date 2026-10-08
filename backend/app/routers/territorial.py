@@ -14,7 +14,7 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models import AdministrativeRegion, Campaign, GeneratedReport, InstagramProfile, InstagramPost, PostTheme, ProfileRegion, Theme
 from app.services.taxonomy import classify_theme, theme_names
-from app.services.trends import build_trends
+from app.services.trends import build_trends, TrendProfileGroup
 
 router = APIRouter(prefix="/api", tags=["territorial intelligence"])
 
@@ -112,11 +112,11 @@ def import_general_profiles(campaign_id: int, session: Session = Depends(get_ses
 
 
 @router.get("/campaigns/{campaign_id}/trends")
-def trends(campaign_id: int, start_date: str, end_date: str, region_id: int | None = None, theme: str | None = None, profile_id: list[int] = Query(default=[]), format: str | None = None, session: Session = Depends(get_session), territorial_origin: Literal["PROFILE", "CONTENT", "LOCATION"] | None = None):
+def trends(campaign_id: int, start_date: str, end_date: str, region_id: int | None = None, theme: str | None = None, profile_id: list[int] = Query(default=[]), format: str | None = None, session: Session = Depends(get_session), territorial_origin: Literal["PROFILE", "CONTENT", "LOCATION"] | None = None, profile_group: TrendProfileGroup = "ALL"):
     if not session.get(Campaign, campaign_id):
         raise HTTPException(404, "Campanha não encontrada.")
     start, end = _dates(start_date, end_date)
-    data = build_trends(session, campaign_id, start, end, region_id, theme, profile_id, format, territorial_origin)
+    data = build_trends(session, campaign_id, start, end, region_id, theme, profile_id, format, territorial_origin, profile_group=profile_group)
     for row in data["trends"]:
         row["small_comparison_base"] = 0 < row["previous_volume"] < 5
     return data
@@ -133,11 +133,11 @@ def _intelligence(data: dict) -> dict:
 
 
 @router.get("/campaigns/{campaign_id}/intelligence")
-def intelligence(campaign_id: int, start_date: str, end_date: str, region_id: int | None = None, session: Session = Depends(get_session)):
+def intelligence(campaign_id: int, start_date: str, end_date: str, region_id: int | None = None, session: Session = Depends(get_session), profile_group: TrendProfileGroup = "ALL"):
     if not session.get(Campaign, campaign_id):
         raise HTTPException(404, "Campanha não encontrada.")
     start, end = _dates(start_date, end_date)
-    return _intelligence(build_trends(session, campaign_id, start, end, region_id))
+    return _intelligence(build_trends(session, campaign_id, start, end, region_id, profile_group=profile_group))
 
 
 def _report_html(campaign: Campaign, region: AdministrativeRegion | None, payload: ReportInput, intel: dict) -> str:
@@ -187,9 +187,9 @@ def trend_posts(campaign_id: int, start_date: str, end_date: str, region_id: int
                 theme: str | None = None, profile_id: list[int] = Query(default=[]), format: str | None = None,
                 territorial_origin: Literal["PROFILE", "CONTENT", "LOCATION"] | None = None,
                 offset: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=200),
-                session: Session = Depends(get_session)):
+                session: Session = Depends(get_session), profile_group: TrendProfileGroup = "ALL"):
     if not session.get(Campaign, campaign_id): raise HTTPException(404, "Campanha não encontrada.")
     start, end = _dates(start_date, end_date)
-    data = build_trends(session, campaign_id, start, end, region_id, theme, profile_id, format, territorial_origin, include_all_evidence=True)
+    data = build_trends(session, campaign_id, start, end, region_id, theme, profile_id, format, territorial_origin, include_all_evidence=True, profile_group=profile_group)
     posts = sorted((e for row in data["trends"] for e in row["evidence"]), key=lambda e: (str(e["date"]), e["post_id"]), reverse=True)
-    return {"total": len(posts), "offset": offset, "limit": limit, "posts": posts[offset:offset+limit]}
+    return {"filters": data["filters"], "total": len(posts), "offset": offset, "limit": limit, "posts": posts[offset:offset+limit]}

@@ -13,6 +13,7 @@ try {
   })
   const base=process.env.UI_BASE_URL||'http://localhost:5173'
   await page.goto(base+'/tendencias')
+  await page.getByLabel('Grupo de perfis').selectOption('CLIENT')
   await expect(page.getByText('Tendências por RA e tema',{exact:true})).toBeVisible()
   await page.getByLabel('Região Administrativa',{exact:true}).selectOption({label:'Planaltina'})
   await page.getByLabel('Origem territorial',{exact:true}).selectOption('CONTENT')
@@ -28,6 +29,7 @@ try {
   await expect(page.getByText('Planaltina',{exact:true})).toBeVisible()
   await expect(page.getByText('Taguatinga',{exact:true})).toBeVisible()
   await page.goto(base+'/tendencias')
+  await page.getByLabel('Grupo de perfis').selectOption('CLIENT')
   await page.getByLabel('Região Administrativa',{exact:true}).selectOption({label:'Planaltina'})
   await page.getByLabel('Origem territorial',{exact:true}).selectOption('PROFILE')
   await expect(page.getByText('Não existem dados para este período ou região.',{exact:true})).toBeVisible()

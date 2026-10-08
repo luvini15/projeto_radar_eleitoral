@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Literal
 from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, select
@@ -20,14 +21,19 @@ def _growth(current: int, previous: int) -> float | None:
     return round((current - previous) / previous, 4)
 
 
-def build_trends(session: Session, campaign_id: int, start: datetime, end: datetime, region_id: int | None = None, theme_filter: str | None = None, profile_ids: list[int] | None = None, format_filter: str | None = None, territorial_origin: str | None = None, include_all_evidence: bool = False) -> dict:
+TrendProfileGroup = Literal["ALL", "TERRITORIAL", "COMPETITOR", "CLIENT"]
+
+
+def build_trends(session: Session, campaign_id: int, start: datetime, end: datetime, region_id: int | None = None, theme_filter: str | None = None, profile_ids: list[int] | None = None, format_filter: str | None = None, territorial_origin: str | None = None, include_all_evidence: bool = False, profile_group: TrendProfileGroup = "ALL") -> dict:
     start, end = _aware(start), _aware(end)
     duration = end - start
     previous_start, previous_end = start - duration, start
 
     links = list(session.exec(select(CampaignProfile).where(CampaignProfile.campaign_id == campaign_id, CampaignProfile.active == True)).all())  # noqa: E712
     selected_profile_ids = set(profile_ids or [])
-    profile_ids = {link.profile_id for link in links}
+    group_roles = {"TERRITORIAL": {"LOCAL_PAGE", "MEDIA", "DF_GENERAL"}, "COMPETITOR": {"COMPETITOR"}, "CLIENT": {"CLIENT"}}
+    allowed_roles = group_roles.get(profile_group)
+    profile_ids = {link.profile_id for link in links if allowed_roles is None or link.role in allowed_roles}
     if selected_profile_ids:
         profile_ids &= selected_profile_ids
 
@@ -88,4 +94,4 @@ def build_trends(session: Session, campaign_id: int, start: datetime, end: datet
         territorial_rows.append({"region_id": rid, "region": region_name, "theme": theme_name, "volume": len(current), "previous_volume": len(previous), "growth": _growth(len(current), len(previous)), "interactions": sum(observed) if observed else None, "interactions_posts": len(observed), "profiles": sorted({profiles[p.profile_id].username for p, _ in current}), "formats": sorted({"Carrossel" if p.content_type == "Sidecar" else "Reels" if p.content_type == "Video" or p.product_type == "clips" else "Imagem" if p.content_type == "Image" else p.content_type or "Outro" for p, _ in current}), "sources": sorted({t["source"] for p, _ in current for t in territories.get(p.id, []) if t["region_id"] == rid}), "evidence": [e for e in (theme_row["evidence"] if theme_row else []) if e["post_id"] in current_ids]})
     territorial_rows.sort(key=lambda r: (-r["volume"], r["region"], r["theme"]))
     rows.sort(key=lambda row: (row["relevance"], row["volume"]), reverse=True)
-    return {"period": {"start": start, "end": end}, "comparison_period": {"start": previous_start, "end": previous_end}, "filters": {"region_id": region_id, "theme": theme_filter, "profile_ids": sorted(profile_ids), "format": format_filter, "territorial_origin": territorial_origin}, "data_status": "NO_DATA" if not any(r["volume"] for r in rows) else "INSUFFICIENT" if sum(r["volume"] for r in rows) < 5 else "SUFFICIENT", "methodology": {"growth": "(volume atual - volume anterior) / volume anterior; sem percentual quando o anterior é zero", "small_base_threshold": 5, "score": "30% participação no volume + 25% crescimento limitado + 25% participação nas interações + 20% recorrência em dias"}, "trends": rows, "territorial_trends": territorial_rows}
+    return {"period": {"start": start, "end": end}, "comparison_period": {"start": previous_start, "end": previous_end}, "filters": {"region_id": region_id, "theme": theme_filter, "profile_ids": sorted(profile_ids), "format": format_filter, "territorial_origin": territorial_origin, "profile_group": profile_group}, "data_status": "NO_DATA" if not any(r["volume"] for r in rows) else "INSUFFICIENT" if sum(r["volume"] for r in rows) < 5 else "SUFFICIENT", "methodology": {"growth": "(volume atual - volume anterior) / volume anterior; sem percentual quando o anterior é zero", "small_base_threshold": 5, "score": "30% participação no volume + 25% crescimento limitado + 25% participação nas interações + 20% recorrência em dias"}, "trends": rows, "territorial_trends": territorial_rows}

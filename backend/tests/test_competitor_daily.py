@@ -10,6 +10,8 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.database import get_session
 from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot, ProfileSnapshot
 from app.routers.filtered_analytics import router
+from app.routers.territorial import router as territorial_router, seed_reference_data
+from app.services.territorial_detection import classify_existing
 from app.services.auto_sync import start_scheduler, tick
 
 class CompetitorDailyTests(unittest.TestCase):
@@ -31,7 +33,7 @@ class CompetitorDailyTests(unittest.TestCase):
         self.s.add(InstagramPost(id=8,profile_id=1,shortcode='no-snapshot',url='https://instagram.com/p/no-snapshot/',published_at=datetime(2026,9,11,tzinfo=timezone.utc)))
         self.s.add(ProfileSnapshot(profile_id=1,followers_count=123,collected_at=datetime(2026,9,10,tzinfo=timezone.utc)))
         self.s.commit()
-        api=FastAPI();api.include_router(router)
+        api=FastAPI();api.include_router(router);api.include_router(territorial_router)
         def session():
             with Session(self.engine) as value:yield value
         api.dependency_overrides[get_session]=session
@@ -71,3 +73,37 @@ class CompetitorDailyTests(unittest.TestCase):
         with patch.dict(os.environ,{'APP_ENV':'development','COLLECTION_ENABLED':'true','COLLECTION_SCHEDULER_MODE':'embedded','APIFY_TOKEN':'test-only'}),patch('app.services.auto_sync.Thread') as thread,patch('app.services.auto_sync.collect_campaign') as collect:
             start_scheduler();tick(self.engine)
             thread.assert_not_called();collect.assert_not_called()
+
+    def test_daily_contract_contains_all_metrics_and_coverage_without_snapshot(self):
+        data=self.call(profile_id=1).json()
+        self.assertEqual(data['filters']['role'],'COMPETITOR')
+        missing=data['daily'][1]
+        for metric in ('interactions','likes','comments','views','plays','shares','saves'):
+            self.assertIsNone(missing[metric])
+            self.assertEqual(missing['metric_samples'][metric],0)
+            self.assertIsNone(missing['profiles']['profile1'][metric])
+        self.assertEqual(missing['posts'],1)
+        self.assertEqual(self.call(profile_id=999).json()['daily'],[])
+
+    def test_trends_group_scope_filters_summary_drilldown_and_intelligence(self):
+        seed_reference_data(self.s)
+        for pid in range(1,8):
+            post=self.s.get(InstagramPost,pid);post.caption='Hospital em Planaltina';self.s.add(post)
+        self.s.commit();classify_existing(self.s,1)
+        period={'start_date':'2026-09-01','end_date':'2026-09-30','theme':'Saúde'}
+        for group,expected in [('TERRITORIAL',{'profile4','profile5','profile6'}),('COMPETITOR',{'profile1','profile2'}),('CLIENT',{'profile3'})]:
+            params={**period,'profile_group':group}
+            summary=self.client.get('/api/campaigns/1/trends',params=params)
+            self.assertEqual(summary.status_code,200,summary.text)
+            data=summary.json()
+            self.assertEqual(data['filters']['profile_group'],group)
+            self.assertEqual(set(data['territorial_trends'][0]['profiles']),expected)
+            posts=self.client.get('/api/campaigns/1/trends/posts',params=params).json()
+            self.assertEqual({p['profile'] for p in posts['posts']},expected)
+            self.assertEqual(posts['filters']['profile_group'],group)
+            self.assertTrue(all(p['territories'][0]['evidence']=='Hospital em Planaltina' for p in posts['posts']))
+            intel=self.client.get('/api/campaigns/1/intelligence',params=params).json()
+            self.assertEqual(set(intel['territorial_trends'][0]['profiles']),expected)
+        empty=self.client.get('/api/campaigns/1/trends',params={**period,'profile_group':'TERRITORIAL','profile_id':[1,2]}).json()
+        self.assertEqual(empty['data_status'],'NO_DATA')
+        self.assertEqual(self.client.get('/api/campaigns/1/trends',params={**period,'profile_group':'unknown'}).status_code,422)

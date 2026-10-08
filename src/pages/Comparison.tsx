@@ -32,7 +32,7 @@ React.useEffect(()=>{
   let cancelled=false;setLoading(true);setError('');
   getFilteredAnalytics(start,end,selected,{regionId,theme:theme||undefined,format:format||undefined,origin:origin||undefined,competitorsOnly:true},campaignId)
     .then(result=>{if(!cancelled)setData(result)})
-    .catch(()=>{if(!cancelled)setError('Não foi possível carregar a comparação. Verifique o período selecionado.')})
+    .catch(cause=>{if(!cancelled)setError(cause instanceof Error?cause.message:'Não foi possível carregar a comparação. Verifique o período selecionado.')})
     .finally(()=>{if(!cancelled)setLoading(false)});
   return()=>{cancelled=true}
 },[campaign,start,end,selected,regionId,theme,format,origin,campaignId]);
