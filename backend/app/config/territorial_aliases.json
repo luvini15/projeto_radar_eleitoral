@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "aliases": {
+    "SCIA/Estrutural": [
+      "Estrutural",
+      "SCIA",
+      "Cidade Estrutural"
+    ],
+    "Sudoeste/Octogonal": [
+      "Sudoeste",
+      "Octogonal"
+    ],
+    "Sol Nascente/Pôr do Sol": [
+      "Sol Nascente",
+      "Pôr do Sol"
+    ],
+    "Riacho Fundo II": [
+      "Riacho Fundo 2"
+    ],
+    "Sobradinho II": [
+      "Sobradinho 2"
+    ],
+    "Núcleo Bandeirante": [
+      "Nucleo Bandeirante"
+    ],
+    "Itapoã": [
+      "Itapoa"
+    ]
+  },
+  "localities": {
+    "Asa Norte": "Plano Piloto",
+    "Asa Sul": "Plano Piloto",
+    "Vila Planalto": "Plano Piloto",
+    "Vila Telebrasília": "Plano Piloto",
+    "Setor Noroeste": "Plano Piloto",
+    "Setor Militar Urbano": "Plano Piloto",
+    "Lago Oeste": "Sobradinho II",
+    "Grande Colorado": "Sobradinho II"
+  },
+  "sources": [
+    "https://dflegis.df.gov.br/ato.php?p=portaria-28-de-28-de-janeiro-de-2021",
+    "https://www.cl.df.gov.br/documents/5744484/19336785/Relat%2BAtividades%2B2017%2B-%2BPlano%2BPiloto%2BRA%2BI.pdf",
+    "https://pdad.ipe.df.gov.br/files/reports/sobradinho_ii_0Flu4cr.pdf"
+  ],
+  "notes": [
+    "Brasília, DF e BSB não identificam uma RA.",
+    "Localidades não cadastradas não são inferidas.",
+    "Menções ambíguas ficam sem region_id; o trecho original é preservado."
+  ]
+}

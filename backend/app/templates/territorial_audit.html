@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoria territorial — Radar Eleitoral</title>
+<style>body{font:16px system-ui;background:#f2f5fa;color:#16253d;margin:0}main{max-width:1120px;margin:auto;padding:28px}h1{margin-bottom:8px}.filters{display:flex;flex-wrap:wrap;gap:12px;background:white;padding:18px;border-radius:12px}label{display:grid;gap:5px;font-size:13px}select,input{font:inherit;padding:8px;border:1px solid #ccd5e3;border-radius:6px}article{background:white;border:1px solid #d5deea;border-radius:12px;padding:22px;margin:18px 0}article p{white-space:pre-wrap;overflow-wrap:anywhere}.meta{color:#586780;font-size:13px}.decision{border-left:4px solid #3669a4;padding-left:15px;margin:18px 0}.low{border-color:#bf7516}.none{border-color:#7c8796}blockquote{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere}a{color:#24569e}.summary{line-height:1.8}button{padding:10px;cursor:pointer}@media print{.filters,button{display:none}article{break-inside:avoid}}</style>
+<main><h1>Auditoria territorial</h1><p>Decisões armazenadas no PostgreSQL. Este relatório não coleta dados nem modifica classificações.</p><p id="summary" class="summary"></p>
+<div class="filters"><label>Confiança<select id="confidence" aria-label="Confiança"><option value="">Todas</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option><option value="NONE">Sem evidência</option></select></label><label>RA<select id="region" aria-label="RA"><option value="">Todas</option><option value="none">Sem RA</option></select></label><label>Perfil<select id="profile" aria-label="Perfil"><option value="">Todos</option></select></label><label>Tema<select id="theme" aria-label="Tema"><option value="">Todos</option></select></label><label>RAs por post<select id="multiple" aria-label="RAs por post"><option value="">Todos</option><option value="yes">Múltiplas RAs</option></select></label><label>Data inicial<input id="start" aria-label="Data inicial" type="date"></label><label>Data final<input id="end" aria-label="Data final" type="date"></label><button id="reset">Limpar filtros</button></div>
+<p id="count" role="status"></p><section id="posts"></section><p class="meta">Métricas do último snapshot. Ausência de métrica aparece como —. NONE não é contado como LOW. Explicações dos LOW são observações da auditoria; as decisões persistidas foram mantidas.</p></main>
+<script type="application/json" id="data">__AUDIT_DATA__</script>
+<script>
+const data=JSON.parse(document.getElementById('data').textContent), rows=data.rows, s=data.summary;
+const el=id=>document.getElementById(id), text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n};
+el('summary').textContent=`${s.total_posts} posts · ${s.posts_with_region} com RA · ${s.posts_without_region} sem RA · ${s.posts_by_confidence.HIGH} posts HIGH · ${s.posts_by_confidence.MEDIUM} MEDIUM · ${s.posts_by_confidence.LOW} LOW · ${s.posts_multiple_regions} com múltiplas RAs. ${s.assignments_by_confidence.HIGH} atribuições HIGH.`;
+function options(id,items){for(const [value,label] of items){const o=document.createElement('option');o.value=value;o.textContent=label;el(id).append(o)}}
+options('region',s.regions.map(r=>[r.region_id,r.region_name]));options('profile',[...new Map(rows.map(r=>[r.profile_id,'@'+r.username])).entries()].sort((a,b)=>a[1].localeCompare(b[1])));options('theme',[...new Set(rows.map(r=>r.theme).filter(Boolean))].sort().map(t=>[t,t]));
+function render(){
+ const c=el('confidence').value,reg=el('region').value,profile=el('profile').value,theme=el('theme').value,start=el('start').value,end=el('end').value;
+ const filtered=rows.filter(r=>(!c||(c==='NONE'?r.detection_source==='NONE':r.confidence===c))&&(!reg||(reg==='none'?r.region_count===0:String(r.region_id)===reg))&&(!profile||String(r.profile_id)===profile)&&(!theme||r.theme===theme)&&(!el('multiple').value||r.region_count>1)&&(!start||(r.published_at&&r.published_at.slice(0,10)>=start))&&(!end||(r.published_at&&r.published_at.slice(0,10)<=end)));
+ const grouped=new Map();for(const r of filtered){if(!grouped.has(r.post_id))grouped.set(r.post_id,[]);grouped.get(r.post_id).push(r)}
+ el('count').textContent=`${grouped.size} posts · ${filtered.length} linhas de classificação no recorte. Cada cartão mostra todas as associações do post.`;el('posts').replaceChildren();
+ for(const group of grouped.values()){
+  const r=group[0],a=document.createElement('article');a.append(text('h2',`Post ${r.post_id} · @${r.username}`),text('p',`${r.published_at||'Sem data'} · ${r.theme||'Sem tema armazenado'} · shortcode ${r.shortcode}`,'meta'),text('h3','Legenda'),text('p',r.caption||'Sem legenda'));
+  if(r.location_name)a.append(text('p','Localização armazenada: '+r.location_name,'meta'));
+  for(const t of r.territories){const d=document.createElement('div');d.className='decision '+(t.confidence==='LOW'?'low':t.detection_source==='NONE'?'none':'');d.append(text('b','↓ Evidência encontrada'),text('blockquote',t.evidence||'Sem evidência territorial suficiente'),text('b','↓ RA atribuída: '+(t.region_name||'NULL')),text('p',`${t.confidence||'Sem classificação'} · ${t.detection_source}`));const match=rows.find(x=>x.post_id===r.post_id&&x.region_id===t.region_id&&x.detection_source===t.detection_source);if(match?.low_confidence_reason)d.append(text('p','Motivo da baixa confiança: '+match.low_confidence_reason));a.append(d)}
+  if(!r.region_count)a.append(text('p','Sem evidência territorial suficiente'));
+  a.append(text('p',`Interações: ${r.interactions??'—'} · Curtidas: ${r.likes??'—'} · Comentários: ${r.comments??'—'} · Views: ${r.views??'—'} · Plays: ${r.plays??'—'}`,'meta'));
+  if(/^https:\/\/(www\.)?instagram\.com\//i.test(r.url)){const link=text('a','Abrir publicação original');link.href=r.url;link.target='_blank';link.rel='noopener noreferrer';a.append(link)}el('posts').append(a)
+ }
+}
+for(const id of ['confidence','region','profile','theme','multiple','start','end'])el(id).addEventListener('change',render);
+el('reset').addEventListener('click',()=>{for(const id of ['confidence','region','profile','theme','multiple','start','end'])el(id).value='';render()});render();
+</script></html>

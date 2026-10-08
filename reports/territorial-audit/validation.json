@@ -1,0 +1,21 @@
+{
+  "branch": "feature/territorial-post-detection",
+  "head": "d209c14b2dc64483f124212758a06917877aeb23",
+  "main": "d209c14b2dc64483f124212758a06917877aeb23",
+  "openapi_paths": 36,
+  "audit_endpoints": "PASS",
+  "live_filters": "PASS",
+  "new_profiles": "PASS",
+  "scheduler_active": false,
+  "backend_tests": 71,
+  "new_backend_tests": 15,
+  "frontend_build": "PASS",
+  "lint_errors": 0,
+  "lint_warnings": 6,
+  "browser_report": "PASS",
+  "apify_calls": 0,
+  "history_and_classification_hashes": "UNCHANGED",
+  "secret_matches": 0,
+  "conflict_markers": 0,
+  "staged_files": 0
+}

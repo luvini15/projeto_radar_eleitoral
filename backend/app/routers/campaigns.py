@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
+from sqlalchemy import func
+from app.services.profile_import import normalize_username
 
 from app.database import get_session
 from app.models import (
     Campaign,
     CampaignProfile,
     InstagramProfile,
+    ProfileMonitoring, ProfileRegion, AdministrativeRegion,
 )
 
 
@@ -98,12 +101,17 @@ def get_campaign(
         )
 
         if profile:
+            metadata = session.get(ProfileMonitoring, profile.id)
+            region = session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first()
             profiles.append({
                 "id": profile.id,
                 "username": profile.username,
                 "full_name": profile.full_name,
                 "role": link.role,
                 "active": link.active,
+                "profile_region_id": region.region_id if region else None,
+                "profile_region": session.get(AdministrativeRegion, region.region_id).name if region else None,
+                "monitoring": metadata.model_dump() if metadata else None,
             })
 
     return {
@@ -139,6 +147,7 @@ def add_profile_to_campaign(
         "COMPETITOR",
         "LOCAL_PAGE",
         "MEDIA",
+        "DF_GENERAL",
     }
 
     if role not in allowed_roles:
@@ -147,11 +156,14 @@ def add_profile_to_campaign(
             detail="Role inválida.",
         )
 
-    username = data.username.strip().lstrip("@")
+    try:
+        username = normalize_username(data.username)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
     profile = session.exec(
         select(InstagramProfile).where(
-            InstagramProfile.username
+            func.lower(InstagramProfile.username)
             == username
         )
     ).first()
@@ -165,6 +177,9 @@ def add_profile_to_campaign(
         session.add(profile)
         session.commit()
         session.refresh(profile)
+
+    if role == "DF_GENERAL" and session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first():
+        raise HTTPException(409, "Este perfil já tem RA fixa. Revise a associação antes de classificá-lo como geral do DF.")
 
     existing_link = session.exec(
         select(CampaignProfile).where(

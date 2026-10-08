@@ -1,0 +1,268 @@
+{
+  "posts_processed": 467,
+  "posts_with_region": 137,
+  "posts_without_region": 330,
+  "regions": {
+    "Planaltina": 65,
+    "Recanto das Emas": 1,
+    "Santa Maria": 3,
+    "Sobradinho": 6,
+    "Ceilândia": 7,
+    "Sol Nascente/Pôr do Sol": 2,
+    "Arniqueira": 19,
+    "Águas Claras": 3,
+    "Água Quente": 1,
+    "Arapoanga": 15,
+    "Riacho Fundo": 3,
+    "Vicente Pires": 1,
+    "Sobradinho II": 1,
+    "Paranoá": 1,
+    "Lago Sul": 2,
+    "SCIA/Estrutural": 2,
+    "SIA": 3,
+    "Taguatinga": 2,
+    "Lago Norte": 1,
+    "Guará": 1,
+    "Gama": 2,
+    "Plano Piloto": 3,
+    "Fercal": 5,
+    "São Sebastião": 1,
+    "Cruzeiro": 1,
+    "Núcleo Bandeirante": 1,
+    "Samambaia": 2,
+    "Brazlândia": 5
+  },
+  "confidence": {
+    "HIGH": 159,
+    "MEDIUM": 0,
+    "LOW": 2
+  },
+  "themes": {
+    "Outros": 142,
+    "Emprego/Renda": 86,
+    "Política": 139,
+    "Lazer": 11,
+    "Eventos/Cultura": 15,
+    "Comunidade/Cotidiano": 16,
+    "Infraestrutura": 18,
+    "Transporte/Mobilidade": 3,
+    "Saúde": 12,
+    "Agro/Rural": 4,
+    "Segurança": 10,
+    "Educação": 10,
+    "Meio Ambiente": 1
+  },
+  "sources": {
+    "NONE": 328,
+    "EXPLICIT_RA": 110,
+    "LOCATION": 51
+  },
+  "examples": [
+    {
+      "post_id": 2,
+      "profile": "claudioborcem_",
+      "caption": "Planaltina viveu um momento de onda azul, inesquecível!💙🔥\n\nQue energia incrível ver nossa gente reunida, com o coração cheio de esperança e a certeza de que estamos no caminho certo.\n\nReceber a nossa governadora @celinaleao na nossa casa é a confirmação de que Planaltina e todo o DF têm voz, apoio e compromisso de verdade. Seguimos juntos, lado a lado, com fé, coragem e muito trabalho pela frente!\n\nObrigado a cada um que esteve presente e fez essa festa ser gigante. Tamo junto! 👊",
+      "url": "https://www.instagram.com/p/DcZAKodR0rE/",
+      "theme": "Emprego/Renda",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 9,
+      "profile": "deputadopepa",
+      "caption": "Lealdade se prova com presença! \n\nAo lado da nossa governadora @celinaleao , reforço aquilo que sempre foi a minha verdade: eu sou daqui, moro aqui e conheço de perto a realidade da nossa cidade.\n\nNão sou daqueles que aparecem na época da eleição, ganham o voto do povo e depois somem ou vão morar longe daqui. Eu fico! Estou presente, ouvindo, trabalhando e correndo atrás de melhorias de sol a sol. \n\nRespeitem quem está na rua, quem enfrenta o dia a dia e quem escolheu continuar ao lado da sua gente.\n\nMinha lealdade não é de eleição. É com a cidade e com o povo! \n\nPepa é daqui. Pepa é do povo. E o trabalho não pode parar! \n Vote 11011",
+      "url": "https://www.instagram.com/p/DcZfJy_uGTd/",
+      "theme": "Política",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "LOCATION",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 10,
+      "profile": "deputadopepa",
+      "caption": "O deputado Pepa apoia o tradicional Costelão da Maçonaria, um momento de confraternização, união e celebração da nossa gente.\n\nÉ sempre uma alegria estar ao lado de quem mantém vivas as nossas tradições e trabalha pelo bem da nossa cidade. \n\nPepa é presença, parceria e compromisso com Planaltina!",
+      "url": "https://www.instagram.com/p/DcZq-RGN5hT/",
+      "theme": "Política",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Pepa é presença, parceria e compromisso com Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 13,
+      "profile": "deputadoroberio",
+      "caption": "Visitar Planaltina é sempre muito especial. Temos uma gratidão enorme pelo carinho que recebemos nas ruas, nas casas e nas conversas com quem vive na região.\n\nObrigado a todos que, ao longo dos últimos anos, nos recebem com tanto respeito e confiança. Esse apoio é o que nos motiva a continuar ouvindo e trabalhando pelo DF! 🤝\n\n#RobérioNegreiros #DeputadoDistrital #Planaltina #DistritoFederal #NossaUniãoNossaForça",
+      "url": "https://www.instagram.com/p/DcZSl2tzQ-B/",
+      "theme": "Política",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Visitar Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 15,
+      "profile": "deputadoroberio",
+      "caption": "Ontem, a onda amarela do 20.000 percorreu todas as áreas do Recanto das Emas. Durante nosso bate-papo com os moradores dessa amada região, pude ver o quanto nosso mandato transforma a vida da comunidade. Além disso, estivemos atentos às necessidades de quem busca mudança e cuidado.\n\nQuero agradecer aos coordenadores e apoiadores que abriram as portas de sua residência para nos receber. Juntos, podemos mais!\n\n2️⃣0️⃣.0️⃣0️⃣0️⃣💛",
+      "url": "https://www.instagram.com/p/DcWk5vdG36x/",
+      "theme": "Comunidade/Cotidiano",
+      "territories": [
+        {
+          "region_id": 15,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "000 percorreu todas as áreas do Recanto das Emas",
+          "region": "Recanto das Emas"
+        }
+      ]
+    },
+    {
+      "post_id": 22,
+      "profile": "claudioborcem_",
+      "caption": "A história não é feita por promessas, é escrita por quem tem coragem de agir. Hoje, na Convenção do Podemos, o que era um propósito se tornou uma realidade oficial: Sou Candidato a Deputado Distrital!\n\nA força do nosso povo se mostrou presente hoje na Convenção do @podemos_distritofederal A mudança começou!! \n\n#ClaudioBorcem #Podemos #DeputadoDistrital #Planaltina #DistritoFederal",
+      "url": "https://www.instagram.com/p/DbgXknNO2QO/",
+      "theme": "Política",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "#ClaudioBorcem #Podemos #DeputadoDistrital #Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 23,
+      "profile": "claudioborcem_",
+      "caption": "Ouvir a nossa comunidade é o primeiro passo para transformar de verdade. Planaltina merece respeito, cuidado e soluções de fato!",
+      "url": "https://www.instagram.com/p/DbN30XEjpap/",
+      "theme": "Comunidade/Cotidiano",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 28,
+      "profile": "claudioborcem_",
+      "caption": "Nosso time Claudio Borcem, estamos trilhando o caminho certo, guiados pelo princípio mais valioso: cuidar das pessoas.",
+      "url": "https://www.instagram.com/p/DaYkX6uPesJ/",
+      "theme": "Outros",
+      "territories": [
+        {
+          "region_id": 13,
+          "source": "LOCATION",
+          "confidence": "HIGH",
+          "evidence": "Santa maria",
+          "region": "Santa Maria"
+        }
+      ]
+    },
+    {
+      "post_id": 37,
+      "profile": "claudioborcem_",
+      "caption": "Hoje estive com o meu amigo e chefe de gabinete @ismaeldfoficial na liderança do Podemos, no Senado Federal, protocolando um projeto que vai abrir novas portas para a juventude do Distrito Federal.\n\nPlanaltina, Ceilândia, Sobradinho e cada canto do nosso DF merecem ações reais e oportunidades de verdade. É assim que a gente transforma o potencial dos nossos jovens em realidade.\n\nJuntos, nós Podemos! 🚀💥",
+      "url": "https://www.instagram.com/p/DZYgbYfOpFN/",
+      "theme": "Infraestrutura",
+      "territories": [
+        {
+          "region_id": 5,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina, Ceilândia, Sobradinho",
+          "region": "Sobradinho"
+        },
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        },
+        {
+          "region_id": 9,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina, Ceilândia",
+          "region": "Ceilândia"
+        }
+      ]
+    },
+    {
+      "post_id": 44,
+      "profile": "deputadopepa",
+      "caption": "Que gracinha gente, Pepinha tá ensinando até a votar 🥰",
+      "url": "https://www.instagram.com/p/DcSQOxTtnrS/",
+      "theme": "Outros",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "LOCATION",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 45,
+      "profile": "deputadopepa",
+      "caption": "Junta Prudente, Celina, Pepa e você que o fechamento é grande papai! 💙💛",
+      "url": "https://www.instagram.com/p/DcV-X_gxPtF/",
+      "theme": "Outros",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "LOCATION",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    },
+    {
+      "post_id": 46,
+      "profile": "deputadopepa",
+      "caption": "Planaltina não precisa de promessa. Precisa de trabalho. E trabalho a gente mostra! 💙\n\nQuando assumi, em 2023, encontrei uma Planaltina que por anos não recebeu a atenção que merecia: buracos por toda parte, equipamentos públicos sucateados e uma população cansada de esperar.\n\nDe lá para cá, muita coisa mudou. Avançamos, conquistamos e mostramos que, quando existe compromisso, o resultado aparece.\n\nMas ainda há muito a fazer. E precisamos continuar avançando!\n\nPorque prometer é fácil. Fazer de verdade exige trabalho, dedicação e presença.\n\nPlanaltina e toda a Região Norte podem contar comigo. Vou continuar trabalhando para dar à nossa gente a atenção, o respeito e os resultados que por tantos anos fizeram falta.\n\nVamos juntos! O trabalho não pode parar.\n\n🗳️ Para Deputado Distrital, vote PEPA 11011.\nTrabalhando por você! 🫵💙",
+      "url": "https://www.instagram.com/p/DcWxmhOhVCJ/",
+      "theme": "Política",
+      "territories": [
+        {
+          "region_id": 6,
+          "source": "EXPLICIT_RA",
+          "confidence": "HIGH",
+          "evidence": "Planaltina",
+          "region": "Planaltina"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "before": {
+    "counts": {
+      "instagram_profiles": 43,
+      "campaign_profiles": 29,
+      "instagram_posts": 467,
+      "post_regions": 489,
+      "post_themes": 467,
+      "post_snapshots": 1765,
+      "profile_snapshots": 68,
+      "collection_runs": 12,
+      "profile_collection_runs": 49
+    },
+    "hashes": {
+      "instagram_posts": "2e67e36911a9ebf9781a4c98a68134736e2540b1e8acef13c1f36289ee9efcaf",
+      "post_regions": "abca89b513c845ef537e0fd8a4054d2a64892ae6664323383860f268789ecbdc",
+      "post_themes": "2eba4d26019dc6c44dda0b77ca5d449dcecd3eb910c0f03d7117a1c488958225",
+      "post_snapshots": "22fbf4830fa82fe5cf2a127435abcdca9442df0f14d86ba4208ad2fc4e359b6f",
+      "profile_snapshots": "52b1fc3145f75d951c7e0cc887cc4202a6bb6e5c02a516c2038f4b3cf1ab2822",
+      "collection_runs": "c7c48f4c0e293486181ea421b6309a651b8f13d6760f9877b33ff09e5bdf84d1",
+      "profile_collection_runs": "5c59f0b55744576842b736610830aeb134d6efb957de45314a6bf1a885c7d1d2"
+    }
+  },
+  "after": {
+    "counts": {
+      "instagram_profiles": 47,
+      "campaign_profiles": 33,
+      "instagram_posts": 467,
+      "post_regions": 489,
+      "post_themes": 467,
+      "post_snapshots": 1765,
+      "profile_snapshots": 68,
+      "collection_runs": 12,
+      "profile_collection_runs": 49
+    },
+    "hashes": {
+      "instagram_posts": "2e67e36911a9ebf9781a4c98a68134736e2540b1e8acef13c1f36289ee9efcaf",
+      "post_regions": "abca89b513c845ef537e0fd8a4054d2a64892ae6664323383860f268789ecbdc",
+      "post_themes": "2eba4d26019dc6c44dda0b77ca5d449dcecd3eb910c0f03d7117a1c488958225",
+      "post_snapshots": "22fbf4830fa82fe5cf2a127435abcdca9442df0f14d86ba4208ad2fc4e359b6f",
+      "profile_snapshots": "52b1fc3145f75d951c7e0cc887cc4202a6bb6e5c02a516c2038f4b3cf1ab2822",
+      "collection_runs": "c7c48f4c0e293486181ea421b6309a651b8f13d6760f9877b33ff09e5bdf84d1",
+      "profile_collection_runs": "5c59f0b55744576842b736610830aeb134d6efb957de45314a6bf1a885c7d1d2"
+    }
+  },
+  "apify_calls": 0,
+  "historical_data_and_classifications_unchanged": true
+}

@@ -72,7 +72,7 @@ radar
 
 Senha local:
 
-radar123
+<POSTGRES_PASSWORD_LOCAL>
 
 Acesso pelo terminal:
 

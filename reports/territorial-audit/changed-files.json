@@ -1,0 +1,18 @@
+{
+  "modified_this_stage": [
+    "README.md",
+    "backend/app/main.py",
+    "backend/app/services/profile_import.py",
+    "backend/tests/test_auto_sync.py",
+    "backend/tests/test_merge_integration.py"
+  ],
+  "created_code_this_stage": [
+    "backend/app/routers/territorial_audit.py",
+    "backend/app/services/territorial_audit.py",
+    "backend/app/territorial_audit_cli.py",
+    "backend/app/templates/territorial_audit.html",
+    "backend/tests/test_territorial_audit.py",
+    "tests/territorial-audit-report-smoke.mjs"
+  ],
+  "artifacts_directory": "reports/territorial-audit/"
+}

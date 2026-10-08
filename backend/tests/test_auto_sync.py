@@ -17,7 +17,7 @@ class AutoSyncTests(unittest.TestCase):
             s.commit()
             s.add(CampaignProfile(campaign_id=1,profile_id=1,role='CLIENT'))
             s.commit()
-        self.env = patch.dict(os.environ, {'APIFY_TOKEN':'test-only','AUTO_SYNC_CAMPAIGN_IDS':'1','AUTO_SYNC_INTERVAL_HOURS':'6','AUTO_SYNC_POST_LIMIT':'25'})
+        self.env = patch.dict(os.environ, {'COLLECTION_ENABLED':'true','APIFY_TOKEN':'test-only','AUTO_SYNC_CAMPAIGN_IDS':'1','AUTO_SYNC_INTERVAL_HOURS':'6','AUTO_SYNC_POST_LIMIT':'25'})
         self.env.start()
         self.now = datetime.now(timezone.utc)
     def tearDown(self):

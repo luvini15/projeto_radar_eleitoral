@@ -1,0 +1,13 @@
+{
+  "collection_run_id": 12,
+  "trigger": "SCHEDULED",
+  "status": "PARTIAL",
+  "new_posts": 6,
+  "post_snapshots_created": 100,
+  "followers_updated": 4,
+  "profiles_succeeded": 4,
+  "profiles_total": 27,
+  "remote_runs_aborted": 0,
+  "next_run_at": "2026-09-24 06:00:00",
+  "explanation": "Execução interrompida durante validação para impedir consumo adicional; agendamento vencido não será repetido."
+}

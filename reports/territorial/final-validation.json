@@ -1,0 +1,41 @@
+{
+  "branch": "feature/territorial-post-detection",
+  "head": "d209c14b2dc64483f124212758a06917877aeb23",
+  "main": "d209c14b2dc64483f124212758a06917877aeb23",
+  "secret_matches": 0,
+  "conflict_markers": 0,
+  "env_ignored": true,
+  "staged_files": 0,
+  "openapi_paths": 34,
+  "schedule": {
+    "enabled": true,
+    "configured": true,
+    "worker_alive": true,
+    "mode": "daily",
+    "time": "03:00",
+    "timezone": "America/Sao_Paulo",
+    "interval_hours": null,
+    "posts_per_profile": 25,
+    "next_run_at": "2026-09-24T06:00:00",
+    "last_started_at": "2026-09-23T13:11:36.411440",
+    "last_finished_at": "2026-09-23T13:28:21.841172",
+    "status": "partial",
+    "error": "Execução interrompida durante validação para impedir consumo adicional; agendamento vencido não será repetido."
+  },
+  "next_collection": "2026-09-24T06:00:00",
+  "linked_profiles": 29,
+  "final_counts": {
+    "instagram_posts": 467,
+    "instagram_profiles": 43,
+    "post_snapshots": 1765,
+    "profile_snapshots": 68,
+    "collection_runs": 12
+  },
+  "backend_tests_passed": 56,
+  "browser_scripts_passed": 6,
+  "postgres_checks_passed": 5,
+  "frontend_build": "PASS",
+  "lint_errors": 0,
+  "lint_warnings": 6,
+  "docker_services": "postgres healthy, backend healthy, scheduler running"
+}

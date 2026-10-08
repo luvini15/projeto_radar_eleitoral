@@ -1,0 +1,1 @@
+export const territorialSource = (source:string) => ({EXPLICIT_RA:'RA detectada no conteúdo',LOCALITY:'Localidade detectada no conteúdo',LOCATION:'Localização da publicação',PROFILE:'RA do perfil',NONE:'Sem evidência territorial'}[source] || source)

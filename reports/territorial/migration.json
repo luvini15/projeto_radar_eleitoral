@@ -1,0 +1,5 @@
+{
+  "migration": "003_post_territories",
+  "status": "APPLIED",
+  "dialect": "postgresql"
+}

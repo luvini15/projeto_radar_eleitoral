@@ -1,5 +1,8 @@
 from __future__ import annotations
 from app.services.comments import read_comment_sample
+from app.services.taxonomy import classify_theme
+from app.services.territorial_detection import territories_for_posts
+from app.models import ProfileRegion, PostTheme, Theme, AdministrativeRegion
 
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -25,18 +28,6 @@ router = APIRouter(prefix="/api/campaigns", tags=["analytics"])
 SP_TZ = ZoneInfo("America/Sao_Paulo")
 WEEKDAY_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
-THEME_RULES: list[tuple[str, tuple[str, ...]]] = [
-    ("Mobilidade", ("ônibus", "transporte", "mobilidade", "brt", "metrô", "ciclovia", "trânsito")),
-    ("Segurança", ("segurança", "polícia", "crime", "violência", "delegacia")),
-    ("Saúde", ("saúde", "hospital", "ubs", "médic", "suicídio", "acolhimento", "amament")),
-    ("Educação", ("educação", "escola", "creche", "professor", "aluno", "ensino")),
-    ("Infraestrutura", ("obra", "infraestrutura", "buraco", "asfalto", "pavimenta", "reforma")),
-    ("Emprego e renda", ("emprego", "trabalho", "renda", "qualificação", "renovadf", "feirante", "economia")),
-    ("Fiscalização", ("fiscaliza", "prestação de contas", "cobrança", "denúncia")),
-    ("Ações comunitárias", ("comunidade", "morador", "bairro", "visita", "ação social", "evento", "feira")),
-    ("Campanha eleitoral", ("vote", "eleição", "campanha", "deputado distrital", "número", "comitê")),
-    ("Institucional", ("lei", "mandato", "emenda", "secretaria", "governo", "deputado")),
-]
 
 
 def _campaign_or_404(session: Session, campaign_id: int) -> Campaign:
@@ -112,11 +103,7 @@ def _format_name(post: InstagramPost) -> str:
 
 
 def _theme(caption: str | None) -> str:
-    text = (caption or "").lower()
-    for theme, keywords in THEME_RULES:
-        if any(keyword in text for keyword in keywords):
-            return theme
-    return "Outros"
+    return classify_theme(caption)[0]
 
 
 def _local_dt(value: datetime | None) -> datetime | None:
@@ -392,17 +379,18 @@ def followers_history(campaign_id: int, days: int = 60, session: Session = Depen
     start_date = now - timedelta(days=days)
     profiles: list[dict] = []
 
-    for link in _links(session, campaign_id):
-        profile = session.get(InstagramProfile, link.profile_id)
+    links = _links(session, campaign_id)
+    ids = {link.profile_id for link in links}
+    by_id = {p.id: p for p in session.exec(select(InstagramProfile).where(InstagramProfile.id.in_(ids))).all()} if ids else {}
+    grouped = {}
+    if ids:
+        for snapshot in session.exec(select(ProfileSnapshot).where(ProfileSnapshot.profile_id.in_(ids), ProfileSnapshot.collected_at >= start_date).order_by(ProfileSnapshot.collected_at.asc(), ProfileSnapshot.id.asc())).all():
+            grouped.setdefault(snapshot.profile_id, []).append(snapshot)
+    for link in links:
+        profile = by_id.get(link.profile_id)
         if not profile:
             continue
-        snapshots = list(
-            session.exec(
-                select(ProfileSnapshot)
-                .where(ProfileSnapshot.profile_id == profile.id, ProfileSnapshot.collected_at >= start_date)
-                .order_by(ProfileSnapshot.collected_at.asc())
-            ).all()
-        )
+        snapshots = grouped.get(profile.id, [])
         daily: dict[str, dict] = {}
         for snapshot in snapshots:
             key = snapshot.collected_at.date().isoformat()
@@ -569,7 +557,12 @@ def campaign_post_detail(campaign_id: int, post_id: int, session: Session = Depe
     period_days = days if isinstance(days, int) else 30
     since = datetime.now(timezone.utc) - timedelta(days=period_days)
     history = session.exec(select(PostSnapshot).where(PostSnapshot.post_id == post_id, PostSnapshot.collected_at >= since).order_by(PostSnapshot.collected_at.desc()).limit(2000)).all()
-    return {'post': _post_payload(post, profile, link.role, _latest_snapshot(session, post_id)), 'history': history, 'period_days': period_days, 'comments': read_comment_sample(session, post_id)}
+    profile_region = session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first()
+    payload = _post_payload(post, profile, link.role, _latest_snapshot(session, post_id))
+    theme_link = session.exec(select(PostTheme).where(PostTheme.post_id == post.id)).first()
+    if theme_link:
+        payload['content']['theme'] = session.get(Theme, theme_link.theme_id).name
+    return {'post': payload, 'profile_region_id': profile_region.region_id if profile_region else None, 'profile_region': session.get(AdministrativeRegion, profile_region.region_id) if profile_region else None, 'territories': territories_for_posts(session, [post]).get(post.id, []), 'history': history, 'period_days': period_days, 'comments': read_comment_sample(session, post_id)}
 
 
 @router.get('/{campaign_id}/posts/{post_id}/thumbnail', summary='Obter prévia persistente da publicação')

@@ -1,0 +1,251 @@
+{
+  "territorial": {
+    "requested": 14,
+    "new": 0,
+    "existing": 14,
+    "linked": 0,
+    "already_linked": 14,
+    "duplicate_rows": 0,
+    "profiles": [
+      {
+        "profile_id": 19,
+        "username": "aguasclarasmidia",
+        "url": "https://www.instagram.com/aguasclarasmidia/",
+        "scope": "TERRITORIAL",
+        "region": "Águas Claras",
+        "active": false,
+        "new": false
+      },
+      {
+        "profile_id": 20,
+        "username": "dfaguasclaras",
+        "url": "https://www.instagram.com/dfaguasclaras/",
+        "scope": "TERRITORIAL",
+        "region": "Águas Claras",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 21,
+        "username": "arapoanganews",
+        "url": "https://www.instagram.com/arapoanganews/",
+        "scope": "TERRITORIAL",
+        "region": "Arapoanga",
+        "active": false,
+        "new": false
+      },
+      {
+        "profile_id": 22,
+        "username": "ceilandia_alerta",
+        "url": "https://www.instagram.com/ceilandia_alerta/",
+        "scope": "TERRITORIAL",
+        "region": "Ceilândia",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 23,
+        "username": "ceilandia.extraordinaria",
+        "url": "https://www.instagram.com/ceilandia.extraordinaria/",
+        "scope": "TERRITORIAL",
+        "region": "Ceilândia",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 24,
+        "username": "ceilandiaemassavei",
+        "url": "https://www.instagram.com/ceilandiaemassavei/",
+        "scope": "TERRITORIAL",
+        "region": "Ceilândia",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 25,
+        "username": "ceilandiamuitatreta",
+        "url": "https://www.instagram.com/ceilandiamuitatreta/",
+        "scope": "TERRITORIAL",
+        "region": "Ceilândia",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 26,
+        "username": "diariodeceilandia",
+        "url": "https://www.instagram.com/diariodeceilandia/",
+        "scope": "TERRITORIAL",
+        "region": "Ceilândia",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 27,
+        "username": "jornaldoguara",
+        "url": "https://www.instagram.com/jornaldoguara/",
+        "scope": "TERRITORIAL",
+        "region": "Guará",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 28,
+        "username": "guarahoje",
+        "url": "https://www.instagram.com/guarahoje/",
+        "scope": "TERRITORIAL",
+        "region": "Guará",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 29,
+        "username": "movimentojb",
+        "url": "https://www.instagram.com/movimentojb/",
+        "scope": "TERRITORIAL",
+        "region": "Jardim Botânico",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 30,
+        "username": "paranoanews",
+        "url": "https://www.instagram.com/paranoanews/",
+        "scope": "TERRITORIAL",
+        "region": "Paranoá",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 31,
+        "username": "visitebrasilia",
+        "url": "https://www.instagram.com/visitebrasilia/",
+        "scope": "TERRITORIAL",
+        "region": "Plano Piloto",
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 32,
+        "username": "riachofundonews",
+        "url": "https://www.instagram.com/riachofundonews/",
+        "scope": "TERRITORIAL",
+        "region": "Riacho Fundo",
+        "active": true,
+        "new": false
+      }
+    ],
+    "errors": [],
+    "conflicts": []
+  },
+  "general": {
+    "requested": 11,
+    "new": 0,
+    "existing": 11,
+    "linked": 0,
+    "already_linked": 11,
+    "duplicate_rows": 0,
+    "profiles": [
+      {
+        "profile_id": 33,
+        "username": "metropoles.df",
+        "url": "https://www.instagram.com/metropoles.df/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 34,
+        "username": "correio.braziliense",
+        "url": "https://www.instagram.com/correio.braziliense/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 35,
+        "username": "jornaldebrasilia",
+        "url": "https://www.instagram.com/jornaldebrasilia/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 36,
+        "username": "distritonews",
+        "url": "https://www.instagram.com/distritonews/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 37,
+        "username": "daquidebrasilia",
+        "url": "https://www.instagram.com/daquidebrasilia/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 38,
+        "username": "dicasdacapital",
+        "url": "https://www.instagram.com/dicasdacapital/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 39,
+        "username": "brasilia.indica",
+        "url": "https://www.instagram.com/brasilia.indica/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 40,
+        "username": "culturakidsbsb",
+        "url": "https://www.instagram.com/culturakidsbsb/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 41,
+        "username": "esporte.df",
+        "url": "https://www.instagram.com/esporte.df/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 42,
+        "username": "gov_df",
+        "url": "https://www.instagram.com/gov_df/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      },
+      {
+        "profile_id": 43,
+        "username": "sececdf",
+        "url": "https://www.instagram.com/sececdf/",
+        "scope": "DF_GENERAL",
+        "region": null,
+        "active": true,
+        "new": false
+      }
+    ],
+    "errors": [],
+    "conflicts": []
+  }
+}

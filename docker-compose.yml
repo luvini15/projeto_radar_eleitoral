@@ -1,16 +1,58 @@
-﻿services:
+services:
   postgres:
     image: postgres:16
     container_name: radar_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: radar
-      POSTGRES_PASSWORD: radar123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no .env local}
       POSTGRES_DB: radar_eleitoral
     ports:
       - "5433:5432"
     volumes:
       - radar_postgres_data:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d radar_eleitoral"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DOCKER:?Configure DATABASE_URL_DOCKER no .env local}
+      APP_ENV: production
+      COLLECTION_SCHEDULER_MODE: external
+      COLLECTION_ENABLED: ${COLLECTION_ENABLED:-true}
+      COLLECTION_DAILY_TIME: ${COLLECTION_DAILY_TIME:-03:00}
+      COLLECTION_TIMEZONE: ${COLLECTION_TIMEZONE:-America/Sao_Paulo}
+      COLLECTION_POST_LIMIT: ${COLLECTION_POST_LIMIT:-25}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  scheduler:
+    build: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "app.scheduler"]
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DOCKER:?Configure DATABASE_URL_DOCKER no .env local}
+      APP_ENV: production
+      COLLECTION_SCHEDULER_MODE: external
+      COLLECTION_ENABLED: ${COLLECTION_ENABLED:-true}
+      COLLECTION_DAILY_TIME: ${COLLECTION_DAILY_TIME:-03:00}
+      COLLECTION_TIMEZONE: ${COLLECTION_TIMEZONE:-America/Sao_Paulo}
+      COLLECTION_POST_LIMIT: ${COLLECTION_POST_LIMIT:-25}
+    depends_on:
+      backend:
+        condition: service_healthy
 volumes:
   radar_postgres_data:

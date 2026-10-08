@@ -1,0 +1,23 @@
+{
+  "before": {
+    "instagram_posts": 461,
+    "instagram_profiles": 18,
+    "post_snapshots": 1665,
+    "profile_snapshots": 64
+  },
+  "after": {
+    "instagram_posts": 461,
+    "instagram_profiles": 43,
+    "post_snapshots": 1665,
+    "profile_snapshots": 64
+  },
+  "apify_calls": 0,
+  "scope": "Importação e primeira classificação. Coleta operacional posterior descrita em operational-incident.json.",
+  "after_operational_incident": {
+    "instagram_posts": 467,
+    "instagram_profiles": 43,
+    "post_snapshots": 1765,
+    "profile_snapshots": 68,
+    "collection_runs": 12
+  }
+}

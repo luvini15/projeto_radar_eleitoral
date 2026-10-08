@@ -1,0 +1,78 @@
+[
+  {
+    "post_id": 195,
+    "shortcode": "DcwIwxWEdfb",
+    "profile_id": 3,
+    "username": "deputadoroberio",
+    "caption": "🥳🎉 Parabéns, #JardimBotânico, pelos 22 anos como Região Administrativa do DF! \n\nAo longo dos último anos, o nosso mandato ouviu os moradores e buscou soluções para levar melhorias à região, cobrando avanços em mobilidade, infraestrutura, saúde, segurança no trânsito e iluminação. \n\nSeguimos juntos, ouvindo a população e buscando melhorias para o Jardim Botânico! 🤝\n\n#RobérioNegreiros #DeputadoDistrital #MandatoParticipativo #NossaUniãoNossaForça AgoraÉ2️⃣0️⃣0️⃣0️⃣0️⃣",
+    "location_name": null,
+    "published_at": "2026-09-01 16:53:50",
+    "url": "https://www.instagram.com/p/DcwIwxWEdfb/",
+    "region_id": null,
+    "region_name": null,
+    "detection_source": "EXPLICIT_RA",
+    "confidence": "LOW",
+    "stored_confidence": "LOW",
+    "evidence": "indo a população e buscando melhorias para o Jardim Botânico",
+    "theme": "Infraestrutura",
+    "interactions": 389,
+    "likes": 365,
+    "comments": 24,
+    "views": null,
+    "plays": null,
+    "snapshot_at": "2026-09-09 12:50:09.609765",
+    "region_count": 0,
+    "territories": [
+      {
+        "region_id": null,
+        "region_name": null,
+        "detection_source": "EXPLICIT_RA",
+        "confidence": "LOW",
+        "stored_confidence": "LOW",
+        "evidence": "indo a população e buscando melhorias para o Jardim Botânico"
+      }
+    ],
+    "status_message": "Sem evidência territorial suficiente",
+    "low_confidence_reason": "Nome potencialmente homônimo sem prefixo geográfico aceito pela regra. A hashtag compacta #JardimBotânico não é um alias cadastrado; a RA permaneceu nula.",
+    "reason_origin": "AUDIT_EXPLANATION",
+    "evidence_is_literal": true
+  },
+  {
+    "post_id": 40,
+    "shortcode": "DaVvAAjx455",
+    "profile_id": 1,
+    "username": "claudioborcem_",
+    "caption": "LANÇAMENTO DA PRÉ-CAMPANHA DA NOSSA GOVERNADORA CELINA LEAO! 🇧🇷\n\nÉ hora de dar mais um passo por um Distrito Federal cada vez melhor. Venha participar deste grande encontro e demonstrar seu apoio à pré-candidatura da @celinaleao \n\n📆 04/07\n⏰ 09h\n📍Local: Santa Maria - Quadradão Cultural, ao lado da\nAdministração Regional.\n\nContamos com a sua presença, aguardo você!",
+    "location_name": "Brasília DF",
+    "published_at": "2026-07-03 17:49:59",
+    "url": "https://www.instagram.com/p/DaVvAAjx455/",
+    "region_id": null,
+    "region_name": null,
+    "detection_source": "EXPLICIT_RA",
+    "confidence": "LOW",
+    "stored_confidence": "LOW",
+    "evidence": "📍Local: Santa Maria",
+    "theme": "Política",
+    "interactions": 0,
+    "likes": null,
+    "comments": 0,
+    "views": 148,
+    "plays": 516,
+    "snapshot_at": "2026-09-23 13:12:32.240707",
+    "region_count": 0,
+    "territories": [
+      {
+        "region_id": null,
+        "region_name": null,
+        "detection_source": "EXPLICIT_RA",
+        "confidence": "LOW",
+        "stored_confidence": "LOW",
+        "evidence": "📍Local: Santa Maria"
+      }
+    ],
+    "status_message": "Sem evidência territorial suficiente",
+    "low_confidence_reason": "Nome potencialmente homônimo. O prefixo Local: não integra os contextos geográficos aceitos pela regra atual; a RA permaneceu nula.",
+    "reason_origin": "AUDIT_EXPLANATION",
+    "evidence_is_literal": true
+  }
+]

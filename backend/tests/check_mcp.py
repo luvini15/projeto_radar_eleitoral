@@ -20,7 +20,7 @@ async def main():
     params = StdioServerParameters(
         command=sys.executable,
         args=[str(script)],
-        env={**os.environ, "RADAR_API_URL": "http://127.0.0.1:8001"},
+        env={**os.environ, "RADAR_API_URL": "http://127.0.0.1:" + os.getenv("UI_FIXTURE_PORT", "8001")},
     )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
