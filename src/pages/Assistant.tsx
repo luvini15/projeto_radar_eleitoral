@@ -9,8 +9,9 @@ import { Tool, type ToolPart } from '@/components/prompt-kit/tool'
 import { Source, SourceContent, SourceTrigger } from '@/components/prompt-kit/source'
 import { useCampaign } from '@/lib/campaignContext'
 import { api } from '@/services/radarApi'
+import type { AssistantVisualizationSpec } from '@/components/assistant/AssistantVisualizations'
 
-type SourceItem = { label: string; path: string; description: string }
+type SourceItem = { label: string; path: string; description: string; visualizations?: AssistantVisualizationSpec[] }
 type Answer = { conversation_id: string; text: string; model: string; sources: SourceItem[]; tools?: ToolPart[] }
 type ChatMessage = { id: string; role: 'user' | 'assistant'; text: string; sources?: SourceItem[]; tools?: ToolPart[] }
 type ConversationSummary = { id: string; title: string; created_at: string; updated_at: string; message_count: number }
@@ -20,7 +21,7 @@ function toolsFromSources(sources: SourceItem[]): ToolPart[] {
   return sources.map(source => ({
     type: `tool-${source.label.toLowerCase().replaceAll(' ', '_')}`,
     state: 'output-available',
-    output: { leitura: source.description },
+    output: { description: source.description, visualizations: source.visualizations ?? [] },
   }))
 }
 

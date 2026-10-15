@@ -13,15 +13,20 @@ from app.models import AIUsage, AssistantConversation, AssistantMessage, utc_now
 from app.routers.analytics import campaign_overview, followers_history, themes_formats, time_performance
 
 assistant_lock = Lock()
-SYSTEM_PROMPT = """Você é a IA do Data Sight. Responda em português claro e direto usando somente os dados fornecidos.
+SYSTEM_PROMPT = """Você é a IA do Data Sight. Responda em português claro, direto e com personalidade, usando somente os dados fornecidos.
 "Campanha" é apenas o nome do espaço de monitoramento no produto. Ela pode acompanhar uma banda, artista, marca,
 negócio, projeto cultural, organização, figura pública ou iniciativa política. Nunca presuma que o contexto é eleitoral
 ou institucional. Identifique o contexto pelos nomes da campanha e dos perfis, pelo conteúdo observado e pelo jeito como
 o usuário escreve. Se ainda houver dúvida, use termos neutros como projeto, perfil, conteúdo e público.
 
-Converse como alguém que conhece o trabalho acompanhado. Prefira frases naturais, específicas e curtas. Evite linguagem
-burocrática, tom de relatório, elogios automáticos, introduções genéricas, conclusões dramáticas e avisos repetidos. Não
-force listas nem coloque todo item em negrito. Adapte o vocabulário ao contexto sem inventar fatos ou tentar imitar gírias.
+Converse como alguém que acompanha de verdade o trabalho analisado. Se o nome ou perfil indicar uma banda ou artista,
+trate explicitamente como banda ou artista — nunca como campanha, organização ou instituição. Nesse caso, fale de posts,
+faixas, shows, bastidores e comunidade apenas quando isso aparecer no contexto. Se for uma marca, fale de produto e
+público; se for uma organização, use o vocabulário dela. Prefira frases naturais, específicas e curtas, como numa
+conversa com a pessoa responsável pelo projeto. Evite linguagem burocrática, tom de relatório, termos como "campanha eleitoral",
+"eleitorado", "stakeholders", "institucional" ou "estratégia de comunicação" quando não forem pertinentes, além de
+elogios automáticos, introduções genéricas, conclusões dramáticas e avisos repetidos. Não force listas nem coloque todo
+item em negrito. Adapte o vocabulário ao contexto sem inventar fatos ou tentar imitar gírias.
 
 Os dados podem ter valores null, amostras parciais e períodos diferentes. Não invente números nem causalidade. Não deduza
 crenças, intenção de voto ou atributos pessoais. Não crie persuasão política, segmentação de eleitores ou mensagens
@@ -161,6 +166,25 @@ def get_conversation(session: Session, campaign_id: int, user_id: str, conversat
         .where(AssistantMessage.conversation_id == conversation.id)
         .order_by(AssistantMessage.id)
     ).all()
+    chart_groups = _visualizations({
+        "overview": campaign_overview(campaign_id, 25, session),
+        "themes_formats": themes_formats(campaign_id, 25, session),
+        "time_performance": time_performance(campaign_id, 25, session),
+        "followers_history": followers_history(campaign_id, 30, session),
+    })
+    visualizations_by_label = {
+        "Visão geral": chart_groups["overview"],
+        "Temas e formatos": chart_groups["themes_formats"],
+        "Dias e horários": chart_groups["time_performance"],
+        "Audiência": chart_groups["followers_history"],
+    }
+
+    def hydrated_sources(message: AssistantMessage) -> list[dict]:
+        sources = json.loads(message.sources_json) if message.sources_json else []
+        for source in sources:
+            source.setdefault("visualizations", visualizations_by_label.get(source.get("label"), []))
+        return sources
+
     return {
         "id": conversation.id,
         "title": conversation.title,
@@ -171,7 +195,7 @@ def get_conversation(session: Session, campaign_id: int, user_id: str, conversat
                 "id": message.id,
                 "role": message.role,
                 "content": message.content,
-                "sources": json.loads(message.sources_json) if message.sources_json else [],
+                "sources": hydrated_sources(message),
                 "created_at": message.created_at,
             }
             for message in messages
@@ -253,7 +277,7 @@ def ask_campaign(
                     json={
                         "model": model,
                         "max_tokens": 1200,
-                        "temperature": 0.3,
+                        "temperature": 0.5,
                         "messages": [
                             {"role": "system", "content": SYSTEM_PROMPT},
                             {"role": "user", "content": serialized},

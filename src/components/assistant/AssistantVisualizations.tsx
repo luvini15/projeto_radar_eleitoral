@@ -1,3 +1,4 @@
+import * as React from 'react'
 import {
   Bar,
   BarChart,
@@ -56,7 +57,7 @@ function metric(value: unknown) {
   return Math.abs(number) >= 1_000 ? compact.format(number) : precise.format(number)
 }
 
-function ChartTooltip({ active, payload, label, sampleKey }: TooltipContentProps<number, string> & { sampleKey?: string }) {
+function ChartTooltip({ active, payload, label, sampleKey }: TooltipContentProps<any, any> & { sampleKey?: string }) {
   if (!active || !payload?.length) return null
   const row = payload[0]?.payload as Datum | undefined
   return <div className="ai-chart-tooltip">

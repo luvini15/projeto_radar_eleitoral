@@ -236,6 +236,26 @@ body {
 .ai-tool__body { display: grid; gap: 12px; border-top: 1px solid rgba(255,255,255,.08); padding: 12px; }
 .ai-tool__body span { color: #ff6a2b; font-family: var(--font-mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
 .ai-tool__body pre { margin-top: 6px; overflow-x: auto; color: rgba(255,255,255,.54); font-family: var(--font-mono); font-size: 10px; white-space: pre-wrap; }
+.ai-tool__visualizations { display: grid; gap: 16px; }
+.ai-tool__summary { color: rgba(255,255,255,.58); font-size: 12px; line-height: 1.6; }
+.ai-chart { min-width: 0; margin: 0; border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: 12px; background: rgba(0,0,0,.16); }
+.ai-chart figcaption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin-bottom: 8px; }
+.ai-chart figcaption strong { color: rgba(255,255,255,.78); font-size: 12px; font-weight: 500; }
+.ai-chart figcaption span { color: rgba(255,255,255,.34); font-size: 10px; }
+.ai-chart-canvas { min-height: 210px; }
+.ai-chart-canvas--line { height: 230px; }
+.ai-chart-empty { padding: 24px 8px; color: rgba(255,255,255,.36); font-size: 11px; }
+.ai-chart-tooltip { display: grid; gap: 4px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px 10px; color: rgba(255,255,255,.76); background: #141414; box-shadow: 0 10px 30px rgba(0,0,0,.35); font-size: 10px; }
+.ai-chart-tooltip strong { color: #fff; font-weight: 500; }
+.ai-chart-tooltip span { display: flex; align-items: center; gap: 5px; }
+.ai-chart-tooltip i { width: 6px; height: 6px; border-radius: 50%; }
+.ai-chart-tooltip small { margin-top: 3px; color: rgba(255,255,255,.38); }
+.ai-heatmap-scroll { overflow-x: auto; }
+.ai-heatmap { display: grid; min-width: 470px; gap: 4px; align-items: center; }
+.ai-heatmap b, .ai-heatmap strong { overflow: hidden; color: rgba(255,255,255,.45); font-family: var(--font-mono); font-size: 9px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.ai-heatmap b { text-align: center; }
+.ai-heatmap strong { color: rgba(255,255,255,.66); text-transform: capitalize; }
+.ai-heatmap button { width: 100%; min-height: 34px; border-radius: 5px; color: rgba(255,255,255,.82); font-size: 9px; }
 .ai-loading { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.42); font-size: 12px; }
 .ai-chat-error { display: flex; align-items: center; gap: 9px; border-left: 2px solid #ff5a1f; padding: 9px 12px; color: rgba(255,255,255,.68); font-size: 12px; }
 .ai-chat-error svg { width: 15px; color: #ff5a1f; }
