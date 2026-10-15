@@ -1,5 +1,7 @@
 # Radar Eleitoral
 
+> **Acesso:** configure Supabase Auth, MFA opcional, cadastro automático, migrações e HTTPS antes de usar. Consulte [SECURITY.md](SECURITY.md).
+
 # Contexto do Projeto
 
 O Radar Eleitoral é uma plataforma de inteligência digital desenvolvida para auxiliar no acompanhamento, organização e análise de dados públicos relacionados à comunicação política nas redes sociais.
@@ -19,7 +21,7 @@ O frontend integrado Data Sight está na raiz (`src/`) e reúne monitoramento, c
 - Backend: FastAPI/SQLModel, porta `8000`.
 - Frontend integrado: React/Vite, porta `5173`.
 - PostgreSQL 16: Docker, host `localhost`, porta `5433`, banco `radar_eleitoral`.
-- Autenticação: simulada; Supabase está preparado, mas ainda não é autenticação de produção.
+- Supabase Auth e autorizacao no backend; consulte SECURITY.md.
 
 ### Executar
 
@@ -28,6 +30,7 @@ docker compose up -d postgres
 cd backend
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\alembic upgrade head
 .venv\Scripts\uvicorn app.main:app --reload
 ```
 
@@ -47,7 +50,7 @@ Copie `backend/.env.example` para `backend/.env` e defina `DATABASE_URL` e `APIF
 
 ### Inteligência territorial
 
-A inicialização cria aditivamente as 35 RAs e os temas existentes. A tabela `profile_regions` identifica a RA do perfil; `post_regions` aceita várias RAs por publicação e guarda fonte, confiança e evidência literal. Portais `DF_GENERAL` nunca recebem fallback territorial do perfil. Menções no conteúdo prevalecem sobre a associação do perfil. Casos ambíguos ficam sem RA; localidades conhecidas usam um dicionário com fontes em `backend/app/config/territorial_aliases.json`.
+Depois das migracoes Alembic, a inicializacao popula as 35 RAs e os temas existentes. A tabela `profile_regions` identifica a RA do perfil; `post_regions` aceita várias RAs por publicação e guarda fonte, confiança e evidência literal. Portais `DF_GENERAL` nunca recebem fallback territorial do perfil. Menções no conteúdo prevalecem sobre a associação do perfil. Casos ambíguos ficam sem RA; localidades conhecidas usam um dicionário com fontes em `backend/app/config/territorial_aliases.json`.
 
 A migração aditiva é `backend/migrations/003_post_territories.sql`. Importação XLSX/CSV e processamento local não iniciam Apify ou scheduler. No PowerShell, a partir da raiz:
 
@@ -110,8 +113,6 @@ A página **Concorrentes** reutiliza esse endpoint em uma única chamada por alt
 `POST /api/campaigns/{campaign_id}/reports` persiste o pacote e o HTML executivo. Para PDF, abra o HTML retornado e use **Imprimir → Salvar como PDF**; estilos A4 e links são preservados.
 
 ```bash
-docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrations/001_territorial_intelligence.sql
-docker exec -i radar_postgres psql -U radar -d radar_eleitoral < backend/migrations/002_continuous_monitoring.sql
 set PYTHONPATH=backend
 python -m unittest discover -s backend/tests -v
 npm run build
@@ -186,7 +187,16 @@ npm run dev
 
 O terminal mostrará um endereço local (algo como `http://localhost:5173`). Abra no navegador.
 
-Na tela de login, qualquer combinação de e-mail e senha preenchidos libera o acesso (autenticação simulada — veja seção "Autenticação" abaixo).
+Em outro terminal, mantenha a API ativa:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Confirme em `http://localhost:8000/health` que a resposta é `{"status":"ok"}`. O login do Supabase só abre o painel depois que essa API valida o usuário.
+
+O login exige credenciais Supabase e autorização na API. Quando o usuário ativa MFA, os próximos acessos também exigem o código do autenticador. Veja [SECURITY.md](SECURITY.md) para configurar o ambiente antes de iniciar.
 
 Para gerar a versão de produção (arquivos estáticos, prontos para hospedar):
 
@@ -206,7 +216,7 @@ Os arquivos finais aparecem em `dist/`.
 - **Recharts** (gráficos de área, linha, barra e dispersão)
 - **Lucide Icons**
 - **React Router** (rotas e proteção de páginas)
-- **Supabase JS** (preparado para autenticação futura, não ativo no protótipo)
+- **Supabase JS** (autenticação por senha e TOTP)
 
 ---
 
@@ -226,7 +236,7 @@ src/
   services/        InstagramDataProvider (interface), MockInstagramService, MetaInstagramService (stub), Supabase client
   types/           Tipos TypeScript do domínio
   utils/           Funções de formatação e cálculo (metrics.ts)
-  lib/             Contexto de autenticação simulada, utilitário de classes CSS
+  lib/             Contexto de autenticação, utilitário de classes CSS
 ```
 
 ---
@@ -255,19 +265,9 @@ Nenhum componente visual precisa ser alterado.
 
 ## Autenticação
 
-O login atual é **simulado**: qualquer e-mail e senha preenchidos liberam o
-acesso, e a sessão fica apenas em `sessionStorage` do navegador (nada de
-senha ou token real é armazenado).
-
-O projeto já inclui `@supabase/supabase-js` e um cliente preparado em
-`src/services/supabaseClient.ts`. Para ativar a autenticação real com
-Supabase Auth no futuro:
-
-1. Copie `.env.example` para `.env.local`;
-2. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com as chaves do
-   seu projeto Supabase (nunca comite esse arquivo);
-3. Substitua a lógica de `signIn` em `src/lib/authContext.tsx` por uma
-   chamada a `supabase.auth.signInWithPassword(...)`.
+O login usa Supabase Auth com senha, Google e TOTP opcional. A API valida a sessão,
+exige `aal2` de quem ativou MFA e cadastra automaticamente novos usuários como analistas. Configure o ambiente conforme
+[SECURITY.md](SECURITY.md).
 
 ---
 
@@ -319,3 +319,11 @@ A página Concorrentes usa exclusivamente vínculos ativos `CampaignProfile.role
 Desempenho por dia soma o último snapshot de cada publicação, por data de publicação em UTC, e oferece interações, curtidas, comentários, visualizações, reproduções, compartilhamentos, salvamentos e publicações. Não mede incrementos de interações recebidas no dia. Datas sem publicações e métricas indisponíveis não são preenchidas; `metric_samples` informa a cobertura de cada métrica. O total considera todos os selecionados, com comparação visual dos cinco primeiros perfis. Audiência usa exclusivamente snapshots de seguidores, com uma série por perfil e lacunas preservadas.
 
 Os testes de navegador usam `backend/tests/serve_ui_fixture.py`, que cria SQLite temporário e desliga os provedores e o scheduler. Os testes PostgreSQL exigem `TEST_DATABASE_URL` apontando para uma instância descartável; não leem mais a conexão operacional de `backend/.env`. O script MCP aceita `UI_FIXTURE_PORT` para apontar para a mesma API isolada.
+
+## Integra??o do redesign e territorial
+
+O schema ? gerenciado pelo Alembic; API e scheduler n?o executam create_all. Em instala??o existente sem hist?rico Alembic, fa?a backup e confira o schema antes de marcar `0001_baseline`, conforme SECURITY.md; depois execute `alembic upgrade head`. A revis?o 0005 adiciona as tabelas territoriais de forma idempotente.
+
+No Compose, configure `DATABASE_URL_DOCKER` para o usu?rio de runtime e `MIGRATION_DATABASE_URL_DOCKER` para o owner; veja `.env.compose.example`. O servi?o migrate deve concluir antes da API e do scheduler. Provisione o usu?rio de runtime conforme SECURITY.md. O frontend ? executado com `npm run dev` ou hospedado separadamente.
+
+A navega??o territorial usa `/inteligencia-territorial`; `/insights` permanece compat?vel. Autentica??o Supabase, Assistant, landing page e componentes do redesign s?o preservados.

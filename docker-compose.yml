@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no .env local}
       POSTGRES_DB: radar_eleitoral
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - radar_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +16,16 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  migrate:
+    build: ./backend
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DOCKER:?Configure DATABASE_URL_DOCKER no .env local}
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL_DOCKER:?Configure MIGRATION_DATABASE_URL_DOCKER no .env local}
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
   backend:
     build: ./backend
     restart: unless-stopped
@@ -23,16 +33,19 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL_DOCKER:?Configure DATABASE_URL_DOCKER no .env local}
       APP_ENV: production
+      ENVIRONMENT: production
       COLLECTION_SCHEDULER_MODE: external
       COLLECTION_ENABLED: ${COLLECTION_ENABLED:-true}
       COLLECTION_DAILY_TIME: ${COLLECTION_DAILY_TIME:-03:00}
       COLLECTION_TIMEZONE: ${COLLECTION_TIMEZONE:-America/Sao_Paulo}
       COLLECTION_POST_LIMIT: ${COLLECTION_POST_LIMIT:-25}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
@@ -46,6 +59,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL_DOCKER:?Configure DATABASE_URL_DOCKER no .env local}
       APP_ENV: production
+      ENVIRONMENT: production
       COLLECTION_SCHEDULER_MODE: external
       COLLECTION_ENABLED: ${COLLECTION_ENABLED:-true}
       COLLECTION_DAILY_TIME: ${COLLECTION_DAILY_TIME:-03:00}

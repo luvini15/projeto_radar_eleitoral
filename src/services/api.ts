@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient'
 import type {
   BenchmarkResponse,
   CompetitorsResponse,
@@ -18,13 +19,16 @@ import type {
   Evidence,
 } from '@/types/api'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000')).replace(/\/$/, '')
 export const CAMPAIGN_ID = Number(import.meta.env.VITE_CAMPAIGN_ID || 1)
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = (await supabase?.auth.getSession())?.data.session?.access_token
+  if (!token) throw new Error('Sessao expirada.')
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}), Authorization: `Bearer ${token}` },
+    cache: 'no-store',
   })
   if (!response.ok) throw new Error(`API ${response.status}: ${await response.text()}`)
   return response.json() as Promise<T>
@@ -63,3 +67,11 @@ export const getCampaign = (campaignId=CAMPAIGN_ID) => request<CampaignDetails>(
 export const getCollections = (campaignId=CAMPAIGN_ID) => request<{campaign_id:number;next_collection:string|null;schedule:CollectionSchedule;collections:CollectionRun[]}>(`/api/campaigns/${campaignId}/collections`)
 export const runCollection = (campaignId=CAMPAIGN_ID) => request(`/api/campaigns/${campaignId}/collections`,{method:'POST'})
 export const getFilteredAnalytics = (start:string,end:string,profileIds:number[]=[],filters:{regionId?:number|null;theme?:string;format?:string;origin?:string;competitorsOnly?:boolean}={},campaignId=CAMPAIGN_ID) => {const q=new URLSearchParams({start_date:start,end_date:end});if(filters.competitorsOnly){q.set('role','COMPETITOR');q.set('profile_selection','selected')}profileIds.forEach(id=>q.append('profile_id',String(id)));if(filters.regionId)q.set('region_id',String(filters.regionId));if(filters.theme)q.set('theme',filters.theme);if(filters.format)q.set('format',filters.format);if(filters.origin)q.set('territorial_origin',filters.origin);return request<FilteredAnalytics>(`/api/campaigns/${campaignId}/analytics?${q}`).then(data=>{if(filters.competitorsOnly&&(data.filters?.role!=='COMPETITOR'||data.filters?.profile_selection!=='selected'))throw new Error('A API está desatualizada e não confirma o filtro de concorrentes. Atualize o backend desta branch.');return data})}
+
+export async function getReportHtml(path: string): Promise<Blob> {
+  const token = (await supabase?.auth.getSession())?.data.session?.access_token
+  if (!token) throw new Error('Sessao expirada.')
+  const response = await fetch(absoluteApiUrl(path), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+  if (!response.ok) throw new Error(`API ${response.status}`)
+  return response.blob()
+}

@@ -26,3 +26,9 @@ Thumbs.db
 
 # Logs
 *.log
+tmp-*.out
+tmp-*.err
+tmp-*.png
+backups/
+backend/backups/
+.tmp-space-kit/

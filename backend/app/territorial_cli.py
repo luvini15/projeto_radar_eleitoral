@@ -2,9 +2,8 @@
 import argparse
 import json
 from pathlib import Path
-from sqlalchemy import text
 from sqlmodel import Session
-from app.database import engine, create_db_and_tables
+from app.database import engine
 from app.routers.territorial import seed_reference_data
 from app.services.profile_import import DF_GENERAL, import_profiles, spreadsheet_rows
 from app.services.territorial_detection import classify_existing
@@ -19,13 +18,12 @@ def main():
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.action == "migrate":
-        if engine.dialect.name == "postgresql":
-            sql = (Path(__file__).parents[1] / "migrations/003_post_territories.sql").read_text(encoding="utf-8")
-            with engine.begin() as connection:
-                for statement in sql.split(";"):
-                    if statement.strip(): connection.execute(text(statement))
-        else: create_db_and_tables()
-        result = {"migration": "003_post_territories", "status": "APPLIED", "dialect": engine.dialect.name}
+        from alembic import command
+        from alembic.config import Config
+        migration_config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
+        migration_config.set_main_option("script_location", str(Path(__file__).parents[1] / "migrations"))
+        command.upgrade(migration_config, "head")
+        result = {"migration": "alembic_head", "status": "APPLIED", "dialect": engine.dialect.name}
     else:
         with Session(engine) as session:
             seed_reference_data(session)

@@ -1,22 +1,22 @@
-import { Menu, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useCampaign } from '@/lib/campaignContext'
+import { ChevronDown, RefreshCw } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { useCampaign } from '@/lib/campaignContext'
+import { SidebarTrigger } from '@/components/animate-ui/components/radix/sidebar'
 
-export function Topbar({ title, onOpenMobileMenu, desktopOpen, onToggleDesktop }: { title: string; onOpenMobileMenu: () => void; desktopOpen: boolean; onToggleDesktop: () => void }) {
-  const c = useCampaign()
+export function Topbar({ title }: { title: string }) {
+  const campaign = useCampaign()
   const { pathname } = useLocation()
-  const field = 'h-9 max-w-full rounded-md border border-border bg-muted px-2 text-sm'
-  return <div className="border-b border-border bg-bg/55 px-4 py-4 md:px-7">
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex items-center gap-3"><button onClick={onOpenMobileMenu} className="md:hidden" aria-label="Abrir menu"><Menu className="h-5 w-5" /></button><button onClick={onToggleDesktop} className="hidden rounded-md p-2 text-slate hover:bg-white/8 md:block" aria-label={desktopOpen ? "Recolher sidebar" : "Expandir sidebar"} aria-expanded={desktopOpen} aria-controls="desktop-sidebar"><Menu className="h-5 w-5" /></button><h1 className="font-display text-2xl font-semibold">{title}</h1></div>
-      <div className="flex max-w-full flex-wrap items-end gap-2">
-        <label className="flex min-w-0 flex-col gap-1 text-xs text-slate">Campanha<select aria-label="Campanha do painel" className={field} value={c.selected} disabled={c.loading} onChange={e => c.setSelected(e.target.value)}><option value="">Selecione</option>{c.campaigns.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-        {['/', '/conteudos', '/temas-formatos', '/dias-horarios', '/audiencia', '/analise-estrategica'].includes(pathname) ? <label className="flex flex-col gap-1 text-xs text-slate">Posts recentes por perfil<select className={field} value={c.limit} onChange={e => c.setLimit(Number(e.target.value))}>{[10,25,50,100].map(n => <option key={n} value={n}>{n} posts</option>)}</select></label> : null}
-        {pathname === '/audiencia' ? <label className="flex flex-col gap-1 text-xs text-slate">Histórico de seguidores<select className={field} value={c.days} onChange={e => c.setDays(Number(e.target.value))}>{[7,30,90].map(n => <option key={n} value={n}>{n} dias</option>)}</select></label> : null}
-        <span className="self-center text-xs text-slate">Atualiza a cada 60s</span>
-        <Button variant="secondary" disabled={c.loading} onClick={c.refresh}><RefreshCw className="h-4 w-4" />Recarregar</Button>
+  const field = 'h-9 appearance-none border-0 border-b border-white/15 bg-transparent py-0 pl-1 pr-7 text-xs text-white outline-none transition-colors hover:border-white/40 focus:border-[#ff5a1f]'
+  const showSample = !['/configuracoes', '/painel', '/ia'].includes(pathname)
+
+  return <header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 px-4 backdrop-blur-xl md:px-7">
+    <div className="mx-auto flex min-h-[64px] max-w-[1600px] flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3"><SidebarTrigger /><span className="h-5 w-px bg-white/10" /><div><p className="font-mono text-[8px] uppercase tracking-[.2em] text-[#ff6a2b]">Data Sight / operação</p><h1 className="truncate text-sm font-medium text-white md:text-base">{title}</h1></div></div>
+      <div className="flex items-center gap-3">
+        <label className="relative"><span className="sr-only">Campanha</span><select className={field} value={campaign.selected} disabled={campaign.loading} onChange={event => campaign.setSelected(event.target.value)}><option value="">Selecione</option>{campaign.campaigns.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" /></label>
+        {showSample ? <label className="relative hidden sm:block"><span className="sr-only">Amostra</span><select className={field} value={campaign.limit} onChange={event => campaign.setLimit(Number(event.target.value))}>{[10, 25, 50, 100].map(value => <option key={value} value={value}>{value} posts</option>)}</select><ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" /></label> : null}
+        <button type="button" onClick={campaign.refresh} disabled={campaign.loading} aria-label="Atualizar dados" className="grid h-9 w-9 place-items-center text-white/45 transition-colors hover:text-[#ff5a1f]"><RefreshCw className={`h-4 w-4 ${campaign.loading ? 'animate-spin' : ''}`} /></button>
       </div>
     </div>
-  </div>
+  </header>
 }

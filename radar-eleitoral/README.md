@@ -1,5 +1,7 @@
 # Radar Eleitoral
 
+> **Arquivo legado:** esta aplicação mantém login simulado. Não publique este diretório. O frontend ativo está na raiz do repositório e sua configuração de segurança está em `../SECURITY.md`.
+
 Plataforma privada de inteligência de Instagram para campanhas políticas.
 
 O Radar Eleitoral coleta dados públicos de perfis monitorados, armazena os dados no PostgreSQL e disponibiliza análises comparativas em um dashboard web.

@@ -6,9 +6,10 @@ import httpx
 from fastapi import HTTPException
 from sqlmodel import Session, SQLModel, create_engine
 os.environ.setdefault('DATABASE_URL', 'sqlite://')
-from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot, AIUsage
+from app.models import Campaign, CampaignProfile, InstagramProfile, InstagramPost, PostSnapshot, AIUsage, AssistantConversation
 from app.routers.analytics import campaign_post_detail
 from app.services.post_ai import generate_analysis, evidence_from
+from app.services.campaign_ai import ask_campaign, get_conversation, list_conversations
 from app.services.comments import save_comment_sample
 
 class PostAITests(unittest.TestCase):
@@ -70,3 +71,18 @@ class PostAITests(unittest.TestCase):
             with self.assertRaises(HTTPException) as error: generate_analysis(self.session,self.detail())
             self.assertEqual(error.exception.status_code,502)
             self.assertNotIn('secret',error.exception.detail)
+    def test_campaign_assistant_uses_grounded_campaign_context(self):
+        with patch('app.services.campaign_ai.httpx.Client', return_value=self.provider()) as client:
+            result = ask_campaign(self.session, 1, 'O que chama atenção?', 'user-1')
+            self.assertEqual(result['text'], 'Resumo descritivo de teste.')
+            self.assertEqual(len(result['sources']), 4)
+            self.assertEqual(len(result['tools']), 4)
+            self.assertTrue(all(item['state'] == 'output-available' for item in result['tools']))
+            self.assertIsNotNone(self.session.get(AssistantConversation, result['conversation_id']))
+            self.assertEqual(list_conversations(self.session, 1, 'user-1')[0]['message_count'], 2)
+            self.assertEqual(len(get_conversation(self.session, 1, 'user-1', result['conversation_id'])['messages']), 2)
+            with self.assertRaises(HTTPException) as error:
+                get_conversation(self.session, 1, 'another-user', result['conversation_id'])
+            self.assertEqual(error.exception.status_code, 404)
+            payload = client.return_value.__enter__.return_value.post.call_args.kwargs['json']
+            self.assertIn('"name": "Teste"', payload['messages'][1]['content'])

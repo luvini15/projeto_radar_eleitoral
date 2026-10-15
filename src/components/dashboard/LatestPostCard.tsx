@@ -4,7 +4,7 @@ import { ArrowUpRight, Bookmark, Eye, Film, Heart, Image as ImageIcon, Layers, M
 import type { Post } from '@/types/radar'
 import { Empty, InstagramLink } from './ApiData'
 import { date, number } from '@/utils/apiFormat'
-import { apiAsset } from '@/services/radarApi'
+import { useProtectedImage } from '@/lib/useProtectedImage'
 
 function embedUrl(url: string | null) {
   try {
@@ -22,7 +22,8 @@ export function LatestPostCard({ post, detail = false, campaignId }: { post: Pos
   const isCarousel = post?.content.format === 'Carrossel'
   const Icon = isReel ? Film : isCarousel ? Layers : ImageIcon
   const embed = post ? embedUrl(post.content.url) : null
-  const preview = post && campaignId ? apiAsset(`/campaigns/${campaignId}/posts/${post.post_id}/thumbnail`) : post?.content.thumbnail_url
+  const protectedPreview = useProtectedImage(post && campaignId ? `/campaigns/${campaignId}/posts/${post.post_id}/thumbnail` : null)
+  const preview = campaignId ? protectedPreview : post?.content.thumbnail_url
   React.useEffect(() => setImageFailed(false), [preview])
 
   if (!post) return <article aria-label={detail ? 'Publicação selecionada' : 'Último post do perfil'}><Empty>Ainda não há publicações coletadas do perfil principal desta campanha.</Empty></article>

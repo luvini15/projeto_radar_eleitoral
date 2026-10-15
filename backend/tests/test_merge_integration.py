@@ -40,7 +40,9 @@ class MergeIntegrationTests(unittest.TestCase):
         self.stack.enter_context(patch("app.services.monitoring_sync.collect_profile", return_value={"followersCount": 100}))
         self.stack.enter_context(patch("app.services.monitoring_sync.collect_posts", return_value=[RAW]))
         self.stack.enter_context(patch.object(main, "engine", self.engine))
-        self.stack.enter_context(patch.object(main, "create_db_and_tables"))
+        self.stack.enter_context(patch.object(main, "authenticate", return_value=("integration-admin", "admin")))
+        self.stack.enter_context(patch.object(main, "pre_auth_rate_limit"))
+        self.stack.enter_context(patch.object(main, "rate_limit"))
         self.start = self.stack.enter_context(patch.object(main, "start_scheduler"))
         def session_override():
             with Session(self.engine) as session:

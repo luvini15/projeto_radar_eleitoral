@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Annotated
 from app.services.comments import read_comment_sample
 from app.services.taxonomy import classify_theme
 from app.services.territorial_detection import territories_for_posts
@@ -155,7 +156,7 @@ def _post_payload(post: InstagramPost, profile: InstagramProfile, role: str, sna
 
 
 @router.get("/{campaign_id}/overview")
-def campaign_overview(campaign_id: int, limit: int = 25, session: Session = Depends(get_session)):
+def campaign_overview(campaign_id: int, limit: Annotated[int, Query(ge=1, le=200)] = 25, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     profiles_data: list[dict] = []
 
@@ -212,7 +213,7 @@ def campaign_overview(campaign_id: int, limit: int = 25, session: Session = Depe
 
 
 @router.get("/{campaign_id}/benchmark")
-def campaign_benchmark(campaign_id: int, limit: int = 25, session: Session = Depends(get_session)):
+def campaign_benchmark(campaign_id: int, limit: Annotated[int, Query(ge=1, le=200)] = 25, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     results: list[dict] = []
 
@@ -284,10 +285,10 @@ def campaign_benchmark(campaign_id: int, limit: int = 25, session: Session = Dep
 @router.get("/{campaign_id}/posts")
 def campaign_posts(
     campaign_id: int,
-    limit_per_profile: int = 25,
-    role: str | None = None,
-    username: str | None = None,
-    content_type: str | None = None,
+    limit_per_profile: Annotated[int, Query(ge=1, le=200)] = 25,
+    role: Annotated[str | None, Query(max_length=30)] = None,
+    username: Annotated[str | None, Query(max_length=31)] = None,
+    content_type: Annotated[str | None, Query(max_length=30)] = None,
     session: Session = Depends(get_session),
 ):
     campaign = _campaign_or_404(session, campaign_id)
@@ -320,7 +321,7 @@ def campaign_posts(
 
 
 @router.get("/{campaign_id}/rankings")
-def campaign_rankings(campaign_id: int, limit_per_profile: int = 25, top_n: int = 10, session: Session = Depends(get_session)):
+def campaign_rankings(campaign_id: int, limit_per_profile: Annotated[int, Query(ge=1, le=200)] = 25, top_n: Annotated[int, Query(ge=1, le=100)] = 10, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     posts_data: list[dict] = []
     for link in _links(session, campaign_id):
@@ -370,7 +371,7 @@ def campaign_rankings(campaign_id: int, limit_per_profile: int = 25, top_n: int 
 
 
 @router.get("/{campaign_id}/followers-history")
-def followers_history(campaign_id: int, days: int = 60, session: Session = Depends(get_session)):
+def followers_history(campaign_id: int, days: Annotated[int, Query(ge=1, le=365)] = 60, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     if days < 1:
         raise HTTPException(status_code=400, detail="days deve ser maior que 0.")
@@ -426,7 +427,7 @@ def followers_history(campaign_id: int, days: int = 60, session: Session = Depen
 
 
 @router.get("/{campaign_id}/themes-formats")
-def themes_formats(campaign_id: int, limit_per_profile: int = 25, session: Session = Depends(get_session)):
+def themes_formats(campaign_id: int, limit_per_profile: Annotated[int, Query(ge=1, le=200)] = 25, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     theme_rows: dict[str, list[dict]] = defaultdict(list)
     format_rows: dict[str, list[dict]] = defaultdict(list)
@@ -479,7 +480,7 @@ def themes_formats(campaign_id: int, limit_per_profile: int = 25, session: Sessi
 
 
 @router.get("/{campaign_id}/time-performance")
-def time_performance(campaign_id: int, limit_per_profile: int = 25, session: Session = Depends(get_session)):
+def time_performance(campaign_id: int, limit_per_profile: Annotated[int, Query(ge=1, le=200)] = 25, session: Session = Depends(get_session)):
     campaign = _campaign_or_404(session, campaign_id)
     buckets: dict[tuple[int, int], list[dict]] = defaultdict(list)
 
@@ -536,7 +537,7 @@ def time_performance(campaign_id: int, limit_per_profile: int = 25, session: Ses
 
 
 @router.get("/{campaign_id}/competitors")
-def competitors(campaign_id: int, limit: int = 25, days: int = 60, session: Session = Depends(get_session)):
+def competitors(campaign_id: int, limit: Annotated[int, Query(ge=1, le=200)] = 25, days: Annotated[int, Query(ge=1, le=365)] = 60, session: Session = Depends(get_session)):
     _campaign_or_404(session, campaign_id)
     benchmark = campaign_benchmark(campaign_id, limit, session)
     followers = followers_history(campaign_id, days, session)

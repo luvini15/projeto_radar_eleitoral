@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session, select
 from sqlalchemy import func
 from app.services.profile_import import normalize_username
@@ -20,14 +20,32 @@ router = APIRouter(
 
 
 class CampaignCreate(BaseModel):
-    name: str
-    slug: str
+    name: str = Field(min_length=2, max_length=120)
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
+
+    @field_validator("name")
+    @classmethod
+    def clean_name(cls, value: str) -> str:
+        value = value.strip()
+        if "<" in value or ">" in value:
+            raise ValueError("HTML nao permitido")
+        return value
 
 
 class ProfileCreate(BaseModel):
-    username: str
-    full_name: str | None = None
-    role: str
+    username: str = Field(pattern=r"^@?[A-Za-z0-9._]{1,30}$")
+    full_name: str | None = Field(default=None, max_length=120)
+    role: str = Field(pattern=r"^(?i:CLIENT|COMPETITOR|LOCAL_PAGE|MEDIA)$")
+
+    @field_validator("full_name")
+    @classmethod
+    def clean_full_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if "<" in value or ">" in value:
+            raise ValueError("HTML nao permitido")
+        return value
 
 
 @router.post("")
