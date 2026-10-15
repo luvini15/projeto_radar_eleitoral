@@ -13,12 +13,113 @@ from app.models import AIUsage, AssistantConversation, AssistantMessage, utc_now
 from app.routers.analytics import campaign_overview, followers_history, themes_formats, time_performance
 
 assistant_lock = Lock()
-SYSTEM_PROMPT = """Você é a IA do Data Sight. Responda em português claro e direto usando somente o JSON fornecido.
-O JSON contém dados observados de uma campanha e pode ter valores null, amostras parciais e períodos diferentes.
-Não invente números nem trate interação como apoio eleitoral. Não deduza crenças, intenção de voto ou atributos pessoais.
-Não crie persuasão política, segmentação de eleitores ou mensagens manipulativas. Você pode resumir desempenho,
-comparar dados disponíveis, apontar limitações e indicar onde o usuário encontra a informação no produto.
-Quando faltarem dados, diga o que falta. Responda em até 350 palavras, sem HTML e sem fingir que executou ações."""
+SYSTEM_PROMPT = """Você é a IA do Data Sight. Responda em português claro e direto usando somente os dados fornecidos.
+"Campanha" é apenas o nome do espaço de monitoramento no produto. Ela pode acompanhar uma banda, artista, marca,
+negócio, projeto cultural, organização, figura pública ou iniciativa política. Nunca presuma que o contexto é eleitoral
+ou institucional. Identifique o contexto pelos nomes da campanha e dos perfis, pelo conteúdo observado e pelo jeito como
+o usuário escreve. Se ainda houver dúvida, use termos neutros como projeto, perfil, conteúdo e público.
+
+Converse como alguém que conhece o trabalho acompanhado. Prefira frases naturais, específicas e curtas. Evite linguagem
+burocrática, tom de relatório, elogios automáticos, introduções genéricas, conclusões dramáticas e avisos repetidos. Não
+force listas nem coloque todo item em negrito. Adapte o vocabulário ao contexto sem inventar fatos ou tentar imitar gírias.
+
+Os dados podem ter valores null, amostras parciais e períodos diferentes. Não invente números nem causalidade. Não deduza
+crenças, intenção de voto ou atributos pessoais. Não crie persuasão política, segmentação de eleitores ou mensagens
+manipulativas. Compare apenas medidas compatíveis. Quando uma limitação mudar a interpretação, explique-a uma vez, junto
+do ponto afetado ou no fim. Responda em até 350 palavras, sem HTML e sem fingir que executou ações."""
+
+
+def _visualizations(evidence: dict) -> dict[str, list[dict]]:
+    overview = evidence["overview"]
+    themes = evidence["themes_formats"]
+    timing = evidence["time_performance"]
+    followers = evidence["followers_history"]
+
+    profile_rows = [
+        {
+            "label": item.get("full_name") or f"@{item['username'].lstrip('@')}",
+            "interactions": item.get("observed_interactions"),
+            "posts": item.get("posts_analyzed"),
+        }
+        for item in overview.get("profiles", [])
+    ]
+
+    def comparison_chart(items: list[dict], category_key: str, title: str) -> dict:
+        rows = [
+            {
+                "label": item.get(category_key) or "Sem classificação",
+                "interactions": item.get("avg_observed_interactions"),
+                "likes": item.get("avg_likes"),
+                "posts": item.get("posts"),
+            }
+            for item in items[:8]
+        ]
+        return {
+            "kind": "bar",
+            "title": title,
+            "subtitle": "Média por publicação; a quantidade de posts aparece no detalhe.",
+            "categoryKey": "label",
+            "sampleKey": "posts",
+            "data": rows,
+            "series": [
+                {"key": "interactions", "label": "Interações observadas", "color": "#ff5a1f"},
+                {"key": "likes", "label": "Curtidas", "color": "#8a8a8a"},
+            ],
+        }
+
+    weekdays = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    time_cells = [
+        {
+            "row": item["weekday"],
+            "column": item["hour_label"],
+            "value": item.get("avg_observed_interactions"),
+            "posts": item.get("posts"),
+        }
+        for item in timing.get("cells", [])
+    ]
+    columns = list(dict.fromkeys(item["column"] for item in sorted(time_cells, key=lambda cell: cell["column"])))
+
+    follower_rows: dict[str, dict] = {}
+    follower_series = []
+    for profile in followers.get("profiles", []):
+        key = f"profile_{profile['profile_id']}"
+        label = profile.get("full_name") or f"@{profile['username'].lstrip('@')}"
+        follower_series.append({"key": key, "label": label})
+        for point in profile.get("history", []):
+            follower_rows.setdefault(point["date"], {"date": point["date"]})[key] = point.get("followers")
+
+    return {
+        "overview": [{
+            "kind": "bar",
+            "title": "Interações observadas por perfil",
+            "subtitle": "Totais nos posts mais recentes incluídos na análise.",
+            "categoryKey": "label",
+            "sampleKey": "posts",
+            "data": profile_rows,
+            "series": [{"key": "interactions", "label": "Interações observadas", "color": "#ff5a1f"}],
+        }],
+        "themes_formats": [
+            comparison_chart(themes.get("themes", []), "theme", "Desempenho médio por tema"),
+            comparison_chart(themes.get("formats", []), "format", "Desempenho médio por formato"),
+        ],
+        "time_performance": [{
+            "kind": "heatmap",
+            "title": "Interações por dia e horário",
+            "subtitle": "Média observada por publicação em janelas de três horas.",
+            "rows": [day for day in weekdays if any(cell["row"] == day for cell in time_cells)],
+            "columns": columns,
+            "cells": time_cells,
+            "valueLabel": "interações observadas",
+        }],
+        "followers_history": [{
+            "kind": "line",
+            "title": "Histórico de seguidores",
+            "subtitle": "Registros disponíveis nos últimos 30 dias.",
+            "xKey": "date",
+            "data": [follower_rows[key] for key in sorted(follower_rows)],
+            "series": follower_series,
+        }],
+    }
 
 
 def _owned_conversation(session: Session, conversation_id: str, user_id: str, campaign_id: int) -> AssistantConversation:
@@ -110,8 +211,24 @@ def ask_campaign(
         "time_performance": time_performance(campaign_id, 25, session),
         "followers_history": followers_history(campaign_id, 30, session),
     }
+    campaign_context = {
+        "name": evidence["overview"]["campaign"]["name"],
+        "profiles": [
+            {
+                "username": profile.get("username"),
+                "name": profile.get("full_name"),
+                "role": profile.get("role"),
+            }
+            for profile in evidence["overview"].get("profiles", [])
+        ],
+    }
     serialized = json.dumps(
-        {"question": question, "conversation_history": history, "evidence": evidence},
+        {
+            "question": question,
+            "conversation_history": history,
+            "campaign_context": campaign_context,
+            "evidence": evidence,
+        },
         ensure_ascii=False,
         default=str,
     )
@@ -136,7 +253,7 @@ def ask_campaign(
                     json={
                         "model": model,
                         "max_tokens": 1200,
-                        "temperature": 0.15,
+                        "temperature": 0.3,
                         "messages": [
                             {"role": "system", "content": SYSTEM_PROMPT},
                             {"role": "user", "content": serialized},
@@ -159,18 +276,21 @@ def ask_campaign(
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             raise HTTPException(502, "A IA não retornou uma resposta válida.") from None
 
+        chart_groups = _visualizations(evidence)
         sources = [
-            {"label": "Visão geral", "path": "/painel", "description": "Métricas observadas da campanha"},
-            {"label": "Temas e formatos", "path": "/temas-formatos", "description": "Distribuição por assunto e formato"},
-            {"label": "Dias e horários", "path": "/dias-horarios", "description": "Desempenho temporal da amostra"},
-            {"label": "Audiência", "path": "/audiencia", "description": "Histórico observado nos últimos 30 dias"},
+            {"label": "Visão geral", "path": "/painel", "description": "Métricas observadas da campanha", "visualizations": chart_groups["overview"]},
+            {"label": "Temas e formatos", "path": "/temas-formatos", "description": "Distribuição por assunto e formato", "visualizations": chart_groups["themes_formats"]},
+            {"label": "Dias e horários", "path": "/dias-horarios", "description": "Desempenho temporal da amostra", "visualizations": chart_groups["time_performance"]},
+            {"label": "Audiência", "path": "/audiencia", "description": "Histórico observado nos últimos 30 dias", "visualizations": chart_groups["followers_history"]},
         ]
         tools = [
             {
                 "type": f"tool-{source['label'].lower().replace(' ', '_')}",
                 "state": "output-available",
-                "input": {"campaign_id": campaign_id},
-                "output": {"leitura": source["description"]},
+                "output": {
+                    "description": source["description"],
+                    "visualizations": source["visualizations"],
+                },
             }
             for source in sources
         ]
