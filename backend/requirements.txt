@@ -8,5 +8,5 @@ email-validator>=2.3,<3.0
 httpx>=0.28,<1
 alembic>=1.16,<2
 cryptography>=46,<51
-mcp>=1.28,<2
+mcp>=2.3.0,<3
 tzdata>=2025.2
