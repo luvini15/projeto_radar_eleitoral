@@ -1,23 +1,23 @@
-# Radar Eleitoral — Atualizações
+# Radar Eleitoral ï¿½ Atualizaï¿½ï¿½es
 
-## Principais alterações
+## Principais alteraï¿½ï¿½es
 
 - Backend em FastAPI integrado ao PostgreSQL.
 - PostgreSQL executado via Docker.
 - Banco exposto localmente na porta 5433.
-- Integração com Apify para coleta de posts e seguidores.
+- Integraï¿½ï¿½o com Apify para coleta de posts e seguidores.
 - Armazenamento de snapshots de posts e perfis.
 - Estrutura multi-cliente com campanhas e concorrentes.
 - Dashboard utilizando dados reais.
 - Nova aba de Concorrentes.
-- Comparação entre cliente e concorrentes.
-- Rankings de conteúdos.
-- Histórico de seguidores.
+- Comparaï¿½ï¿½o entre cliente e concorrentes.
+- Rankings de conteï¿½dos.
+- Histï¿½rico de seguidores.
 - Temas e formatos calculados a partir dos dados coletados.
-- Desempenho por dia e horário calculado a partir dos posts.
-- Métricas indisponíveis são apresentadas como N/D.
-- Likes ocultos são armazenados como NULL.
-- Shares e saves não são estimados quando indisponíveis.
+- Desempenho por dia e horï¿½rio calculado a partir dos posts.
+- Mï¿½tricas indisponï¿½veis sï¿½o apresentadas como N/D.
+- Likes ocultos sï¿½o armazenados como NULL.
+- Shares e saves nï¿½o sï¿½o estimados quando indisponï¿½veis.
 
 ## PostgreSQL
 
@@ -33,7 +33,7 @@ Banco:
 
 radar_eleitoral
 
-Usuário:
+Usuï¿½rio:
 
 radar
 
@@ -70,9 +70,9 @@ Frontend:
 
 http://localhost:5173
 
-## Segurança
+## Seguranï¿½a
 
-Não versionar:
+Nï¿½o versionar:
 
 - backend/.env
 - radar-eleitoral/.env.local
@@ -81,3 +81,16 @@ Não versionar:
 - node_modules
 
 Os arquivos .env.example podem ser versionados normalmente.
+
+
+o PowerShell, a partir da raiz do projeto:
+# 1. Inicie o PostgreSQL
+$env:POSTGRES_PASSWORD = "radar123"
+docker compose up -d postgres
+
+# 2. Aplique as migraÃ§Ãµes
+cd backend
+.\.venv\Scripts\python.exe -m alembic upgrade head
+
+# 3. Inicie a API
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.
