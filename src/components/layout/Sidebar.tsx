@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { CalendarClock, FileStack, House, Layers3, LogOut, Settings, Sparkles, Users } from 'lucide-react'
+import { CalendarClock, FileStack, House, Layers3, LogOut, MapPinned, Settings, Sparkles, Users } from 'lucide-react'
 import { useAuth } from '@/lib/authContext'
 import { DataSightLogo } from '@/components/brand/DataSightLogo'
 import { Sidebar as AnimatedSidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator, useSidebar } from '@/components/animate-ui/components/radix/sidebar'
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/temas-formatos', label: 'Temas e formatos', icon: Layers3 },
   { to: '/dias-horarios', label: 'Dias e horários', icon: CalendarClock },
   { to: '/audiencia', label: 'Audiência', icon: Users },
+  { to: '/territorios', label: 'Territórios', icon: MapPinned },
   { to: '/insights', label: 'Inteligência', icon: Sparkles },
 ]
 

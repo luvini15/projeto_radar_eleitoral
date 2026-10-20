@@ -4,7 +4,7 @@ import { Topbar } from './Topbar'
 import { useCampaign } from '@/lib/campaignContext'
 import { SidebarInset, SidebarProvider } from '@/components/animate-ui/components/radix/sidebar'
 
-const titles: Record<string, string> = { '/painel': 'Hub de inteligência', '/ia': 'Data Sight IA', '/conteudos': 'Conteúdos publicados', '/temas-formatos': 'Temas e formatos', '/dias-horarios': 'Dias e horários', '/audiencia': 'Audiência', '/insights': 'Inteligência estratégica', '/configuracoes': 'Configurações' }
+const titles: Record<string, string> = { '/painel': 'Hub de inteligência', '/ia': 'Data Sight IA', '/conteudos': 'Conteúdos publicados', '/temas-formatos': 'Temas e formatos', '/dias-horarios': 'Dias e horários', '/audiencia': 'Audiência', '/territorios': 'Inteligência territorial', '/insights': 'Inteligência estratégica', '/configuracoes': 'Configurações' }
 export function DashboardLayout() {
   const location = useLocation(); const campaign = useCampaign()
   const title = location.pathname.startsWith('/conteudos/') ? 'Detalhes do conteúdo' : titles[location.pathname] ?? titles['/painel']

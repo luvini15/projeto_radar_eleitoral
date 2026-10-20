@@ -17,6 +17,7 @@ import Schedule from '@/pages/Schedule'
 import Audience from '@/pages/Audience'
 import Insights from '@/pages/Insights'
 import Settings from '@/pages/Settings'
+import Geography from '@/pages/Geography'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/temas-formatos" element={<Topics />} />
               <Route path="/dias-horarios" element={<Schedule />} />
               <Route path="/audiencia" element={<Audience />} />
+              <Route path="/territorios" element={<Geography />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/configuracoes" element={<Settings />} />
             </Route>
