@@ -560,6 +560,64 @@ def competitors(campaign_id: int, limit: Annotated[int, Query(ge=1, le=200)] = 2
         profiles.append({**item, "current_followers": f.get("current_followers"), "growth_absolute": f.get("growth_absolute"), "growth_percent": f.get("growth_percent")})
     return {"campaign": benchmark["campaign"], "profiles": profiles}
 
+
+@router.get("/{campaign_id}/geography")
+def campaign_geography(
+    campaign_id: int,
+    limit_per_profile: Annotated[int, Query(ge=1, le=200)] = 200,
+    session: Session = Depends(get_session),
+):
+    """Return real Instagram-geotagged posts for territorial aggregation."""
+    campaign = _campaign_or_404(session, campaign_id)
+    total_posts = 0
+    tagged_posts = 0
+    points = []
+
+    for link in _links(session, campaign_id):
+        profile = session.get(InstagramProfile, link.profile_id)
+        if not profile:
+            continue
+        for post in _latest_posts(session, profile.id, limit_per_profile):
+            total_posts += 1
+            if post.location_name or post.location_id:
+                tagged_posts += 1
+            if post.location_lat is None or post.location_lng is None:
+                continue
+            snapshot = _latest_snapshot(session, post.id)
+            points.append(
+                {
+                    "post_id": post.id,
+                    "shortcode": post.shortcode,
+                    "username": profile.username,
+                    "role": link.role,
+                    "location_name": post.location_name,
+                    "latitude": post.location_lat,
+                    "longitude": post.location_lng,
+                    "published_at": post.published_at,
+                    "likes": snapshot.likes_count if snapshot else None,
+                    "comments": snapshot.comments_count if snapshot else None,
+                    "plays": snapshot.plays_count if snapshot else None,
+                    "observed_interactions": snapshot.interactions_count if snapshot else None,
+                }
+            )
+
+    return {
+        "campaign": {"id": campaign.id, "name": campaign.name},
+        "coverage": {
+            "posts_considered": total_posts,
+            "posts_with_location_tag": tagged_posts,
+            "posts_with_coordinates": len(points),
+        },
+        "methodology": {
+            "source": "APIFY_PUBLIC",
+            "territorial_basis": "IBGE",
+            "location_meaning": "Local marcado pelo autor na publicacao; nao representa a localizacao da audiencia.",
+            "metric_is_observed_not_causal": True,
+            "posts_per_profile": limit_per_profile,
+        },
+        "points": points,
+    }
+
 @router.get('/{campaign_id}/posts/{post_id}')
 def campaign_post_detail(campaign_id: int, post_id: int, session: Session = Depends(get_session), days: int = Query(default=30, ge=1, le=365)):
     post = _campaign_post_or_404(session, campaign_id, post_id)

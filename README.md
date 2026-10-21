@@ -50,6 +50,35 @@ Dashboard privado de inteligência digital para acompanhamento do Instagram da c
 
 ## Como rodar o projeto
 
+### Tudo pelo Docker (desenvolvimento local)
+
+Com o Docker Desktop aberto, configure uma vez `.env.local` (frontend),
+`backend/.env` (API) e `.env` na raiz (senha do PostgreSQL). Os valores de
+`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` e
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` devem apontar para o mesmo projeto Supabase.
+O Supabase Auth é hospedado: o Compose inicia o PostgreSQL local, executa as
+migrações, inicia a API e depois o frontend. Ele não cria um segundo Supabase.
+
+```powershell
+Copy-Item .env.compose.example .env # apenas na primeira vez; substitua a senha
+docker compose up --build -d
+```
+
+Abra `http://localhost:5173`. A API responde em `http://localhost:8000/health`.
+Nas próximas vezes, use `docker compose up -d`; para acompanhar o início,
+`docker compose logs -f`. Para parar, `docker compose down` (sem `-v`, para
+preservar os dados do PostgreSQL). Alterações em `src/`, `public/` e `backend/`
+aparecem sem rebuild; se mudar dependências ou Dockerfiles, rode
+`docker compose up --build -d`.
+
+O Compose usa a mesma senha em `.env` para o PostgreSQL e para a conexão da API.
+Se já existe um volume de banco, mantenha a senha que ele usa. A senha deve ser
+compatível com uma URL (letras, números, `_`, `-`, `.`, `~`), pois entra em
+`DATABASE_URL`. Em bancos antigos sem controle de versão Alembic, siga a
+orientação de migração em [SECURITY.md](SECURITY.md) antes da primeira subida.
+
+### Sem Docker
+
 Pré-requisitos: [Node.js](https://nodejs.org) 18 ou superior.
 
 ```bash

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { CalendarClock, FileStack, House, Layers3, LogOut, MapPinned, Settings, Sparkles, Users } from 'lucide-react'
+import { BellRing, CalendarClock, Columns3, Database, FileStack, FileText, House, Layers3, LogOut, MapPinned, RadioTower, Settings, Sparkles, Users } from 'lucide-react'
 import { useAuth } from '@/lib/authContext'
 import { DataSightLogo } from '@/components/brand/DataSightLogo'
 import { Sidebar as AnimatedSidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator, useSidebar } from '@/components/animate-ui/components/radix/sidebar'
@@ -11,7 +11,12 @@ const navItems = [
   { to: '/temas-formatos', label: 'Temas e formatos', icon: Layers3 },
   { to: '/dias-horarios', label: 'Dias e horários', icon: CalendarClock },
   { to: '/audiencia', label: 'Audiência', icon: Users },
+  { to: '/comparar-perfis', label: 'Comparar perfis', icon: Columns3 },
   { to: '/territorios', label: 'Territórios', icon: MapPinned },
+  { to: '/escuta-df', label: 'Escuta DF', icon: RadioTower },
+  { to: '/fontes', label: 'Fontes', icon: Database },
+  { to: '/alertas', label: 'Alertas', icon: BellRing },
+  { to: '/relatorio-semanal', label: 'Relatório semanal', icon: FileText },
   { to: '/insights', label: 'Inteligência', icon: Sparkles },
 ]
 

@@ -69,6 +69,13 @@ def get_or_create_post(
     ).first()
 
     if post:
+        post.location_name = item.get("location_name") or post.location_name
+        post.location_id = item.get("location_id") or post.location_id
+        post.location_lat = item.get("location_lat") if item.get("location_lat") is not None else post.location_lat
+        post.location_lng = item.get("location_lng") if item.get("location_lng") is not None else post.location_lng
+        session.add(post)
+        session.commit()
+        session.refresh(post)
         return post, False
 
     post = InstagramPost(
@@ -81,6 +88,9 @@ def get_or_create_post(
         product_type=item.get("product_type"),
         thumbnail_url=item.get("thumbnail_url"),
         location_name=item.get("location_name"),
+        location_id=item.get("location_id"),
+        location_lat=item.get("location_lat"),
+        location_lng=item.get("location_lng"),
         paid_partnership=item.get(
             "paid_partnership"
         ),

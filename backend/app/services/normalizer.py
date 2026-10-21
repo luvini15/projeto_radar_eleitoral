@@ -17,6 +17,15 @@ def parse_datetime(value):
     )
 
 
+def normalize_coordinate(value, minimum, maximum):
+    try:
+        coordinate = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return coordinate if minimum <= coordinate <= maximum else None
+
+
 def calculate_interactions(
     likes,
     comments,
@@ -50,6 +59,7 @@ def calculate_interactions(
 
 
 def normalize_apify_post(item: dict):
+    location = item.get("location") if isinstance(item.get("location"), dict) else {}
     likes = normalize_non_negative(
         item.get("likesCount")
     )
@@ -100,7 +110,18 @@ def normalize_apify_post(item: dict):
 
         "thumbnail_url": item.get("displayUrl"),
 
-        "location_name": item.get("locationName"),
+        "location_name": item.get("locationName") or location.get("name"),
+        "location_id": str(item.get("locationId") or location.get("id") or "") or None,
+        "location_lat": normalize_coordinate(
+            item.get("locationLat", location.get("lat", location.get("latitude"))),
+            -90,
+            90,
+        ),
+        "location_lng": normalize_coordinate(
+            item.get("locationLng", location.get("lng", location.get("longitude"))),
+            -180,
+            180,
+        ),
 
         "paid_partnership": item.get("paidPartnership"),
 

@@ -2,13 +2,14 @@ import os
 from app.services.auto_sync import collection_slot, config
 from app.models import SyncSchedule
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import Campaign
+from app.models import Campaign, CampaignProfile, InstagramProfile
 from app.services.instagram_sync import (
     sync_campaign,
     sync_instagram_profile,
+    sync_profile_snapshot,
 )
 
 router = APIRouter(
@@ -65,6 +66,40 @@ def sync_campaign_route(
             campaign_id=campaign_id,
             limit=limit,
         )
+
+
+@router.post(
+    "/campaigns/{campaign_id}/profiles/{profile_id}/sync",
+    summary="Sincronizar somente um perfil vinculado à campanha",
+)
+def sync_campaign_profile_route(
+    campaign_id: int,
+    profile_id: int,
+    limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts do perfil"),
+    session: Session = Depends(get_session),
+):
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign or not campaign.active:
+        raise HTTPException(status_code=404, detail="Campanha ativa não encontrada")
+    link = session.exec(
+        select(CampaignProfile).where(
+            CampaignProfile.campaign_id == campaign_id,
+            CampaignProfile.profile_id == profile_id,
+            CampaignProfile.active == True,  # noqa: E712
+        )
+    ).first()
+    profile = session.get(InstagramProfile, profile_id)
+    if not link or not profile:
+        raise HTTPException(status_code=404, detail="Perfil ativo não encontrado nesta campanha")
+
+    with collection_slot():
+        profile_snapshot = sync_profile_snapshot(session=session, profile=profile)
+        result = sync_instagram_profile(session=session, username=profile.username, limit=limit)
+    result["campaign_id"] = campaign_id
+    result["profile_id"] = profile_id
+    result["role"] = link.role
+    result["followers_count"] = profile_snapshot.followers_count if profile_snapshot else None
+    return result
 
 
 @router.get('/sync/status', summary='Status da coleta automática')

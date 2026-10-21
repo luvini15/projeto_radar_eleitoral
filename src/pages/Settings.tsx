@@ -64,7 +64,7 @@ export default function Settings() {
       </fieldset></form>
     </CardContent></Card>
     {detail ? <Card><CardHeader><CardTitle>Perfis de {detail.name}</CardTitle></CardHeader><CardContent className="space-y-5">
-      {detail.profiles.length ? <ul className="divide-y divide-border">{detail.profiles.map(p => <li key={p.id} className="py-2">@{p.username} · {({ CLIENT: 'Principal', COMPETITOR: 'Concorrente', LOCAL_PAGE: 'Página local', MEDIA: 'Imprensa' } as Record<string, string>)[p.role] || p.role}{p.active ? '' : ' · Inativo'}</li>)}</ul> : <p>Vincule um perfil para iniciar a coleta.</p>}
+      {detail.profiles.length ? <ul className="divide-y divide-border">{detail.profiles.map(p => <li key={p.id} className="py-2">@{p.username} · {({ CLIENT: 'Principal', REFERENCE: 'Referência', COMPETITOR: 'Concorrente', LOCAL_PAGE: 'Página local', MEDIA: 'Imprensa' } as Record<string, string>)[p.role] || p.role}{p.active ? '' : ' · Inativo'}</li>)}</ul> : <p>Vincule um perfil para iniciar a coleta.</p>}
       <form onSubmit={e => {
         e.preventDefault(); const form = e.currentTarget; const data = new FormData(form)
         void mutate(async () => {
@@ -73,7 +73,7 @@ export default function Settings() {
         })
       }}><fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
         <label className="text-sm">Instagram<Input name="username" required pattern="@?[A-Za-z0-9_.]{1,30}" placeholder="@perfil" /></label>
-        <label className="flex flex-col text-sm">Papel<select name="role" className={selectClass}><option value="CLIENT">Principal</option><option value="COMPETITOR">Concorrente</option><option value="LOCAL_PAGE">Página local</option><option value="MEDIA">Imprensa</option></select></label>
+        <label className="flex flex-col text-sm">Papel<select name="role" className={selectClass}><option value="CLIENT">Principal</option><option value="REFERENCE">Referência</option><option value="COMPETITOR">Concorrente</option><option value="LOCAL_PAGE">Página local</option><option value="MEDIA">Imprensa</option></select></label>
         <Button>Vincular perfil</Button>
       </fieldset></form>
       <form className="border-t border-border pt-4" onSubmit={e => {

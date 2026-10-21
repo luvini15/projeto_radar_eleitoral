@@ -21,6 +21,16 @@ from app.models import AppUser, AuthSession
 logger = logging.getLogger("radar.security")
 _hits: dict[tuple[str, str], deque[float]] = defaultdict(deque)
 _lock = Lock()
+_LOCAL_USER_ID = "00000000-0000-4000-8000-000000000001"
+
+
+def _local_auth_enabled(request: Request) -> bool:
+    if os.getenv("ENVIRONMENT", "development").lower() == "production":
+        return False
+    if os.getenv("LOCAL_AUTH_BYPASS", "").lower() != "true":
+        return False
+    client = request.client.host if request.client else ""
+    return client in {"127.0.0.1", "::1", "localhost"}
 
 
 def _configured_origin() -> str:
@@ -144,6 +154,8 @@ def enforce_session(claims: dict, user_id: str) -> None:
 
 async def authenticate(request: Request) -> tuple[str, str]:
     authorization = request.headers.get("authorization", "")
+    if _local_auth_enabled(request) and authorization == "Bearer local-development":
+        return _LOCAL_USER_ID, "admin"
     if not authorization.startswith("Bearer ") or len(authorization) > 8199:
         raise HTTPException(401, "Autenticacao obrigatoria")
     token = authorization[7:]

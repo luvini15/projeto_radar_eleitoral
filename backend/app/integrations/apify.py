@@ -23,7 +23,7 @@ def collect_posts(username: str, limit: int = 3):
     }
 
     run = client.actor(
-        "apify/instagram-post-scraper"
+        os.getenv("APIFY_POSTS_ACTOR", "themineworks/instagram-post-scraper")
     ).call(
         run_input=run_input
     )
@@ -43,7 +43,7 @@ def collect_profile(username: str):
     }
 
     run = client.actor(
-        "apify/instagram-profile-scraper"
+        os.getenv("APIFY_PROFILE_ACTOR", "apify/instagram-profile-scraper")
     ).call(
         run_input=run_input
     )

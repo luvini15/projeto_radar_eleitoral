@@ -103,6 +103,9 @@ class InstagramPost(SQLModel, table=True):
     thumbnail_url: str | None = None
 
     location_name: str | None = None
+    location_id: str | None = Field(default=None, index=True)
+    location_lat: float | None = None
+    location_lng: float | None = None
 
     paid_partnership: bool | None = None
 
@@ -244,3 +247,68 @@ class AssistantMessage(SQLModel, table=True):
     content: str
     sources_json: str = "[]"
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class ListeningSource(SQLModel, table=True):
+    __tablename__ = "listening_sources"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    source_type: str
+    url: str
+    scope_ra: str | None = None
+    active: bool = True
+    official: bool = False
+    last_status: str = "never"
+    last_error: str | None = None
+    last_items_count: int = 0
+    last_checked_at: datetime | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
+class ListeningItem(SQLModel, table=True):
+    __tablename__ = "listening_items"
+
+    id: int | None = Field(default=None, primary_key=True)
+    source_id: int = Field(foreign_key="listening_sources.id", index=True)
+    external_id: str = Field(index=True)
+    evidence_kind: str = "NEWS"
+    title: str
+    excerpt: str = ""
+    url: str
+    published_at: datetime | None = Field(default=None, index=True)
+    ra: str | None = Field(default=None, index=True)
+    ra_method: str | None = None
+    topics_json: str = "[]"
+    issue_signal: bool = False
+    collected_at: datetime = Field(default_factory=utc_now, index=True)
+
+
+class ListeningAlert(SQLModel, table=True):
+    __tablename__ = "listening_alerts"
+
+    id: int | None = Field(default=None, primary_key=True)
+    fingerprint: str = Field(index=True, unique=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    ra: str
+    topic: str
+    window_days: int = 14
+    evidence_count: int = 0
+    source_count: int = 0
+    first_seen_at: datetime
+    last_seen_at: datetime
+    status: str = "NEW"
+    generated_at: datetime = Field(default_factory=utc_now)
+
+
+class WeeklyEvidenceReport(SQLModel, table=True):
+    __tablename__ = "weekly_evidence_reports"
+
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    week_start: datetime = Field(index=True)
+    week_end: datetime = Field(index=True)
+    data_json: str
+    markdown: str
+    generated_at: datetime = Field(default_factory=utc_now)

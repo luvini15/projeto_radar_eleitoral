@@ -12,7 +12,10 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 config = context.config
 if config.config_file_name:
     fileConfig(config.config_file_name)
-config.set_main_option("sqlalchemy.url", (os.environ.get("MIGRATION_DATABASE_URL") or os.environ["DATABASE_URL"]).replace("%", "%%"))
+database_url = os.environ.get("MIGRATION_DATABASE_URL") or os.environ["DATABASE_URL"]
+if os.name == "nt":
+    database_url = database_url.replace("@localhost:", "@127.0.0.1:")
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 target_metadata = SQLModel.metadata
 
 def run_migrations_offline():

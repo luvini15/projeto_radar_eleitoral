@@ -13,9 +13,64 @@
       - radar_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U radar -d radar_eleitoral"]
-      interval: 30s
+      interval: 5s
       timeout: 5s
-      retries: 3
+      retries: 10
+
+  migrate:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://radar:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ambiente}@postgres:5432/radar_eleitoral
+      MIGRATION_DATABASE_URL: postgresql+psycopg://radar:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ambiente}@postgres:5432/radar_eleitoral
+    command: alembic upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://radar:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ambiente}@postgres:5432/radar_eleitoral
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    env_file:
+      - ./.env.local
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   radar_postgres_data:

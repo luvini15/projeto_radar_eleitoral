@@ -18,6 +18,12 @@ import Audience from '@/pages/Audience'
 import Insights from '@/pages/Insights'
 import Settings from '@/pages/Settings'
 import Geography from '@/pages/Geography'
+import ProfileComparison from '@/pages/ProfileComparison'
+import TerritorialListening from '@/pages/TerritorialListening'
+import ListeningSources from '@/pages/ListeningSources'
+import ListeningAlerts from '@/pages/ListeningAlerts'
+import RegionDetail from '@/pages/RegionDetail'
+import WeeklyReport from '@/pages/WeeklyReport'
 
 const Landing = lazy(() => import('@/pages/Landing'))
 
@@ -47,6 +53,12 @@ export default function App() {
               <Route path="/dias-horarios" element={<Schedule />} />
               <Route path="/audiencia" element={<Audience />} />
               <Route path="/territorios" element={<Geography />} />
+              <Route path="/comparar-perfis" element={<ProfileComparison />} />
+              <Route path="/escuta-df" element={<TerritorialListening />} />
+              <Route path="/escuta-df/ra/:raName" element={<RegionDetail />} />
+              <Route path="/fontes" element={<ListeningSources />} />
+              <Route path="/alertas" element={<ListeningAlerts />} />
+              <Route path="/relatorio-semanal" element={<WeeklyReport />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/configuracoes" element={<Settings />} />
             </Route>

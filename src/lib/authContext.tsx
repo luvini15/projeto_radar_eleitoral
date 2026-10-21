@@ -24,6 +24,8 @@ interface AuthContextValue {
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null)
+const localAuthEnabled = import.meta.env.DEV && import.meta.env.VITE_LOCAL_AUTH === 'true'
+const localUser: AuthUser = { nome: 'Desenvolvimento', email: 'local@datasight.dev', papel: 'Administrador' }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null)
@@ -66,6 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const loadUser = React.useCallback(async (surfaceErrors = false) => {
+    if (localAuthEnabled) {
+      setUser(localUser)
+      setAccessError(null)
+      setLoading(false)
+      return
+    }
     if (!supabase) { setLoading(false); return }
     if (window.location.pathname === '/redefinir-senha') { setLoading(false); return }
 
@@ -249,6 +257,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadUser, mfaFactorId])
 
   const signOut = React.useCallback(async () => {
+    if (localAuthEnabled) {
+      setUser(null)
+      setAccessError(null)
+      clearMfa()
+      return
+    }
     await supabase?.auth.signOut()
     setUser(null)
     setAccessError(null)

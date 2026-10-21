@@ -32,7 +32,7 @@ class CampaignCreate(BaseModel):
 class ProfileCreate(BaseModel):
     username: str = Field(pattern=r"^@?[A-Za-z0-9._]{1,30}$")
     full_name: str | None = Field(default=None, max_length=120)
-    role: str = Field(pattern=r"^(?i:CLIENT|COMPETITOR|LOCAL_PAGE|MEDIA)$")
+    role: str = Field(pattern=r"^(?i:CLIENT|REFERENCE|COMPETITOR|LOCAL_PAGE|MEDIA)$")
 
     @field_validator("full_name")
     @classmethod
@@ -154,6 +154,7 @@ def add_profile_to_campaign(
 
     allowed_roles = {
         "CLIENT",
+        "REFERENCE",
         "COMPETITOR",
         "LOCAL_PAGE",
         "MEDIA",
