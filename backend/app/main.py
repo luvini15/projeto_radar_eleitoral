@@ -49,6 +49,17 @@ app = FastAPI(
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 
+def _cors_origins() -> list[str]:
+    defaults = "http://localhost:5173,http://127.0.0.1:5173"
+    raw_origins = os.getenv("CORS_ORIGINS", "") or defaults
+    origins = []
+    for value in raw_origins.split(","):
+        origin = value.replace("\x00", "").strip().strip("'\"").rstrip("/")
+        if origin and origin not in origins:
+            origins.append(origin)
+    return origins or defaults.split(",")
+
+
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/") or request.url.path == "/api":
@@ -78,12 +89,15 @@ async def security_middleware(request: Request, call_next):
     return response
 
 
+allowed_origins = _cors_origins()
+logging.getLogger("radar.cors").info("cors_allowed_origins=%r", allowed_origins)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["*"],
 )
 
 

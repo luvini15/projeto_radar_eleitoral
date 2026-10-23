@@ -14,7 +14,7 @@ from starlette.requests import Request
 
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 from app.security import authenticate, rate_limit, _hits
-from app.main import app
+from app.main import _cors_origins, app
 from app.database import engine
 from app.models import AppUser, AuthSession
 
@@ -98,6 +98,12 @@ class SecurityTests(unittest.IsolatedAsyncioTestCase):
             rate_limit(image_request, "test-user")
         self.assertEqual(error.exception.status_code, 429)
         _hits.clear()
+
+    def test_cors_origins_are_sanitized_and_empty_config_uses_local_defaults(self):
+        with patch("app.main.os.getenv", return_value=" 'https://app.example/' , \"https://admin.example/\"\x00\r"):
+            self.assertEqual(_cors_origins(), ["https://app.example", "https://admin.example"])
+        with patch("app.main.os.getenv", return_value=""):
+            self.assertEqual(_cors_origins(), ["http://localhost:5173", "http://127.0.0.1:5173"])
 
     def test_server_enforces_session_idle_timeout(self):
         from app.security import enforce_session
