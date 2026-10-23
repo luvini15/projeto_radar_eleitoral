@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { supabase } from '@/services/supabaseClient'
 
-interface AuthUser { nome: string; email: string; papel: 'Administrador' | 'Analista' }
+interface AuthUser { id: string; nome: string; email: string; papel: 'Administrador' | 'Analista' }
 type MfaStage = 'enroll' | 'challenge' | null
 
 interface AuthContextValue {
@@ -127,8 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return
     }
-    const account = await response.json() as { role: 'admin' | 'analyst' }
+    const account = await response.json() as { id: string; role: 'admin' | 'analyst' }
     setUser({
+      id: account.id,
       nome: session.user.email?.split('@')[0] || 'Usuário',
       email: session.user.email || '',
       papel: account.role === 'admin' ? 'Administrador' : 'Analista',

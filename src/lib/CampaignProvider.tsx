@@ -2,10 +2,13 @@ import * as React from 'react'
 import { api } from '@/services/radarApi'
 import type { Campaign } from '@/services/radarApi'
 import { CampaignContext } from './campaignContext'
+import { useAuth } from './authContext'
 
 export function CampaignProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  const storageKey = `radar:campaign:v2:${user?.id || 'anonymous'}`
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([])
-  const [selected, select] = React.useState(() => { try { return localStorage.getItem('radar:campaign:v1') || '' } catch { return '' } })
+  const [selected, select] = React.useState(() => { try { return localStorage.getItem(storageKey) || '' } catch { return '' } })
   const [limit, setLimit] = React.useState(25)
   const [days, setDays] = React.useState(30)
   const [revision, refresh] = React.useReducer((n: number) => n + 1, 0)
@@ -13,8 +16,11 @@ export function CampaignProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = React.useState('')
   const setSelected = React.useCallback((id: string) => {
     select(id)
-    try { localStorage.setItem('radar:campaign:v1', id) } catch { /* Selection still works without storage. */ }
-  }, [])
+    try { localStorage.setItem(storageKey, id) } catch { /* Selection still works without storage. */ }
+  }, [storageKey])
+  React.useEffect(() => {
+    try { select(localStorage.getItem(storageKey) || '') } catch { select('') }
+  }, [storageKey])
   React.useEffect(() => {
     const poll = () => { if (document.visibilityState === 'visible') refresh() }
     const timer = window.setInterval(poll, 60_000)
