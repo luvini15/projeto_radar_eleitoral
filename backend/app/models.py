@@ -10,11 +10,15 @@ def utc_now():
 
 class Campaign(SQLModel, table=True):
     __tablename__ = "campaigns"
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "slug", name="uq_campaign_owner_slug"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
 
+    owner_user_id: str | None = Field(default=None, index=True)
     name: str
-    slug: str = Field(index=True, unique=True)
+    slug: str = Field(index=True)
 
     active: bool = True
 
@@ -25,14 +29,17 @@ class Campaign(SQLModel, table=True):
 
 class InstagramProfile(SQLModel, table=True):
     __tablename__ = "instagram_profiles"
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "username", name="uq_instagram_profile_owner_username"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
 
+    owner_user_id: str | None = Field(default=None, index=True)
     instagram_id: str | None = Field(default=None, index=True)
 
     username: str = Field(
         index=True,
-        unique=True,
     )
 
     full_name: str | None = None
@@ -76,6 +83,9 @@ class CampaignProfile(SQLModel, table=True):
 
 class InstagramPost(SQLModel, table=True):
     __tablename__ = "instagram_posts"
+    __table_args__ = (
+        UniqueConstraint("profile_id", "shortcode", name="uq_instagram_post_profile_shortcode"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
 
@@ -86,7 +96,6 @@ class InstagramPost(SQLModel, table=True):
 
     shortcode: str = Field(
         index=True,
-        unique=True,
     )
 
     profile_id: int = Field(
