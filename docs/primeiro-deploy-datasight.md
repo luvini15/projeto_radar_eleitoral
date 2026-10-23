@@ -45,6 +45,7 @@ Variáveis injetadas no ambiente de *Production* (Settings > Environment Variabl
 Variáveis injetadas no serviço da API:
 
 * `CORS_ORIGINS`: URL base de produção do frontend (Vercel).
+* `CAMPAIGN_OWNER_EMAIL`: e-mail exato da conta DataPath que receberá as campanhas e os perfis existentes na migração de isolamento.
 
 * *Demais segredos locais:* Senhas do banco PostgreSQL, tokens de terceiros (ex: Apify) devem ser mantidos no Railway Variables, jamais no frontend.
 
@@ -62,7 +63,9 @@ Este roteiro descreve a esteira de implantação "zero-to-production". Siga estr
 
 1. Conecte o repositório GitHub ao Railway.
 2. Configure o deploy para apontar para o diretório `/backend` (Docker).
-3. Após o build bem-sucedido, o Railway provisionará os serviços (API e Scheduler).
+3. Confirme que a conta definida em `CAMPAIGN_OWNER_EMAIL` já entrou ao menos uma vez, para existir em `app_users`.
+4. Configure `alembic upgrade head` como comando de pre-deploy, usando `MIGRATION_DATABASE_URL` com permissão de alteração de schema.
+5. Após a migração bem-sucedida, o Railway provisionará os serviços (API e Scheduler). A revisão `0006_account_data_isolation` falha de forma segura se não localizar a conta DataPath; nesse caso, a aplicação não deve ser promovida antes da correção da variável.
 4. No painel do serviço da API, vá em **Networking > Generate Domain**.
 5. Extraia e documente a URL pública gerada (Ex: `https://seu-backend.up.railway.app`).
 
@@ -97,7 +100,7 @@ A API no FastAPI aplica *middlewares* de validação rigorosos. Requisições (c
 2. Navegue até a aba **Variables**.
 3. Localize (ou crie via *New Variable*) a chave `CORS_ORIGINS`.
 4. Atribua como valor a URL base da Vercel (Ex: `https://radar-eleitoral.vercel.app`).
-   * 🚨 **ATENÇÃO CRÍTICA:** O valor deve ser inserido rigorosamente **sem a barra final (`/`)**. O middleware do FastAPI realiza uma correspondência exata de strings (*Exact String Matching*). Uma barra residual resultará em falha de validação de origem, causando bloqueios de comunicação `HTTP 403 / CORS Error` na interface web.
+   * Use a URL da Vercel, por exemplo `https://projetoradareleitoral1.vercel.app`. O backend remove espaços, aspas, caracteres nulos e barra final acidental antes de configurar o middleware e registra no log as origens efetivamente carregadas.
 5. Ao modificar/inserir a variável, o Railway engatilhará automaticamente um novo build/redeploy do contêiner da API para injetar a nova diretiva de rede.
 
 ## 4. Guia de Sustentação (Manutenção e Troubleshooting)
