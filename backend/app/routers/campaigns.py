@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session, select
 from sqlalchemy import func
@@ -51,11 +51,13 @@ class ProfileCreate(BaseModel):
 @router.post("")
 def create_campaign(
     data: CampaignCreate,
+    request: Request,
     session: Session = Depends(get_session),
 ):
     existing = session.exec(
         select(Campaign).where(
-            Campaign.slug == data.slug
+            Campaign.owner_user_id == request.state.user_id,
+            Campaign.slug == data.slug,
         )
     ).first()
 
@@ -66,6 +68,7 @@ def create_campaign(
         )
 
     campaign = Campaign(
+        owner_user_id=request.state.user_id,
         name=data.name,
         slug=data.slug,
     )
@@ -79,10 +82,11 @@ def create_campaign(
 
 @router.get("")
 def list_campaigns(
+    request: Request,
     session: Session = Depends(get_session),
 ):
     return session.exec(
-        select(Campaign)
+        select(Campaign).where(Campaign.owner_user_id == request.state.user_id)
         .order_by(Campaign.id)
     ).all()
 
@@ -145,6 +149,7 @@ def get_campaign(
 def add_profile_to_campaign(
     campaign_id: int,
     data: ProfileCreate,
+    request: Request,
     session: Session = Depends(get_session),
 ):
     campaign = session.get(
@@ -181,6 +186,7 @@ def add_profile_to_campaign(
 
     profile = session.exec(
         select(InstagramProfile).where(
+            InstagramProfile.owner_user_id == request.state.user_id,
             func.lower(InstagramProfile.username)
             == username
         )
@@ -188,6 +194,7 @@ def add_profile_to_campaign(
 
     if not profile:
         profile = InstagramProfile(
+            owner_user_id=request.state.user_id,
             username=username,
             full_name=data.full_name,
         )

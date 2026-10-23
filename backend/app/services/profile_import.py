@@ -72,7 +72,8 @@ def spreadsheet_rows(path):
 
 
 def import_profiles(session: Session, campaign_id, rows, *, general=False, source_file=None, confirm_territorial=False):
-    if not session.get(Campaign, campaign_id): raise ValueError("Campanha não encontrada")
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign: raise ValueError("Campanha não encontrada")
     regions = {normalize_text(r.name).strip(): r for r in session.exec(select(AdministrativeRegion)).all()}
     result = {"requested": len(rows), "new": 0, "existing": 0, "linked": 0, "already_linked": 0, "duplicate_rows": 0, "profiles": [], "errors": [], "conflicts": []}
     seen = set()
@@ -84,10 +85,13 @@ def import_profiles(session: Session, campaign_id, rows, *, general=False, sourc
             if username in seen:
                 result["duplicate_rows"] += 1; continue
             seen.add(username)
-            profile = session.exec(select(InstagramProfile).where(func.lower(InstagramProfile.username) == username)).first()
+            profile = session.exec(select(InstagramProfile).where(
+                InstagramProfile.owner_user_id == campaign.owner_user_id,
+                func.lower(InstagramProfile.username) == username,
+            )).first()
             created = profile is None
             if created:
-                profile = InstagramProfile(username=username)
+                profile = InstagramProfile(owner_user_id=campaign.owner_user_id, username=username)
                 session.add(profile); session.flush()
             existing_region = session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first()
             if general and existing_region:

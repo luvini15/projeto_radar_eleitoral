@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.security import authenticate, pre_auth_rate_limit, rate_limit
+from app.security import authenticate, enforce_resource_ownership, pre_auth_rate_limit, rate_limit
 from app.database import engine
 from app.routers.sync import router as sync_router
 from app.routers.campaigns import router as campaigns_router
@@ -60,6 +60,7 @@ async def security_middleware(request: Request, call_next):
             user_id, role = await authenticate(request)
             request.state.user_id = user_id
             request.state.role = role
+            enforce_resource_ownership(request, user_id, engine)
             rate_limit(request, user_id)
         except HTTPException as exc:
             return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers=exc.headers)

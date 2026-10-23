@@ -3,6 +3,7 @@ import base64
 import json
 import logging
 import os
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict, deque
@@ -13,10 +14,10 @@ from uuid import UUID
 import httpx
 from fastapi import HTTPException, Request
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.database import engine
-from app.models import AppUser, AuthSession
+from app.models import AppUser, AuthSession, Campaign, CollectionRun, GeneratedReport, InstagramProfile
 
 logger = logging.getLogger("radar.security")
 _hits: dict[tuple[str, str], deque[float]] = defaultdict(deque)
@@ -186,12 +187,59 @@ async def authenticate(request: Request) -> tuple[str, str]:
         logger.error("auth_provider_unavailable")
         raise HTTPException(503, "Servico de autenticacao indisponivel") from None
     role = authorize_user(user_id, email)
-    analyst_safe_post = request.method == "POST" and request.url.path.endswith("/assistant")
-    if request.method not in {"GET", "HEAD"} and not analyst_safe_post and role != "admin":
+    tenant_write = (
+        request.url.path == "/api/campaigns"
+        or request.url.path.startswith("/api/campaigns/")
+        or request.url.path.startswith("/api/profiles/")
+        or request.url.path.startswith("/api/sync/instagram/")
+    )
+    if request.method not in {"GET", "HEAD"} and not tenant_write and role != "admin":
         logger.warning("write_denied user_id=%s path=%s", user_id, request.url.path)
         raise HTTPException(403, "Permissao insuficiente")
     enforce_session(claims, user_id)
     return user_id, role
+
+
+def enforce_resource_ownership(request: Request, user_id: str, database_engine=engine) -> None:
+    """Hide tenant resources that do not belong to the authenticated account."""
+    path = request.url.path
+    campaign_match = re.match(r"^/api/campaigns/(\d+)(?:/|$)", path)
+    profile_match = re.match(r"^/api/profiles/(\d+)(?:/|$)", path)
+    collection_match = re.match(r"^/api/collections/(\d+)(?:/|$)", path)
+    report_match = re.match(r"^/api/reports/(\d+)(?:/|$)", path)
+    query_campaign = request.query_params.get("campaign_id") if path.startswith("/api/territorial/audit") else None
+
+    with Session(database_engine) as session:
+        owner_id = None
+        resource_found = False
+        if campaign_match or query_campaign:
+            try:
+                campaign_id = int(campaign_match.group(1) if campaign_match else query_campaign)
+            except (TypeError, ValueError):
+                raise HTTPException(400, "Identificador de campanha invalido") from None
+            resource = session.get(Campaign, campaign_id)
+            resource_found = resource is not None
+            owner_id = resource.owner_user_id if resource else None
+        elif profile_match:
+            resource = session.get(InstagramProfile, int(profile_match.group(1)))
+            resource_found = resource is not None
+            owner_id = resource.owner_user_id if resource else None
+        elif collection_match:
+            resource = session.get(CollectionRun, int(collection_match.group(1)))
+            resource_found = resource is not None
+            campaign = session.get(Campaign, resource.campaign_id) if resource else None
+            owner_id = campaign.owner_user_id if campaign else None
+        elif report_match:
+            resource = session.get(GeneratedReport, int(report_match.group(1)))
+            resource_found = resource is not None
+            campaign = session.get(Campaign, resource.campaign_id) if resource else None
+            owner_id = campaign.owner_user_id if campaign else None
+
+        # Nullable owners exist only in old local/test databases. Production migration 0006
+        # makes both ownership columns NOT NULL.
+        if resource_found and owner_id is not None and owner_id != user_id:
+            logger.warning("cross_account_access_denied user_id=%s path=%s", user_id, path)
+            raise HTTPException(404, "Recurso nao encontrado")
 
 
 def rate_limit(request: Request, user_id: str) -> None:

@@ -5,7 +5,7 @@ from contextlib import ExitStack
 from sqlalchemy import func
 from sqlmodel import select
 from app.services.auto_sync import scheduler_status
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from sqlmodel import Session
 
 from app.database import get_session
@@ -28,11 +28,15 @@ router = APIRouter(
     responses={503: {"description": "Token Apify não configurado"}},
 )
 def sync_instagram(
+    request: Request,
     username: str = Path(pattern=r"^[A-Za-z0-9._]{1,30}$"),
     limit: int = Query(default=25, ge=1, le=200, description="Máximo de posts por perfil"),
     session: Session = Depends(get_session),
 ):
-    profile = session.exec(select(InstagramProfile).where(func.lower(InstagramProfile.username) == username.strip().lstrip("@").lower())).first()
+    profile = session.exec(select(InstagramProfile).where(
+        InstagramProfile.owner_user_id == request.state.user_id,
+        func.lower(InstagramProfile.username) == username.strip().lstrip("@").lower(),
+    )).first()
     campaign_ids = sorted(set(session.exec(select(CampaignProfile.campaign_id).where(CampaignProfile.profile_id == profile.id)).all())) if profile else []
     with ExitStack() as stack:
         for campaign_id in campaign_ids or ["profile:" + username.lower()]:
@@ -40,6 +44,7 @@ def sync_instagram(
         return sync_instagram_profile(
             session=session,
             username=username,
+            owner_user_id=request.state.user_id,
             limit=limit,
         )
 
@@ -79,8 +84,11 @@ def sync_campaign_route(
 
 
 @router.get('/sync/status', summary='Status da coleta automática')
-def sync_status(session: Session = Depends(get_session)):
+def sync_status(request: Request, session: Session = Depends(get_session)):
     ids, hours, limit = config()
-    campaigns = session.exec(select(Campaign).where(Campaign.active == True)).all()
+    campaigns = session.exec(select(Campaign).where(
+        Campaign.owner_user_id == request.state.user_id,
+        Campaign.active == True,
+    )).all()
     items = [{"campaign_id": campaign.id, "schedule": scheduler_status(session, campaign.id)} for campaign in campaigns]
     return {"enabled": any(item["schedule"]["enabled"] for item in items), "interval_hours": hours, "posts_per_profile": limit, "campaigns": items}

@@ -17,7 +17,10 @@ def now() -> datetime:
 
 
 def upsert_post(session: Session, profile: InstagramProfile, item: dict) -> tuple[InstagramPost, bool]:
-    post = session.exec(select(InstagramPost).where(InstagramPost.shortcode == item["shortcode"])).first()
+    post = session.exec(select(InstagramPost).where(
+        InstagramPost.profile_id == profile.id,
+        InstagramPost.shortcode == item["shortcode"],
+    )).first()
     if post:
         return post, False
     post = InstagramPost(instagram_id=item.get("instagram_id"), shortcode=item["shortcode"], profile_id=profile.id, url=item["url"], caption=item.get("caption"), content_type=item.get("content_type"), product_type=item.get("product_type"), thumbnail_url=item.get("thumbnail_url"), location_name=item.get("location_name"), paid_partnership=item.get("paid_partnership"), comments_disabled=item.get("comments_disabled"), published_at=item.get("published_at"))

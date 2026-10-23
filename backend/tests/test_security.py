@@ -74,11 +74,15 @@ class SecurityTests(unittest.IsolatedAsyncioTestCase):
                 await authenticate(request(token_value=token("user-1", "aal1")))
             self.assertEqual(error.exception.status_code, 403)
             self.assertEqual(await authenticate(request(token_value=token("user-1", "aal2"))), ("user-1", "analyst"))
+            self.assertEqual(
+                await authenticate(request(method="POST", token_value=token("user-1", "aal2"))),
+                ("user-1", "analyst"),
+            )
             with self.assertRaises(HTTPException) as error:
-                await authenticate(request(method="POST", token_value=token("user-1", "aal2")))
+                await authenticate(request(method="POST", path="/api/admin/users", token_value=token("user-1", "aal2")))
             self.assertEqual(error.exception.status_code, 403)
             with patch.dict(os.environ, {"ADMIN_USER_IDS": "user-1"}):
-                self.assertEqual(await authenticate(request(method="POST", token_value=token("user-1", "aal2"))), ("user-1", "admin"))
+                self.assertEqual(await authenticate(request(method="POST", path="/api/admin/users", token_value=token("user-1", "aal2"))), ("user-1", "admin"))
 
         with Session(engine) as session:
             provisioned = session.get(AppUser, "user-1")

@@ -28,8 +28,12 @@ def low_reason(source, evidence, caption):
 
 
 def audit_rows(session: Session, *, region_id=None, confidence=None, profile_id=None, theme=None,
-               start_date=None, end_date=None, has_region=None, multiple_regions=None, campaign_id=None):
+               start_date=None, end_date=None, has_region=None, multiple_regions=None, campaign_id=None,
+               owner_user_id=None):
     query = select(InstagramPost)
+    if owner_user_id is not None:
+        owned_profiles = select(InstagramProfile.id).where(InstagramProfile.owner_user_id == owner_user_id)
+        query = query.where(InstagramPost.profile_id.in_(owned_profiles))
     if profile_id is not None: query = query.where(InstagramPost.profile_id == profile_id)
     if campaign_id is not None:
         profile_ids = session.exec(select(CampaignProfile.profile_id).where(CampaignProfile.campaign_id == campaign_id)).all()

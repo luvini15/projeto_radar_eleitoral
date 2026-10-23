@@ -17,11 +17,13 @@ from app.integrations.apify import collect_profile
 def get_or_create_profile(
     session: Session,
     item: dict,
+    owner_user_id: str,
 ):
     username = item["owner_username"]
 
     profile = session.exec(
         select(InstagramProfile).where(
+            InstagramProfile.owner_user_id == owner_user_id,
             InstagramProfile.username == username
         )
     ).first()
@@ -40,6 +42,7 @@ def get_or_create_profile(
         return profile
 
     profile = InstagramProfile(
+        owner_user_id=owner_user_id,
         instagram_id=item.get("owner_id"),
         username=username,
         full_name=item.get("owner_full_name"),
@@ -64,6 +67,7 @@ def get_or_create_post(
 ):
     post = session.exec(
         select(InstagramPost).where(
+            InstagramPost.profile_id == profile.id,
             InstagramPost.shortcode
             == item["shortcode"]
         )
@@ -138,6 +142,7 @@ def create_snapshot(
 def sync_instagram_profile(
     session: Session,
     username: str,
+    owner_user_id: str,
     limit: int = 25,
 ):
     raw_posts = collect_posts(
@@ -160,6 +165,7 @@ def sync_instagram_profile(
         profile = get_or_create_profile(
             session,
             item,
+            owner_user_id,
         )
 
         post, created = get_or_create_post(
@@ -227,6 +233,7 @@ def sync_campaign(
         result = sync_instagram_profile(
             session=session,
             username=profile.username,
+            owner_user_id=profile.owner_user_id,
             limit=limit,
         )
 
