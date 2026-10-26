@@ -1,4 +1,5 @@
 import logging
+import re
 import os
 from contextlib import asynccontextmanager
 from app.services.auto_sync import start_scheduler
@@ -9,6 +10,8 @@ from sqlalchemy import text
 
 from app.security import authenticate, enforce_resource_ownership, pre_auth_rate_limit, rate_limit
 from app.database import engine
+from app.routers.digital_reports import router as digital_reports_router
+from app.routers.executive import router as executive_router
 from app.routers.sync import router as sync_router
 from app.routers.campaigns import router as campaigns_router
 from app.routers.analytics import router as analytics_router
@@ -65,7 +68,11 @@ async def security_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/") or request.url.path == "/api":
         try:
             content_length = request.headers.get("content-length")
-            if content_length and (not content_length.isdigit() or int(content_length) > 64 * 1024):
+            # Only offline PDF snapshots need room for inline fonts/images.
+            # All authentication/authorization/rate limits below remain identical.
+            pdf_export = request.method == "POST" and re.fullmatch(r"/api/digital-reports/[0-9]+/export/pdf", request.url.path)
+            max_body = 16 * 1024 * 1024 if pdf_export else 64 * 1024
+            if content_length and (not content_length.isdigit() or int(content_length) > max_body):
                 raise HTTPException(413, "Corpo da requisicao muito grande")
             pre_auth_rate_limit(request)
             user_id, role = await authenticate(request)
@@ -101,6 +108,8 @@ app.add_middleware(
 )
 
 
+app.include_router(digital_reports_router)
+app.include_router(executive_router)
 app.include_router(sync_router)
 app.include_router(campaigns_router)
 app.include_router(analytics_router)
