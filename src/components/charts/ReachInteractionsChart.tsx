@@ -13,7 +13,7 @@ export function ReachInteractionsChart({ data }: { data: DailyMetric[] }) {
       <CardContent className="pl-1 pr-4">
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.045)"/>
             <XAxis
               dataKey="data"
               tickFormatter={(v) => v.slice(8, 10) + '/' + v.slice(5, 7)}
@@ -44,17 +44,17 @@ export function ReachInteractionsChart({ data }: { data: DailyMetric[] }) {
               type="monotone"
               dataKey="alcance"
               name="Alcance"
-              stroke="#8EA4FF"
-              strokeWidth={2}
-              dot={false}
+              stroke="#ff6a2b"
+              strokeWidth={3}
+              dot={{r:3}}
             />
             <Line
               type="monotone"
               dataKey="interacoes"
               name="Interacoes"
               stroke="#5CE1A7"
-              strokeWidth={2}
-              dot={false}
+              strokeWidth={3}
+              dot={{r:3}}
             />
           </LineChart>
         </ResponsiveContainer>

@@ -27,7 +27,7 @@ export function TopicOpportunityScatter({ data }: { data: TopicoResumo[] }) {
       <CardContent className="pl-1 pr-4">
         <ResponsiveContainer width="100%" height={340}>
           <ScatterChart margin={{ top: 16, right: 24, left: 0, bottom: 8 }}>
-            <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.045)"/>
             <XAxis
               type="number"
               dataKey="quantidadeConteudos"
@@ -68,7 +68,7 @@ export function TopicOpportunityScatter({ data }: { data: TopicoResumo[] }) {
               {data.map((entry, i) => {
                 const isOportunidade =
                   entry.engajamentoMedio >= mediaEngajamento && entry.quantidadeConteudos <= mediaFrequencia
-                return <Cell key={i} fill={isOportunidade ? '#5CE1A7' : '#8EA4FF'} fillOpacity={0.78} />
+                return <Cell key={i} fill={isOportunidade ? '#5CE1A7' : '#ff6a2b'} fillOpacity={0.78} />
               })}
             </Scatter>
           </ScatterChart>

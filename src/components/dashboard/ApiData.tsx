@@ -19,7 +19,7 @@ export function Panel({ title, children }: {title: string; children: ReactNode})
 }
 
 export function Metrics({ items }: { items: readonly (readonly [string, number | null | undefined])[] }) {
-  return <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">{items.map(([label, value]) => <Card key={label} className="p-5"><dt className="relative z-[1] text-[10px] uppercase tracking-[.12em] text-slate">{label}</dt><dd className="relative z-[1] mt-3 font-mono text-2xl text-ink">{number(value)}</dd></Card>)}</dl>
+  return <dl className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">{items.map(([label, value]) => <Card key={label} className="p-5"><dt className="relative z-[1] text-[10px] uppercase tracking-[.12em] text-slate">{label}</dt><dd className={`relative z-[1] mt-3 break-words font-mono text-ink ${value==null?'text-sm':'text-2xl'}`}>{value==null?'Métrica indisponível':number(value)}</dd></Card>)}</dl>
 }
 
 export function Empty({ children = 'Ainda não há dados coletados para esta seleção.' }: {children?: ReactNode}) {
@@ -32,8 +32,8 @@ export function DataFrame({ data, error, children, showContext = true }: {data: 
   if (campaign.loading) return <p role="status" className="text-sm text-slate">Carregando campanhas…</p>
   if (!campaign.selected) return <Empty>Cadastre uma campanha para começar a acompanhar seus perfis.</Empty>
   if (!data) return <p role="status" className="text-sm text-slate">Carregando dados da campanha…</p>
-  const selectedName = campaign.campaigns.find(item => String(item.id) === campaign.selected)?.name
-  return <div className="space-y-6">{showContext ? <div className="flex flex-wrap items-center gap-2 text-xs text-slate"><span className="status-pulse h-1.5 w-1.5 rounded-full bg-positive text-positive" /><strong className="font-medium text-white/80">{selectedName}</strong><span>·</span><span>{campaign.limit} posts recentes por perfil</span><span>·</span><span>última coleta disponível</span></div> : null}{children}</div>
+  const selectedName = campaign.scopeName
+  return <div className="space-y-6">{showContext ? <div className="flex flex-wrap items-center gap-2 text-xs text-slate"><span className="status-pulse h-1.5 w-1.5 rounded-full bg-positive text-positive" /><strong className="font-medium text-white/80">{selectedName}</strong><span>·</span><span>Até {campaign.limit} posts recentes por perfil · {campaign.days} dias</span><span>·</span><span>última coleta disponível</span></div> : null}{children}</div>
 }
 
 export function DataTable({ headers, children }: {headers: string[]; children: ReactNode}) {
