@@ -39,14 +39,8 @@ def _campaign_or_404(session: Session, campaign_id: int) -> Campaign:
 
 
 def _links(session: Session, campaign_id: int) -> list[CampaignProfile]:
-    return list(
-        session.exec(
-            select(CampaignProfile).where(
-                CampaignProfile.campaign_id == campaign_id,
-                CampaignProfile.active == True,  # noqa: E712
-            )
-        ).all()
-    )
+    from app.services.campaign_scope import campaign_links
+    return campaign_links(session, campaign_id)
 
 
 def _campaign_post_or_404(session: Session, campaign_id: int, post_id: int) -> InstagramPost:
@@ -58,14 +52,13 @@ def _campaign_post_or_404(session: Session, campaign_id: int, post_id: int) -> I
 
 
 def _latest_posts(session: Session, profile_id: int, limit: int) -> list[InstagramPost]:
-    return list(
-        session.exec(
-            select(InstagramPost)
-            .where(InstagramPost.profile_id == profile_id)
-            .order_by(InstagramPost.published_at.desc())
-            .limit(limit)
-        ).all()
-    )
+    query = select(InstagramPost).where(InstagramPost.profile_id == profile_id)
+    if session.info.get("analysis_days") or session.info.get("period_start"):
+        from app.services.analysis_period import analysis_bounds
+        start, end = analysis_bounds(session)
+        query = query.where(InstagramPost.published_at >= start, InstagramPost.published_at < end)
+    limit = session.info.get("sample_limit", limit)
+    return list(session.exec(query.order_by(InstagramPost.published_at.desc()).limit(limit)).all())
 
 
 def _latest_snapshot(session: Session, post_id: int) -> PostSnapshot | None:
@@ -77,11 +70,12 @@ def _latest_snapshot(session: Session, post_id: int) -> PostSnapshot | None:
 
 
 def _latest_profile_snapshot(session: Session, profile_id: int) -> ProfileSnapshot | None:
-    return session.exec(
-        select(ProfileSnapshot)
-        .where(ProfileSnapshot.profile_id == profile_id)
-        .order_by(ProfileSnapshot.collected_at.desc())
-    ).first()
+    query = select(ProfileSnapshot).where(ProfileSnapshot.profile_id == profile_id)
+    if session.info.get("analysis_days") or session.info.get("period_start"):
+        from app.services.analysis_period import analysis_bounds
+        start, end = analysis_bounds(session)
+        query = query.where(ProfileSnapshot.collected_at >= start, ProfileSnapshot.collected_at < end)
+    return session.exec(query.order_by(ProfileSnapshot.collected_at.desc())).first()
 
 
 def _avg(values: list[int | float]) -> float | None:
@@ -308,6 +302,13 @@ def campaign_posts(
                 continue
             results.append(_post_payload(post, profile, link.role, _latest_snapshot(session, post.id)))
 
+    from app.services.campaign_scope import slate_payloads
+    slates = slate_payloads(session, campaign_id)
+    origins = {member["profile_id"]: {"slate": slate["name"], "slate_id": slate["id"],
+        "position": member["position"]} for slate in slates for member in slate["members"]}
+    for row in results:
+        row["origin"] = {"campaign": campaign.name, "campaign_id": campaign_id,
+            **origins.get(row["profile"]["id"], {"slate": None, "slate_id": None, "position": None})}
     results.sort(
         key=lambda x: _local_dt(x["content"]["published_at"]) or datetime.min.replace(tzinfo=timezone.utc),
         reverse=True,
@@ -376,54 +377,24 @@ def followers_history(campaign_id: int, days: Annotated[int, Query(ge=1, le=365)
     if days < 1:
         raise HTTPException(status_code=400, detail="days deve ser maior que 0.")
 
-    now = datetime.now(timezone.utc)
-    start_date = now - timedelta(days=days)
-    profiles: list[dict] = []
-
+    from app.services.analysis_period import analysis_bounds, period_payload
+    from app.services.follower_history import daily_observations, growth_metrics
+    start, end = analysis_bounds(session, days)
     links = _links(session, campaign_id)
     ids = {link.profile_id for link in links}
     by_id = {p.id: p for p in session.exec(select(InstagramProfile).where(InstagramProfile.id.in_(ids))).all()} if ids else {}
-    grouped = {}
-    if ids:
-        for snapshot in session.exec(select(ProfileSnapshot).where(ProfileSnapshot.profile_id.in_(ids), ProfileSnapshot.collected_at >= start_date).order_by(ProfileSnapshot.collected_at.asc(), ProfileSnapshot.id.asc())).all():
-            grouped.setdefault(snapshot.profile_id, []).append(snapshot)
+    grouped = daily_observations(session, ids, start, end)
+    profiles = []
     for link in links:
         profile = by_id.get(link.profile_id)
         if not profile:
             continue
-        snapshots = grouped.get(profile.id, [])
-        daily: dict[str, dict] = {}
-        for snapshot in snapshots:
-            key = snapshot.collected_at.date().isoformat()
-            daily[key] = {
-                "date": key,
-                "followers": snapshot.followers_count,
-                "collected_at": snapshot.collected_at,
-            }
-        history = list(daily.values())
-        current = history[-1]["followers"] if history else None
-        first = history[0]["followers"] if history else None
-        growth = current - first if current is not None and first is not None else None
-        growth_percent = round((growth / first) * 100, 2) if growth is not None and first else None
-        profiles.append(
-            {
-                "profile_id": profile.id,
-                "username": profile.username,
-                "full_name": profile.full_name,
-                "role": link.role,
-                "current_followers": current,
-                "growth_absolute": growth,
-                "growth_percent": growth_percent,
-                "days_with_data": len(history),
-                "history": history,
-            }
-        )
-
-    return {
-        "campaign": {"id": campaign.id, "name": campaign.name},
-        "period": {"requested_days": days, "from": start_date.date().isoformat(), "to": now.date().isoformat()},
-        "profiles": profiles,
-    }
+        history = grouped.get(profile.id, [])
+        metrics = growth_metrics(history)
+        profiles.append({"profile_id": profile.id, "username": profile.username, "full_name": profile.full_name,
+            "role": link.role, "current_followers": metrics.pop("followers"), **metrics, "history": history})
+    return {"campaign": {"id": campaign.id, "name": campaign.name},
+        "period": {"requested_days": days, **period_payload(session, days)}, "profiles": profiles}
 
 
 @router.get("/{campaign_id}/themes-formats")
