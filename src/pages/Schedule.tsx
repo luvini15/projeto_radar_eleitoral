@@ -1,3 +1,4 @@
+import { ProfileFilter } from '@/components/dashboard/ProfileFilter'
 import * as React from 'react'
 import { DataFrame, Empty, Panel } from '@/components/dashboard/ApiData'
 import { useCampaign, useCampaignData } from '@/lib/campaignContext'
@@ -12,11 +13,12 @@ const metricLabels: Record<Metric, string> = {
   avg_observed_interactions: 'Interações',
   avg_comments: 'Comentários',
 }
-const heatColors = ['#342A5E', '#315878', '#28766F', '#718E55', '#C7A84B']
+const heatColors = ['#3a2118', '#66321d', '#93451f', '#bf5422', '#e86528']
 
 export default function Schedule() {
   const { limit } = useCampaign()
-  const { data, error } = useCampaignData<{ cells: Cell[] }>('time-performance', `limit_per_profile=${limit}`)
+  const [profile,setProfile]=React.useState('')
+  const { data, error } = useCampaignData<{ cells: Cell[] }>('time-performance', `limit_per_profile=${limit}${profile?'&scope_profile_id='+profile:''}`)
   const [metric, setMetric] = React.useState<Metric>('avg_observed_interactions')
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null)
   const cells = data?.cells ?? []
@@ -27,6 +29,7 @@ export default function Schedule() {
 
   return (
     <DataFrame data={data} error={error}>
+      <ProfileFilter value={profile} onChange={setProfile}/>
       {cells.length ? (
         <Panel title="Distribuição por dia e horário">
           <div className="flex flex-col gap-5 border-b border-white/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -63,7 +66,7 @@ export default function Schedule() {
           )}
 
           <div className="overflow-x-auto pb-2">
-            <table className="w-full min-w-[760px] border-separate border-spacing-1 text-center text-xs">
+            <table className="w-full min-w-[640px] border-separate border-spacing-1 text-center text-xs">
               <thead>
                 <tr>
                   <th className="w-16 p-2 text-left font-medium text-slate">Dia</th>
@@ -87,6 +90,7 @@ export default function Schedule() {
                             type="button"
                             disabled={!cell}
                             onClick={() => setSelectedKey(key)}
+                            title={cell ? `${day}, ${cell.hour_label}: ${number(value)} em média; ${cell.posts} publicações; ${number(cell.avg_comments)} comentários médios` : 'Sem dados coletados'}
                             aria-label={cell ? `${day}, ${cell.hour_label}: ${number(value)} ${metricLabels[metric].toLowerCase()} em média, ${cell.posts} publicações` : `${day}, ${hour}h–${(hour + 3) % 24}h: sem dados`}
                             className={`flex h-16 w-full flex-col items-center justify-center rounded-md border text-white transition-[border-color,transform] ${selectedKey === key ? 'border-white' : 'border-white/5'} ${cell ? 'hover:-translate-y-0.5 hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50' : 'cursor-default text-slate/45'}`}
                             style={{ backgroundColor: background }}
@@ -104,7 +108,7 @@ export default function Schedule() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate">
-            <span className="font-medium text-white/75">Intensidade</span>
+            <span className="font-medium text-white/75">Intensidade relativa · escala logarítmica</span>
             <span className="flex items-center gap-2"><i className="h-3 w-3 rounded-sm border border-white/10 bg-white/[0.025]" />Sem dados</span>
             <span className="flex items-center gap-1">{heatColors.map(color => <i key={color} className="h-3 w-5 first:rounded-l-sm last:rounded-r-sm" style={{backgroundColor: color}} />)}</span>
             <span>Menor</span><span>Maior</span>
