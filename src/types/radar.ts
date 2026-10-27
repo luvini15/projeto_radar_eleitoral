@@ -8,5 +8,5 @@ export interface Post {
 }
 export interface Group { theme?: string; format?: string; posts: number; avg_comments: number | null; avg_likes: number | null; avg_views: number | null; avg_observed_interactions: number | null }
 export interface Cell { weekday_index: number; weekday: string; hour: number; hour_label: string; posts: number; avg_observed_interactions: number | null; avg_comments: number | null }
-export interface Follower { profile_id: number; username: string; role: string; current_followers: number | null; growth_absolute: number | null; growth_percent: number | null; days_with_data: number; history: {date: string; followers: number | null; collected_at: string}[] }
+export interface Follower { profile_id: number; username: string; role: string; current_followers: number | null; growth_absolute: number | null; growth_percent: number | null; days_with_data: number; history: {source?:string;source_label?:string;date: string; followers: number | null; collected_at: string}[] }
 export interface RankedPost { post_id: number; username: string; caption: string | null; format: string; url: string | null; comments: number | null; views: number | null; plays: number | null; observed_interactions: number | null }
