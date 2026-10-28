@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision = "0008_remove_legacy_profile_username_index"
+revision = "0008_drop_legacy_username_idx"
 down_revision = "0007_merge_heads"
 branch_labels = None
 depends_on = None
