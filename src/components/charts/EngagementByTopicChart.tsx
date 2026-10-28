@@ -2,7 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TopicoResumo } from '@/types/instagram'
 
-const cores = ['#8EA4FF', '#5CE1A7', '#F2B45C', '#FF6B63']
+const cores = ['#ff6a2b', '#5CE1A7', '#F2B45C', '#FF6B63']
 
 export function EngagementByTopicChart({ data }: { data: TopicoResumo[] }) {
   const sorted = [...data].sort((a, b) => b.engajamentoMedio - a.engajamentoMedio)
@@ -14,7 +14,7 @@ export function EngagementByTopicChart({ data }: { data: TopicoResumo[] }) {
       <CardContent className="pl-1 pr-4">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={sorted} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-            <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.045)"/>
             <XAxis
               type="number"
               tickFormatter={(v) => `${v}%`}

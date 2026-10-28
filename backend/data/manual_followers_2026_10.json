@@ -1,0 +1,366 @@
+{
+  "source": "MANUAL_HISTORICAL",
+  "provenance": "Observações históricas fornecidas pelo usuário em 22/10/2026; horário da observação não informado. Variação do primeiro dia não é usada para inferir 04/10.",
+  "profiles": [
+    {
+      "username": "celinaleao",
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "followers": 342377,
+          "reported_daily_change": 1984
+        },
+        {
+          "date": "2026-10-06",
+          "followers": 343082,
+          "reported_daily_change": 705
+        },
+        {
+          "date": "2026-10-07",
+          "followers": 343483,
+          "reported_daily_change": 401
+        },
+        {
+          "date": "2026-10-08",
+          "followers": 344012,
+          "reported_daily_change": 529
+        },
+        {
+          "date": "2026-10-09",
+          "followers": 345352,
+          "reported_daily_change": 1340
+        },
+        {
+          "date": "2026-10-10",
+          "followers": 346183,
+          "reported_daily_change": 831
+        },
+        {
+          "date": "2026-10-11",
+          "followers": 346953,
+          "reported_daily_change": 770
+        },
+        {
+          "date": "2026-10-12",
+          "followers": 347504,
+          "reported_daily_change": 551
+        },
+        {
+          "date": "2026-10-13",
+          "followers": 348013,
+          "reported_daily_change": 509
+        },
+        {
+          "date": "2026-10-14",
+          "followers": 348542,
+          "reported_daily_change": 529
+        },
+        {
+          "date": "2026-10-15",
+          "followers": 348961,
+          "reported_daily_change": 419
+        },
+        {
+          "date": "2026-10-16",
+          "followers": 349576,
+          "reported_daily_change": 615
+        },
+        {
+          "date": "2026-10-17",
+          "followers": 350404,
+          "reported_daily_change": 828
+        },
+        {
+          "date": "2026-10-18",
+          "followers": 351420,
+          "reported_daily_change": 1016
+        },
+        {
+          "date": "2026-10-19",
+          "followers": 352257,
+          "reported_daily_change": 837
+        },
+        {
+          "date": "2026-10-20",
+          "followers": 352898,
+          "reported_daily_change": 641
+        },
+        {
+          "date": "2026-10-21",
+          "followers": 353720,
+          "reported_daily_change": 822
+        }
+      ]
+    },
+    {
+      "username": "leandrograss",
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "followers": 143253,
+          "reported_daily_change": 2704
+        },
+        {
+          "date": "2026-10-06",
+          "followers": 143723,
+          "reported_daily_change": 470
+        },
+        {
+          "date": "2026-10-07",
+          "followers": 145793,
+          "reported_daily_change": 2070
+        },
+        {
+          "date": "2026-10-08",
+          "followers": 148096,
+          "reported_daily_change": 2303
+        },
+        {
+          "date": "2026-10-09",
+          "followers": 153048,
+          "reported_daily_change": 4952
+        },
+        {
+          "date": "2026-10-10",
+          "followers": 155092,
+          "reported_daily_change": 2044
+        },
+        {
+          "date": "2026-10-11",
+          "followers": 156017,
+          "reported_daily_change": 925
+        },
+        {
+          "date": "2026-10-12",
+          "followers": 156461,
+          "reported_daily_change": 444
+        },
+        {
+          "date": "2026-10-13",
+          "followers": 157006,
+          "reported_daily_change": 545
+        },
+        {
+          "date": "2026-10-14",
+          "followers": 158195,
+          "reported_daily_change": 1189
+        },
+        {
+          "date": "2026-10-15",
+          "followers": 158651,
+          "reported_daily_change": 456
+        },
+        {
+          "date": "2026-10-16",
+          "followers": 158936,
+          "reported_daily_change": 285
+        },
+        {
+          "date": "2026-10-17",
+          "followers": 159138,
+          "reported_daily_change": 202
+        },
+        {
+          "date": "2026-10-18",
+          "followers": 163378,
+          "reported_daily_change": 4240
+        },
+        {
+          "date": "2026-10-19",
+          "followers": 165271,
+          "reported_daily_change": 1893
+        },
+        {
+          "date": "2026-10-20",
+          "followers": 166431,
+          "reported_daily_change": 1160
+        },
+        {
+          "date": "2026-10-21",
+          "followers": 166906,
+          "reported_daily_change": 475
+        }
+      ]
+    },
+    {
+      "username": "doragomes_oficial",
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "followers": 4563,
+          "reported_daily_change": 7
+        },
+        {
+          "date": "2026-10-06",
+          "followers": 4586,
+          "reported_daily_change": 23
+        },
+        {
+          "date": "2026-10-07",
+          "followers": 4618,
+          "reported_daily_change": 32
+        },
+        {
+          "date": "2026-10-08",
+          "followers": 4655,
+          "reported_daily_change": 37
+        },
+        {
+          "date": "2026-10-09",
+          "followers": 4697,
+          "reported_daily_change": 42
+        },
+        {
+          "date": "2026-10-10",
+          "followers": 4774,
+          "reported_daily_change": 77
+        },
+        {
+          "date": "2026-10-11",
+          "followers": 4803,
+          "reported_daily_change": 29
+        },
+        {
+          "date": "2026-10-12",
+          "followers": 4822,
+          "reported_daily_change": 19
+        },
+        {
+          "date": "2026-10-13",
+          "followers": 4844,
+          "reported_daily_change": 22
+        },
+        {
+          "date": "2026-10-14",
+          "followers": 4845,
+          "reported_daily_change": 1
+        },
+        {
+          "date": "2026-10-15",
+          "followers": 4851,
+          "reported_daily_change": 6
+        },
+        {
+          "date": "2026-10-16",
+          "followers": 4875,
+          "reported_daily_change": 24
+        },
+        {
+          "date": "2026-10-17",
+          "followers": 4895,
+          "reported_daily_change": 20
+        },
+        {
+          "date": "2026-10-18",
+          "followers": 4914,
+          "reported_daily_change": 19
+        },
+        {
+          "date": "2026-10-19",
+          "followers": 4935,
+          "reported_daily_change": 21
+        },
+        {
+          "date": "2026-10-20",
+          "followers": 4970,
+          "reported_daily_change": 35
+        },
+        {
+          "date": "2026-10-21",
+          "followers": 5023,
+          "reported_daily_change": 53
+        }
+      ]
+    },
+    {
+      "username": "gustavo.rochadf",
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "followers": 8396,
+          "reported_daily_change": 315
+        },
+        {
+          "date": "2026-10-06",
+          "followers": 8520,
+          "reported_daily_change": 124
+        },
+        {
+          "date": "2026-10-07",
+          "followers": 8564,
+          "reported_daily_change": 44
+        },
+        {
+          "date": "2026-10-08",
+          "followers": 8666,
+          "reported_daily_change": 102
+        },
+        {
+          "date": "2026-10-09",
+          "followers": 8770,
+          "reported_daily_change": 104
+        },
+        {
+          "date": "2026-10-10",
+          "followers": 8858,
+          "reported_daily_change": 88
+        },
+        {
+          "date": "2026-10-11",
+          "followers": 9007,
+          "reported_daily_change": 149
+        },
+        {
+          "date": "2026-10-12",
+          "followers": 9088,
+          "reported_daily_change": 81
+        },
+        {
+          "date": "2026-10-13",
+          "followers": 9155,
+          "reported_daily_change": 67
+        },
+        {
+          "date": "2026-10-14",
+          "followers": 9218,
+          "reported_daily_change": 63
+        },
+        {
+          "date": "2026-10-15",
+          "followers": 9310,
+          "reported_daily_change": 92
+        },
+        {
+          "date": "2026-10-16",
+          "followers": 9337,
+          "reported_daily_change": 27
+        },
+        {
+          "date": "2026-10-17",
+          "followers": 9375,
+          "reported_daily_change": 38
+        },
+        {
+          "date": "2026-10-18",
+          "followers": 9584,
+          "reported_daily_change": 209
+        },
+        {
+          "date": "2026-10-19",
+          "followers": 9621,
+          "reported_daily_change": 37
+        },
+        {
+          "date": "2026-10-20",
+          "followers": 9632,
+          "reported_daily_change": 11
+        },
+        {
+          "date": "2026-10-21",
+          "followers": 9671,
+          "reported_daily_change": 39
+        }
+      ]
+    }
+  ]
+}

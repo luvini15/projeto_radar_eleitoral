@@ -1,0 +1,2 @@
+/** Static print adaptation of the Cube silhouette and Slant eyes in landing/Watcher. */
+export function ReportBrandMark(){return <svg className="report-brand-mark" viewBox="0 0 100 100" role="img" aria-label="Símbolo Data Sight"><path d="M30 6 H70 A24 24 0 0 1 94 30 V70 A24 24 0 0 1 70 94 H30 A24 24 0 0 1 6 70 V30 A24 24 0 0 1 30 6 Z" fill="#ff5a1f"/><rect x="36" y="42" width="9" height="15" rx="4.5" fill="#111"/><rect x="55" y="42" width="9" height="15" rx="4.5" fill="#111"/></svg>}

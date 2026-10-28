@@ -1,0 +1,11 @@
+import * as React from 'react'
+import {useCampaign} from '@/lib/campaignContext'
+import {periodOptions,validPeriod} from '@/utils/analysisPeriod'
+import {date} from '@/utils/apiFormat'
+export function PeriodSelector(){
+ const c=useCampaign(),[start,setStart]=React.useState(c.startDate),[end,setEnd]=React.useState(c.endDate)
+ React.useEffect(()=>{setStart(c.startDate);setEnd(c.endDate)},[c.startDate,c.endDate])
+ const field='h-9 min-w-0 max-w-full rounded-md border border-white/15 bg-[#101010] px-2 text-xs text-white [color-scheme:dark]'
+ const valid=validPeriod(start,end)
+ return <div className="flex w-full min-w-0 flex-wrap items-end gap-3 py-3" aria-label="Período compartilhado"><label className="flex flex-col gap-1 text-[10px] text-white/60">Período analisado<select aria-label="Período analisado" className={field} value={c.periodMode==='custom'?'custom':c.days} onChange={e=>{if(e.target.value==='custom')c.setPeriodMode('custom');else{c.setDays(Number(e.target.value));c.setPeriodMode('preset')}}}>{periodOptions.map(n=><option key={n} value={n}>{n} dias</option>)}<option value="custom">Personalizado</option></select></label>{c.periodMode==='custom'?<form className="flex min-w-0 max-w-full flex-wrap items-end gap-2" onSubmit={e=>{e.preventDefault();if(valid)c.setDateRange(start,end)}}><label className="flex min-w-0 flex-col gap-1 text-[10px] text-white/60">Data inicial<input aria-label="Início do período" type="date" required className={field} value={start} onChange={e=>setStart(e.target.value)} max={end||undefined}/></label><label className="flex min-w-0 flex-col gap-1 text-[10px] text-white/60">Data final<input aria-label="Fim do período" type="date" required className={field} value={end} min={start||undefined} onChange={e=>setEnd(e.target.value)}/></label><button disabled={!valid} className="h-9 rounded-md border border-[#ff6a2b]/50 px-3 text-xs text-[#ff9b75] disabled:opacity-40">Aplicar período</button>{!valid?<p role="alert" className="w-full text-xs text-[#ff9b75]">Informe datas válidas; o fim deve ser igual ou posterior ao início.</p>:null}</form>:null}<p className="pb-2 text-[10px] text-white/50">{date(c.startDate)} a {date(c.endDate)} · dias completos em UTC</p></div>
+}

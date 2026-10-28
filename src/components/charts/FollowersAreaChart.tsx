@@ -1,9 +1,11 @@
+import { InsufficientData } from './ChartTheme'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import type { DailyMetric } from '@/types/instagram'
 import { formatCompact, formatNumber } from '@/utils/metrics'
 
 export function FollowersAreaChart({ data }: { data: DailyMetric[] }) {
+  if(data.filter(point=>point.seguidores!=null).length<2)return <Card><CardHeader><CardTitle>Evolução de seguidores</CardTitle></CardHeader><CardContent><InsufficientData/></CardContent></Card>
   return (
     <Card>
       <CardHeader>
@@ -15,11 +17,11 @@ export function FollowersAreaChart({ data }: { data: DailyMetric[] }) {
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="seguidoresGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8EA4FF" stopOpacity={0.34} />
-                <stop offset="100%" stopColor="#8EA4FF" stopOpacity={0} />
+                <stop offset="0%" stopColor="#ff6a2b" stopOpacity={0.34} />
+                <stop offset="100%" stopColor="#ff6a2b" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.045)"/>
             <XAxis
               dataKey="data"
               tickFormatter={(v) => v.slice(8, 10) + '/' + v.slice(5, 7)}
@@ -50,8 +52,8 @@ export function FollowersAreaChart({ data }: { data: DailyMetric[] }) {
             <Area
               type="monotone"
               dataKey="seguidores"
-              stroke="#8EA4FF"
-              strokeWidth={2}
+              stroke="#ff6a2b"
+              strokeWidth={3}
               fill="url(#seguidoresGradient)"
             />
           </AreaChart>

@@ -384,3 +384,26 @@ class AssistantMessage(SQLModel, table=True):
     content: str
     sources_json: str = "[]"
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class CampaignSlate(SQLModel, table=True):
+    """An explicitly configured ticket inside a monitored campaign."""
+    __tablename__ = "campaign_slates"
+    __table_args__ = (UniqueConstraint("campaign_id", "name"),)
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    name: str
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class SlateMember(SQLModel, table=True):
+    __tablename__ = "slate_members"
+    __table_args__ = (
+        UniqueConstraint("campaign_id", "profile_id"),
+        CheckConstraint("position IN ('CANDIDATE', 'VICE', 'ASSOCIATE')"),
+    )
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    slate_id: int = Field(foreign_key="campaign_slates.id", index=True)
+    profile_id: int = Field(foreign_key="instagram_profiles.id", index=True)
+    position: str = "ASSOCIATE"

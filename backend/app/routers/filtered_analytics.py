@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.services.campaign_scope import campaign_links
 
 from collections import defaultdict
 from datetime import date, datetime, time, timezone
@@ -31,10 +32,24 @@ def filtered_analytics(campaign_id: int, start_date: str, end_date: str, region_
         raise HTTPException(422, "Informe datas válidas no formato AAAA-MM-DD.")
     if start > end:
         raise HTTPException(422, "A data inicial deve ser anterior à data final.")
-    links = list(session.exec(select(CampaignProfile).where(CampaignProfile.campaign_id == campaign_id, CampaignProfile.active == True)).all())  # noqa: E712
+    if session.info.get("period_start") or session.info.get("analysis_days"):
+        from app.services.analysis_period import analysis_bounds
+        start, exclusive_end = analysis_bounds(session)
+        from datetime import timedelta
+        end = exclusive_end - timedelta(microseconds=1)
+        start_date, end_date = start.date().isoformat(), end.date().isoformat()
+    links = campaign_links(session, campaign_id)  # noqa: E712
     roles = {x.profile_id: x.role for x in links if role is None or x.role == role}; ids = set(roles)
     if profile_id or profile_selection == "selected": ids &= set(profile_id)
     posts = list(session.exec(select(InstagramPost).where(InstagramPost.profile_id.in_(ids), InstagramPost.published_at >= start, InstagramPost.published_at <= end)).all()) if ids else []
+    if session.info.get("sample_limit"):
+        counts = defaultdict(int)
+        limited = []
+        for post in sorted(posts, key=lambda p: (p.published_at, p.id), reverse=True):
+            if counts[post.profile_id] < session.info["sample_limit"]:
+                limited.append(post)
+                counts[post.profile_id] += 1
+        posts = limited
     post_ids = [p.id for p in posts]
     latest = {}
     if post_ids:
@@ -61,9 +76,9 @@ def filtered_analytics(campaign_id: int, start_date: str, end_date: str, region_
         for row in rows: thematic[row["theme"]].append(row); format_dist[row["format"]]+=1
         profile_output.append({"profile_id":pid,"username":profiles[pid].username,"full_name":profiles[pid].full_name,"role":roles[pid],**summarize(rows),"themes":{name:len(values) for name,values in thematic.items()},"theme_performance":{name:summarize(values) for name,values in thematic.items()},"formats":dict(format_dist)})
     if region_id is not None or territorial_origin: ids = set(profile_rows)
-    follower_snapshots=list(session.exec(select(ProfileSnapshot).where(ProfileSnapshot.profile_id.in_(ids),ProfileSnapshot.collected_at>=start,ProfileSnapshot.collected_at<=end).order_by(ProfileSnapshot.collected_at)).all()) if ids else []
-    followers=defaultdict(list)
-    for snapshot in follower_snapshots: followers[snapshot.profile_id].append({"date":snapshot.collected_at.isoformat(),"followers":snapshot.followers_count})
+    from app.services.follower_history import daily_observations
+    from datetime import timedelta
+    followers = daily_observations(session, ids, start, end + timedelta(microseconds=1))
     def daily_totals(rows):
         result = {"posts": len(rows), "metric_samples": {}}
         for metric in ("interactions", "likes", "comments", "views", "plays", "shares", "saves"):

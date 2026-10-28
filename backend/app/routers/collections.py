@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -36,7 +37,30 @@ def run_collection(campaign_id: int, limit: int = Query(default=25, ge=1, le=100
 
 @router.get("/campaigns/{campaign_id}/collections")
 def collection_history(campaign_id: int, limit: int = Query(default=20, ge=1, le=100), session: Session = Depends(get_session)):
-    rows = list(session.exec(select(CollectionRun).where(CollectionRun.campaign_id == campaign_id).order_by(CollectionRun.started_at.desc()).limit(limit)).all())
+    from app.services.campaign_scope import campaign_links
+    query = select(CollectionRun).where(CollectionRun.campaign_id == campaign_id)
+    if session.info.get("period_start") or session.info.get("analysis_days"):
+        from app.services.analysis_period import analysis_bounds
+        start, end = analysis_bounds(session)
+        query = query.where(CollectionRun.started_at >= start, CollectionRun.started_at < end)
+    scoped = session.info.get("slate_id") is not None or session.info.get("scope_profile_id") is not None
+    if scoped:
+        ids = [link.profile_id for link in campaign_links(session,campaign_id)]
+        runs = select(ProfileCollectionRun.collection_run_id).where(ProfileCollectionRun.profile_id.in_(ids))
+        query = query.where(CollectionRun.id.in_(runs))
+    rows = list(session.exec(query.order_by(CollectionRun.started_at.desc()).limit(limit)).all())
+    if scoped:
+        scoped_rows=[]
+        for run in rows:
+            details=session.exec(select(ProfileCollectionRun).where(ProfileCollectionRun.collection_run_id==run.id,ProfileCollectionRun.profile_id.in_(ids))).all()
+            values=run.model_dump()
+            for field in ("posts_found","new_posts","post_snapshots_created"):
+                values[field]=sum(getattr(row,field) for row in details)
+            values.update(profiles_total=len(details),profiles_succeeded=sum(row.status in {"SUCCESS","PARTIAL"} for row in details),
+                profiles_failed=sum(row.status=="FAILED" for row in details),followers_updated=sum(row.followers_updated for row in details),
+                errors=json.dumps([{ "profile_id":row.profile_id,"error":row.error} for row in details if row.error]) if any(row.error for row in details) else None,scope_note="Contadores dos perfis selecionados; status operacional da execução completa.")
+            scoped_rows.append(values)
+        rows=scoped_rows
     from app.services.auto_sync import scheduler_status
     schedule = scheduler_status(session, campaign_id)
     return {"campaign_id": campaign_id, "next_collection": schedule["next_run_at"], "schedule": schedule, "collections": rows}

@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session, select
-from sqlalchemy import func
+from sqlalchemy import delete, func
 from sqlalchemy.exc import IntegrityError
+from typing import Literal
+from app.services import campaign_admin as admin
 from app.services.profile_import import normalize_username
 
 from app.database import get_session
 from app.models import (
-    Campaign,
+    Campaign, CampaignSlate, SlateMember,
     CampaignProfile,
     InstagramProfile,
     ProfileMonitoring, ProfileRegion, AdministrativeRegion,
@@ -28,15 +30,15 @@ class CampaignCreate(BaseModel):
     @classmethod
     def clean_name(cls, value: str) -> str:
         value = value.strip()
-        if "<" in value or ">" in value:
-            raise ValueError("HTML nao permitido")
+        if len(value) < 2 or "<" in value or ">" in value:
+            raise ValueError("Informe um nome válido com pelo menos dois caracteres.")
         return value
 
 
 class ProfileCreate(BaseModel):
     username: str = Field(pattern=r"^@?[A-Za-z0-9._]{1,30}$")
     full_name: str | None = Field(default=None, max_length=120)
-    role: str = Field(pattern=r"^(?i:CLIENT|COMPETITOR|LOCAL_PAGE|MEDIA)$")
+    role: str = Field(pattern=r"^(?i:CLIENT|COMPETITOR|LOCAL_PAGE|MEDIA|DF_GENERAL)$")
 
     @field_validator("full_name")
     @classmethod
@@ -86,10 +88,21 @@ def list_campaigns(
     request: Request,
     session: Session = Depends(get_session),
 ):
-    return session.exec(
-        select(Campaign).where(Campaign.owner_user_id == request.state.user_id)
+    from app.services.campaign_scope import slate_payloads
+
+    campaigns = session.exec(
+        select(Campaign)
+        .where(Campaign.owner_user_id == request.state.user_id)
         .order_by(Campaign.id)
     ).all()
+
+    return [
+        {
+            **campaign.model_dump(),
+            "slates": slate_payloads(session, campaign.id),
+        }
+        for campaign in campaigns
+    ]
 
 
 @router.get("/{campaign_id}")
@@ -115,6 +128,13 @@ def get_campaign(
         )
     ).all()
 
+    from app.services.campaign_scope import campaign_links, slate_payloads
+    allowed = ({link.profile_id for link in campaign_links(session, campaign_id)}
+               if session.info.get("slate_id") is not None or session.info.get("scope_profile_id") is not None
+               else {link.profile_id for link in links})
+    members = {member.profile_id:member for member in session.exec(select(SlateMember).where(SlateMember.campaign_id==campaign_id)).all()}
+    profile_records = list(session.exec(select(InstagramProfile).where(InstagramProfile.id.in_([link.profile_id for link in links]))).all()) if links else []
+    editing = admin.editability(session,profile_records)
     profiles = []
 
     for link in links:
@@ -123,11 +143,15 @@ def get_campaign(
             link.profile_id,
         )
 
-        if profile:
+        if profile and profile.id in allowed:
             metadata = session.get(ProfileMonitoring, profile.id)
             region = session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first()
             profiles.append({
                 "id": profile.id,
+                "instagram_id": profile.instagram_id,
+                **editing[profile.id],
+                "slate_id": members[profile.id].slate_id if profile.id in members else None,
+                "position": members[profile.id].position if profile.id in members else None,
                 "username": profile.username,
                 "full_name": profile.full_name,
                 "role": link.role,
@@ -143,6 +167,7 @@ def get_campaign(
         "slug": campaign.slug,
         "active": campaign.active,
         "profiles": profiles,
+        "slates": slate_payloads(session, campaign_id),
     }
 
 
@@ -268,3 +293,183 @@ def add_profile_to_campaign(
         "username": profile.username,
         "role": role,
     }
+
+
+class SlateInput(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value):
+        value = value.strip()
+        if len(value) < 2 or "<" in value or ">" in value:
+            raise ValueError("Informe um nome válido.")
+        return value
+
+
+class MemberInput(BaseModel):
+    profile_id: int = Field(gt=0)
+    position: str = Field(pattern="^(CANDIDATE|VICE|ASSOCIATE)$")
+
+
+@router.post("/{campaign_id}/slates")
+def create_slate(campaign_id: int, data: SlateInput, session: Session = Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    if not session.get(Campaign, campaign_id):
+        raise HTTPException(404, "Campanha não encontrada.")
+    existing = session.exec(select(CampaignSlate).where(CampaignSlate.campaign_id == campaign_id,
+                                                       CampaignSlate.name == data.name)).first()
+    if existing:
+        raise HTTPException(409, "Já existe uma chapa com este nome.")
+    slate = CampaignSlate(campaign_id=campaign_id, name=data.name)
+    session.add(slate)
+    admin.commit(session)
+    session.refresh(slate)
+    return slate
+
+
+@router.put("/{campaign_id}/slates/{slate_id}")
+def rename_slate(campaign_id: int, slate_id: int, data: SlateInput, session: Session = Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    slate = session.get(CampaignSlate, slate_id)
+    if not slate or slate.campaign_id != campaign_id:
+        raise HTTPException(404, "Chapa não encontrada.")
+    duplicate = session.exec(select(CampaignSlate).where(CampaignSlate.campaign_id == campaign_id,
+        CampaignSlate.name == data.name, CampaignSlate.id != slate_id)).first()
+    if duplicate:
+        raise HTTPException(409, "Já existe uma chapa com este nome.")
+    slate.name = data.name
+    session.add(slate)
+    admin.commit(session)
+    session.refresh(slate)
+    return slate
+
+
+@router.put("/{campaign_id}/slates/{slate_id}/members")
+def assign_slate_member(campaign_id: int, slate_id: int, data: MemberInput, session: Session = Depends(get_session)):
+    try:
+        admin.locked_campaign(session,campaign_id)
+        member=admin.set_membership(session,campaign_id,data.profile_id,slate_id,data.position)
+        admin.commit(session)
+        session.refresh(member)
+        return member
+    except HTTPException:
+        session.rollback()
+        raise
+
+
+
+@router.delete("/{campaign_id}/slates/{slate_id}/members/{profile_id}")
+def remove_slate_member(campaign_id: int, slate_id: int, profile_id: int, session: Session = Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    member = session.exec(select(SlateMember).where(SlateMember.campaign_id == campaign_id,
+        SlateMember.slate_id == slate_id, SlateMember.profile_id == profile_id)).first()
+    if not member:
+        raise HTTPException(404, "Vínculo não encontrado.")
+    session.delete(member)
+    session.commit()
+    return {"removed": True}
+
+
+class ProfileUpdate(BaseModel):
+    username: str | None = Field(default=None,max_length=31)
+    full_name: str | None = Field(default=None,max_length=120)
+    role: Literal["CLIENT","COMPETITOR","LOCAL_PAGE","MEDIA","DF_GENERAL"] | None = None
+    active: bool | None = None
+    slate_id: int | None = Field(default=None,gt=0)
+    position: Literal["CANDIDATE","VICE","ASSOCIATE"] | None = None
+
+    @field_validator("full_name")
+    @classmethod
+    def clean_name(cls,value):
+        if value is not None:
+            value=value.strip() or None
+            if value and ("<" in value or ">" in value):raise ValueError("HTML não permitido.")
+        return value
+
+
+class ExistingProfileInput(BaseModel):
+    profile_id: int = Field(gt=0)
+    role: Literal["CLIENT","COMPETITOR","LOCAL_PAGE","MEDIA","DF_GENERAL"]
+
+
+@router.put("/{campaign_id}")
+def edit_campaign(campaign_id:int,data:CampaignCreate,session:Session=Depends(get_session)):
+    campaign=admin.locked_campaign(session,campaign_id)
+    duplicate=session.exec(select(Campaign).where(Campaign.slug==data.slug,Campaign.id!=campaign_id)).first()
+    if duplicate:raise HTTPException(409,"Identificador já utilizado por outra campanha.")
+    campaign.name,campaign.slug=data.name,data.slug
+    session.add(campaign);admin.commit(session);session.refresh(campaign)
+    return campaign
+
+
+@router.delete("/{campaign_id}")
+def archive_campaign(campaign_id:int,confirmation:str=Query(...),session:Session=Depends(get_session)):
+    campaign=admin.locked_campaign(session,campaign_id)
+    admin.confirm(campaign.slug,confirmation)
+    campaign.active=False
+    session.add(campaign);admin.commit(session)
+    return {"id":campaign.id,"archived":True,"history_preserved":True}
+
+
+@router.post("/{campaign_id}/restore")
+def restore_campaign(campaign_id:int,session:Session=Depends(get_session)):
+    campaign=admin.locked_campaign(session,campaign_id)
+    campaign.active=True
+    session.add(campaign);admin.commit(session)
+    return {"id":campaign.id,"active":True}
+
+
+@router.get("/{campaign_id}/slates")
+def list_slates(campaign_id:int,session:Session=Depends(get_session)):
+    if not session.get(Campaign,campaign_id):raise HTTPException(404,"Campanha monitorada não encontrada.")
+    from app.services.campaign_scope import slate_payloads
+    return slate_payloads(session,campaign_id)
+
+
+@router.delete("/{campaign_id}/slates/{slate_id}")
+def delete_slate(campaign_id:int,slate_id:int,confirmation:str=Query(...),session:Session=Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    slate=session.get(CampaignSlate,slate_id)
+    if not slate or slate.campaign_id!=campaign_id:raise HTTPException(404,"Chapa não encontrada nesta campanha.")
+    admin.confirm(slate.name,confirmation)
+    session.exec(delete(SlateMember).where(SlateMember.slate_id==slate_id,SlateMember.campaign_id==campaign_id))
+    session.delete(slate);admin.commit(session)
+    return {"deleted":True,"history_preserved":True}
+
+
+@router.put("/{campaign_id}/profiles/{profile_id}")
+def edit_profile(campaign_id:int,profile_id:int,data:ProfileUpdate,session:Session=Depends(get_session)):
+    return admin.update_profile(session,campaign_id,profile_id,data.model_dump(exclude_unset=True))
+
+
+@router.delete("/{campaign_id}/profiles/{profile_id}")
+def remove_profile(campaign_id:int,profile_id:int,confirmation:str=Query(...),session:Session=Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    profile=session.get(InstagramProfile,profile_id)
+    if not profile:raise HTTPException(404,"Perfil não encontrado.")
+    admin.confirm(profile.username,confirmation)
+    return {**admin.update_profile(session,campaign_id,profile_id,{"active":False}),"history_preserved":True}
+
+
+@router.get("/{campaign_id}/available-profiles")
+def available_profiles(campaign_id:int,session:Session=Depends(get_session)):
+    if not session.get(Campaign,campaign_id):raise HTTPException(404,"Campanha monitorada não encontrada.")
+    links={link.profile_id:link for link in session.exec(select(CampaignProfile).where(CampaignProfile.campaign_id==campaign_id)).all()}
+    return [{"id":profile.id,"username":profile.username,"full_name":profile.full_name,
+             "linked":profile.id in links,"active":links[profile.id].active if profile.id in links else False}
+            for profile in session.exec(select(InstagramProfile).order_by(InstagramProfile.username)).all()]
+
+
+@router.post("/{campaign_id}/profile-links")
+def link_existing_profile(campaign_id:int,data:ExistingProfileInput,session:Session=Depends(get_session)):
+    admin.locked_campaign(session,campaign_id)
+    if not session.get(InstagramProfile,data.profile_id):raise HTTPException(404,"Perfil existente não encontrado.")
+    if data.role=="DF_GENERAL" and session.exec(select(ProfileRegion).where(ProfileRegion.profile_id==data.profile_id)).first():
+        raise HTTPException(409,"Perfil com RA fixa não pode ser classificado como Portal geral do DF.")
+    link=session.exec(select(CampaignProfile).where(CampaignProfile.campaign_id==campaign_id,CampaignProfile.profile_id==data.profile_id)).first()
+    if link and link.active:raise HTTPException(409,"Perfil já está ativo nesta campanha.")
+    link=link or CampaignProfile(campaign_id=campaign_id,profile_id=data.profile_id,role=data.role)
+    link.active=True;link.role=data.role
+    session.add(link);admin.commit(session)
+    return {"profile_id":data.profile_id,"active":True,"role":link.role}
