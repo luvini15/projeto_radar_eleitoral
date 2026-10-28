@@ -45,5 +45,25 @@ class MonitoringTest(unittest.TestCase):
         self.assertEqual(result["status"],"FAILED");self.assertEqual(result["profiles_failed"],1)
         self.assertEqual(self.session.exec(select(CollectionRun)).all()[-1].status,"FAILED")
 
+    @patch("app.services.monitoring_sync.collect_posts",return_value=[RAW_POST])
+    @patch("app.services.monitoring_sync.collect_profile",return_value={"followersCount":100})
+    def test_same_shortcode_can_be_collected_for_different_profiles(self,_profile,_posts):
+        second_profile = InstagramProfile(username="another-profile")
+        self.session.add(second_profile)
+        self.session.commit()
+        self.session.refresh(second_profile)
+        self.session.add(CampaignProfile(
+            campaign_id=self.campaign_id,
+            profile_id=second_profile.id,
+            role="COMPETITOR",
+        ))
+        self.session.commit()
+
+        result = collect_campaign(self.session, self.campaign_id)
+
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["profiles_succeeded"], 2)
+        self.assertEqual(len(self.session.exec(select(InstagramPost)).all()), 2)
+
 
 if __name__ == "__main__": unittest.main()
