@@ -9,7 +9,7 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from starlette.requests import Request
 
 from app.models import Campaign, InstagramPost, InstagramProfile
-from app.routers.campaigns import list_campaigns
+from app.routers.campaigns import ProfileCreate, add_profile_to_campaign, list_campaigns
 from app.security import enforce_resource_ownership
 from app.services.monitoring_sync import upsert_post
 from app.services.territorial_audit import audit_rows
@@ -64,6 +64,21 @@ class AccountIsolationTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as denied:
             enforce_resource_ownership(request("/api/profiles/2/followers-history"), "user-a", self.engine)
         self.assertEqual(denied.exception.status_code, 404)
+
+    def test_adding_existing_profile_reuses_it_and_duplicate_link_is_conflict(self):
+        with Session(self.engine) as session:
+            data = ProfileCreate(username="@same.profile", role="COMPETITOR")
+
+            result = add_profile_to_campaign(1, data, request("/api/campaigns/1/profiles"), session)
+
+            self.assertEqual(result["profile_id"], 1)
+            self.assertEqual(len(session.exec(select(InstagramProfile)).all()), 2)
+
+            with self.assertRaises(HTTPException) as duplicate:
+                add_profile_to_campaign(1, data, request("/api/campaigns/1/profiles"), session)
+
+            self.assertEqual(duplicate.exception.status_code, 409)
+            self.assertEqual(duplicate.exception.detail, "Perfil já vinculado a esta campanha.")
 
 
 if __name__ == "__main__":

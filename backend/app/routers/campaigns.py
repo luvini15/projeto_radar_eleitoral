@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session, select
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from app.services.profile_import import normalize_username
 
 from app.database import get_session
@@ -193,15 +194,27 @@ def add_profile_to_campaign(
     ).first()
 
     if not profile:
-        profile = InstagramProfile(
-            owner_user_id=request.state.user_id,
-            username=username,
-            full_name=data.full_name,
-        )
-
-        session.add(profile)
-        session.commit()
-        session.refresh(profile)
+        try:
+            with session.begin_nested():
+                profile = InstagramProfile(
+                    owner_user_id=request.state.user_id,
+                    username=username,
+                    full_name=data.full_name,
+                )
+                session.add(profile)
+                session.flush()
+        except IntegrityError:
+            profile = session.exec(
+                select(InstagramProfile).where(
+                    InstagramProfile.owner_user_id == request.state.user_id,
+                    func.lower(InstagramProfile.username) == username,
+                )
+            ).first()
+            if not profile:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Não foi possível cadastrar este perfil. Tente novamente.",
+                )
 
     if role == "DF_GENERAL" and session.exec(select(ProfileRegion).where(ProfileRegion.profile_id == profile.id)).first():
         raise HTTPException(409, "Este perfil já tem RA fixa. Revise a associação antes de classificá-lo como geral do DF.")
@@ -227,8 +240,26 @@ def add_profile_to_campaign(
         role=role,
     )
 
-    session.add(link)
-    session.commit()
+    try:
+        session.add(link)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        existing_link = session.exec(
+            select(CampaignProfile).where(
+                CampaignProfile.campaign_id == campaign_id,
+                CampaignProfile.profile_id == profile.id,
+            )
+        ).first()
+        if existing_link:
+            raise HTTPException(
+                status_code=409,
+                detail="Perfil já vinculado a esta campanha.",
+            )
+        raise HTTPException(
+            status_code=409,
+            detail="Não foi possível vincular este perfil à campanha. Tente novamente.",
+        )
     session.refresh(link)
 
     return {
